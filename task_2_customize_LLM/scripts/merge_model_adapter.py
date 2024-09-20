@@ -14,7 +14,7 @@ import argparse
 from datasets import load_dataset
 from pprint import pprint
 
-
+import subprocess as sb
 
 def set_custom_env(env_vars: Dict[str, str]) -> None:
     """
@@ -57,8 +57,8 @@ def create_test_prompt():
     
     return random_row
     
-
-def generate_text(model, prompt, max_length=500, num_return_sequences=1):
+# Generate in-memory inference
+def generate_text(model, prompt, max_length=600, num_return_sequences=1):
     # Encode the input prompt
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -74,7 +74,7 @@ def generate_text(model, prompt, max_length=500, num_return_sequences=1):
     
     tokenizer.save_pretrained("/opt/ml/model/merged/")
     
-    prompt_input=prompt['prompt'].split("### Summary")[0] + "### Summary"
+    prompt_input=prompt['prompt'].split("### Summary")[0]
     
     input_ids = tokenizer.encode(prompt_input, return_tensors="pt")#.to(device)
 
@@ -95,6 +95,7 @@ def generate_text(model, prompt, max_length=500, num_return_sequences=1):
         
     return generated_texts
 
+# Merge the trained adapter with the base model and test it
 def merge_and_save_model(model_id, adapter_dir, output_dir):
     from peft import PeftModel
 
@@ -105,7 +106,7 @@ def merge_and_save_model(model_id, adapter_dir, output_dir):
     base_model = AutoModelForCausalLM.from_pretrained(
         args.basemodel if args.use_local else model_id,
         low_cpu_mem_usage=True,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.float32,
         device_map="auto",
       #  offload_folder="/opt/ml/model/"
     )
@@ -117,7 +118,7 @@ def merge_and_save_model(model_id, adapter_dir, output_dir):
     #############################
     prompt=create_test_prompt()
     
-    pprint(f"*** Generating Inference on Base Model: {generate_text(base_model,prompt)}")
+    #pprint(f"*** Generating Inference on Base Model: {generate_text(base_model,prompt)}")
     
     base_model.config.use_cache = False
     
@@ -128,7 +129,7 @@ def merge_and_save_model(model_id, adapter_dir, output_dir):
     peft_model = PeftModel.from_pretrained(
         base_model, 
         adapter_dir, 
-        torch_dtype=torch.float16,  # Set dtype to float16
+        torch_dtype=torch.float32,  # Set dtype to float16
      #   offload_folder="/opt/ml/model/"
     )
     
@@ -138,7 +139,9 @@ def merge_and_save_model(model_id, adapter_dir, output_dir):
     print("Loaded peft model")
     model = peft_model.merge_and_unload()
     print("Merge done")
-    
+
+    model.eval()
+    model.active_adapters = "default" 
     #############################
     # Run Inference - Trained Model 
     #############################
@@ -152,9 +155,8 @@ def merge_and_save_model(model_id, adapter_dir, output_dir):
     print(f"Saving the newly created merged model to {output_dir}")
     model.save_pretrained(output_dir, safe_serialization=True)
     base_model.config.save_pretrained(output_dir)
-    
 
-
+# Parse CLI arguments passed by SageMaker Jobs
 def parse_arge():
 
     parser = argparse.ArgumentParser()
@@ -164,7 +166,6 @@ def parse_arge():
     parser.add_argument("--testdata", type=str, default=os.environ["SM_CHANNEL_TESTDATA"])
     
     parser.add_argument("--basemodel", type=str, default=os.environ.get("SM_CHANNEL_BASEMODEL",""))
-    #parser.add_argument("--tokenizer", type=str, default=os.environ.get("SM_CHANNEL_TOKENIZER",""))
     parser.add_argument('--use_local', type=lambda x: str(x).lower() in ['true', '1', 't', 'y', 'yes'], help="A boolean flag")
     
     parser.add_argument("--model_id", type=str, default="meta-llama/Meta-Llama-3.1-8B")
@@ -184,5 +185,10 @@ if __name__ == "__main__":
                                   }
     set_custom_env(custom_env)
 
-    # launch training
+    print("*****printing adapetrs")
+
+    # Run the command to get the Adapter artifacts
+    sb.run(["ls", "-ltr", args.adapterdir])
+
+    # launch training to merge trained adapaters with base model
     merge_and_save_model(args.model_id, args.adapterdir,"/opt/ml/model/merged/")

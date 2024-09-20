@@ -128,6 +128,7 @@ def training_function(script_args, training_args):
     ####################
     # Model & Tokenizer
     ####################
+    # Initialize a tokenizer by loading a pre-trained tokenizer configuration, using the fast tokenizer implementation if available.
     tokenizer = AutoTokenizer.from_pretrained(
             script_args.base_model_s3_path if script_args.use_local else script_args.model_id,
             use_fast=True
@@ -194,7 +195,7 @@ def training_function(script_args, training_args):
         bias="none",
         target_modules="all-linear",
         task_type="CAUSAL_LM",
-        # modules_to_save = ["lm_head", "embed_tokens"] # add if you want to use the Llama 3 instruct template
+        #modules_to_save = ["lm_head", "embed_tokens"] # add if you want to use the Llama 3 instruct template
     )
     
     ######################################
@@ -244,12 +245,6 @@ def training_function(script_args, training_args):
             checkpoint = training_args.resume_from_checkpoint
         trainer.train(resume_from_checkpoint=checkpoint)
 
-        # Log final metrics
-        # mlflow.log_metrics({
-        #     "train_runtime": train_result.metrics["train_runtime"],
-        #     "train_samples_per_second": train_result.metrics["train_samples_per_second"],
-        # })
-
         #########################################
         # SAVE ADAPTER AND CONFIG FOR SAGEMAKER
         #########################################
@@ -257,7 +252,6 @@ def training_function(script_args, training_args):
         if trainer.is_fsdp_enabled:
             trainer.accelerator.state.fsdp_plugin.set_state_dict_type("FULL_STATE_DICT")
         trainer.save_model()
-        
         
         mlflow_artifact_dir="/opt/ml/model/llama3.1/mlflow"
         if not os.path.exists(mlflow_artifact_dir):
@@ -268,7 +262,7 @@ def training_function(script_args, training_args):
     print("*** Adapter Saved")
 
     ##################
-    # CLEAN UP 
+    # CLEAN UP
     ##################
     del model
     del trainer
