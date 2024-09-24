@@ -1,3 +1,6 @@
+"""
+Generative AI on Amazon SageMaker - playground streamlit app
+"""
 from langchain.callbacks import StreamlitCallbackHandler
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 from langchain.llms import SagemakerEndpoint
@@ -50,9 +53,8 @@ def format_messages(messages: List[Dict[str, str]]) -> List[str]:
     return output
 
 
-f = open(os.path.join(app_path, "endpoint_name.txt"), "r")
-endpoint_name = f.read()
-f.close()
+with open(os.path.join(app_path, "endpoint_name.txt"), "r") as endpoint_file:
+    endpoint_name = endpoint_file.read()
 
 
 class ContentHandler(LLMContentHandler):
@@ -84,9 +86,9 @@ class ContentHandler(LLMContentHandler):
 
 
 st.set_page_config(page_title="Amazon SageMaker Workshop", page_icon="🦜")
-st.image(os.path.join(app_path, "media", "banner.svg"), use_column_width=True)  
+st.image(os.path.join(app_path, "media", "banner.png"), use_column_width=True)  
 st.title("🦜 Amazon SageMaker & LangChain: Llama 3.1 8B Playground")
-st.sidebar.image(os.path.join(app_path, "media", "logo.svg"), use_column_width=True) 
+st.sidebar.image(os.path.join(app_path, "media", "logo.png"), use_column_width=True) 
 
 content_handler = ContentHandler()
 msgs = StreamlitChatMessageHistory()
