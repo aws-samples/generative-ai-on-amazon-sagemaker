@@ -159,3 +159,4 @@ poetry.lock
 # Files that might appear anywhere in the directory
 .DS_Store
 **/.DS_Store
+.ipynb_checkpoints
