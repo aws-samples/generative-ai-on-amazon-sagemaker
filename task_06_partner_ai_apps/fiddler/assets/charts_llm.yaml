@@ -1,0 +1,111 @@
+charts:
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 30d
+        time_zone: America/Los_Angeles
+      query_type: EMBEDDING
+      queries:
+        - column_name: PromptTextEmbedding
+          plot: 3D
+          metric_type: umap
+          sample_size: 100
+          query_key: dd4566c3-2ac8-49a8-b2b5-8ffb543a61bb
+          retrieve_columns: ["user_input", "chatbot_response", "fdl_topics__chatbot_response__topic", "fdl_enrichment_qa_sentiment__chatbot_response__sentiment", "fdl_enrichment_qa_sentiment__user_input__sentiment", "session_id","timestamp","feedback","prompt_tokens","completion_tokens","total_tokens","srch_id"]
+          minimum_distance: 0.5
+          number_of_neighbors: 7
+          model_name: trip_assistant_chatbot
+    query_type: EMBEDDING
+    description: UMAP Projection for User Input Embeddings
+    options:
+      color_by: feedback
+    title: User Input UMAP    
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 30d
+        time_zone: America/Los_Angeles
+      query_type: EMBEDDING
+      queries:
+        - column_name: ResponseTextEmbedding
+          plot: 3D
+          metric_type: umap
+          sample_size: 100
+          query_key: dd4566c3-2ac8-49a8-b2b5-8ffb543a61bb
+          retrieve_columns: ["user_input", "chatbot_response", "fdl_topics__chatbot_response__topic", "fdl_enrichment_qa_sentiment__chatbot_response__sentiment", "fdl_enrichment_qa_sentiment__user_input__sentiment", "session_id","timestamp","feedback","prompt_tokens","completion_tokens","total_tokens","srch_id"]
+          minimum_distance: 0.5
+          number_of_neighbors: 7
+          model_name: trip_assistant_chatbot
+          version: v1
+    query_type: EMBEDDING
+    description: UMAP Projection Chatbot Reponse Embeddings
+    options:
+      color_by: feedback
+    title: Chatbot Response UMAP
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 7d
+        time_zone: America/Los_Angeles
+      query_type: MONITORING
+      queries:
+        - columns: []
+          metric: Total Cost
+          metric_type: custom
+          query_key: dd4466c3-2ac8-49a8-b8b5-8ffa543a61b5
+          viz_type: line
+          model_name: trip_assistant_chatbot
+        - columns: ['prompt_tokens', 'total_tokens', 'completion_tokens']
+          metric: "sum"
+          metric_type: "statistic"
+          query_key: dd4466c3-2ac8-49a8-b9b5-8ffa543a61b6
+          viz_type: bar
+          model_name: trip_assistant_chatbot
+    description: Cost Tracker for Chatbot 
+    options:
+      queryNames:
+        dd4466c3-2ac8-49a8-b8b5-8ffa543a61b5: Total Cost in USD
+        dd4466c3-2ac8-49a8-b9b5-8ffa543a61b6: Number of Tokens Used
+      customYAxis:
+        - query_keys: ['dd4466c3-2ac8-49a8-b8b5-8ffa543a61b5']
+          scale: value  
+        - query_keys: ['dd4466c3-2ac8-49a8-b9b5-8ffa543a61b6']
+          scale: value   
+    query_type: MONITORING
+    title: Total Cost Tracker
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 7d
+        time_zone: America/Los_Angeles
+      query_type: MONITORING
+      queries:
+        - columns: ["fdl_enrichment_qa_sentiment__user_input__sentiment_probability"]
+          metric: average
+          metric_type: statistic
+          query_key: 334466c3-2ac8-49a8-b8b5-8ffa543a6112
+          segment: "No Click"
+          viz_type: line
+          model_name: trip_assistant_chatbot
+        - columns: ["fdl_enrichment_qa_sentiment__user_input__sentiment_probability"]
+          metric: average
+          metric_type: statistic
+          query_key: 224466c3-2ac8-49a8-b8b5-8ffa543a6112
+          segment: "Booked"
+          viz_type: line
+          model_name: trip_assistant_chatbot
+        - columns: ["fdl_enrichment_qa_sentiment__user_input__sentiment_probability"]
+          metric: average
+          metric_type: statistic
+          query_key: 114466c3-2ac8-49a8-b8b5-8ffa543a6112
+          segment: "Click"
+          viz_type: line
+          model_name: trip_assistant_chatbot          
+    description: Daily user sentiment segmented by outcome  
+    options:
+      queryNames:
+        334466c3-2ac8-49a8-b8b5-8ffa543a6112: No Click
+        224466c3-2ac8-49a8-b8b5-8ffa543a6112: Booked
+        114466c3-2ac8-49a8-b8b5-8ffa543a6112: Click   
+    query_type: MONITORING
+    title: User Sentiment Tracker              
