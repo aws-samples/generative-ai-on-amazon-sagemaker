@@ -1,25 +1,13 @@
-![Banner](/media/smbanner.png)
-# Generative AI on Amazon SageMaker
+# Generative AI Fine-tuning with Amazon SageMaker AI and Amazon Bedrock
 
 ## Welcome!
 
-Welcome to home of Generative AI on Amazon SageMaker. This repository is a growing collection of generative AI samples which include workflows like,
-1. Setting up a Foundation Model Playground on Amazon SageMaker
-2. Customization of Foundation Models on Amazon SageMaker
-3. Deploy, Evaluate and Monitor Foundation Models on Amazon SageMaker
-
-
-## Supported Models
-| Model Type  | Model Name          | Model Source             |
-|-------------|---------------------|--------------------------|
-| Language    | Llama 3.1 8b               | Meta                |
-
-## Coming Soon...
-
-1. Foundation model use cases (medical, financial, etc..)
-2. Support for additonal domains (vision, audio, etc..)
-3. Additional workflows (RAG, Graph RAG, etc..)
-
+Welcome to home of Generative AI Fine-tuning with Amazon SageMaker AI and Amazon Bedrock. This repository is a growing collection of generative AI samples which include workflows like,
+1. Setting up a Foundation Model Playground on Amazon SageMaker AI
+2. Customization of Foundation Models on Amazon SageMaker AI
+3. Deploy, Evaluate and Monitor Foundation Models on Amazon SageMaker AI
+4. Creating Bedrock Guardrails with a SageMaker Endpoint
+5. Develop FMOps fine-tuning workflows with SageMaker Pipelines
 
 ## Security
 
