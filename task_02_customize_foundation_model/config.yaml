@@ -1,0 +1,23 @@
+SchemaVersion: '1.0'
+SageMaker:
+  PythonSDK:
+    Modules:
+      RemoteFunction:
+        Dependencies: ./requirements.txt
+        ImageUri: '763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.5.1-gpu-py311-cu124-ubuntu22.04-sagemaker'
+        InstanceType: ml.g5.12xlarge
+        IncludeLocalWorkDir: true
+        PreExecutionCommands:
+          - 'export NCCL_P2P_DISABLE=1'
+          - 'export HF_HUB_ENABLE_HF_TRANSFER=1'
+        CustomFileFilter:
+          IgnoreNamePatterns:
+          - "data/*"
+          - "models/*"
+          - "*.ipynb"
+          - "*.csv"
+          - "*.md"
+          - "__pycache__"
+        #RoleArn: RoleArn required if you are running the notebooks from a local IDE
+  Model:
+    EnableNetworkIsolation: false
