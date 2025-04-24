@@ -1,0 +1,8 @@
+boto3
+botocore
+sagemaker
+langchain
+langchain_aws
+langchain_experimental
+langgraph
+matplotlib
