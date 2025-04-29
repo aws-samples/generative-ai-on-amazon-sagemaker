@@ -1,0 +1,7 @@
+boto3
+sqlalchemy
+langchain
+langchain-community
+langchain-aws
+PyAthena
+s3fs
