@@ -14,6 +14,8 @@ from transformers import (
 from typing import Dict, List
 import xtarfile as tarfile
 
+max_samples = 5
+
 SYSTEM_PREFIX: str = "<｜begin▁of▁sentence｜>"
 SYSTEM_PROMPT = """
 You are a medical expert with advanced knowledge in clinical reasoning, diagnostics, and treatment planning. 
@@ -178,9 +180,7 @@ def calculate_metrics(model, test_dataset_response, config, desc, max_new_tokens
     print(f"Average human baseline length: {avg_baseline_length} characters")
 
     # Use the adaptive approach that will choose the best strategy based on dataset size
-    model_summaries_response = get_summaries(
-        model, test_dataset_response, config, avg_baseline_length
-    )
+    model_summaries_response = get_summaries(model, test_dataset_response, config, 500)
     human_baseline_summaries = test_dataset_response["human_baseline"]
 
     import evaluate
