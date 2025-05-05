@@ -54,7 +54,7 @@ spec:
 apiVersion: "kubeflow.org/v1"
 kind: PyTorchJob
 metadata:
-  name: deepseek-fine-tuning
+  name: deepseek-r1-distill-qwen-7b-fine-tuning
 spec:
   elasticPolicy:
     rdzvBackend: etcd
@@ -77,7 +77,7 @@ spec:
       template:
         metadata:
           labels:
-            app: deepseek-r1-llama-8b-agent
+            app: deepseek-r1-distill-qwen-7b-fine-tuning
         spec:
           volumes:
             - name: shmem
@@ -126,12 +126,12 @@ spec:
                 - /bin/bash
                 - -c
                 - |
-                  pip install -r /data/<STUDIO_USER_PROFILE>/deepseek-r1-llama-8b-agent/requirements.txt && \
+                  pip install -r /data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/requirements.txt && \
                   torchrun \
                   --nnodes=4 \
                   --nproc_per_node=1 \
-                  /data/<STUDIO_USER_PROFILE>/deepseek-r1-llama-8b-agent/scripts/train.py \
-                  --config /data/<STUDIO_USER_PROFILE>/deepseek-r1-llama-8b-agent/args.yaml
+                  /data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/scripts/train.py \
+                  --config /data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/args.yaml
               volumeMounts:
                 - name: shmem
                   mountPath: /dev/shm
