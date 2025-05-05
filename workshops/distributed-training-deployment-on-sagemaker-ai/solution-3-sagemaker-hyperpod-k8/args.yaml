@@ -1,10 +1,10 @@
-model_id: "/data/<STUDIO_USER_PROFILE>/deepseek-r1-llama-8b-agent/DeepSeek-R1-Distill-Llama-8B" # Hugging Face model id
+model_id: "/data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/DeepSeek-R1-Distill-Qwen-7B" # Hugging Face model id
 mlflow_uri: ""
 mlflow_experiment_name: ""
 # sagemaker specific parameters
-output_dir: "/data/<STUDIO_USER_PROFILE>/deepseek-r1-llama-8b-agent/model/" # path to where SageMaker will upload the model
-train_dataset_path: "/data/<STUDIO_USER_PROFILE>/deepseek-r1-llama-8b-agent/data/train/" # path to where FSx saves train dataset
-test_dataset_path: "/data/<STUDIO_USER_PROFILE>/deepseek-r1-llama-8b-agent/data/test/" # path to where FSx saves test dataset
+output_dir: "/data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/model/" # path to where SageMaker will upload the model
+train_dataset_path: "/data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/data/train/" # path to where FSx saves train dataset
+test_dataset_path: "/data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/data/test/" # path to where FSx saves test dataset
 # training parameters
 lora_r: 8
 lora_alpha: 16

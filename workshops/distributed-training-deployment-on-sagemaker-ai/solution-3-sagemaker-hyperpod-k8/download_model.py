@@ -2,7 +2,7 @@ from huggingface_hub import snapshot_download
 import os
 
 
-MODEL_ID = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+MODEL_ID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 
 
 def download_model(path, model_name):
