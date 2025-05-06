@@ -180,7 +180,9 @@ def calculate_metrics(model, test_dataset_response, config, desc, max_new_tokens
     print(f"Average human baseline length: {avg_baseline_length} characters")
 
     # Use the adaptive approach that will choose the best strategy based on dataset size
-    model_summaries_response = get_summaries(model, test_dataset_response, config, 500)
+    model_summaries_response = get_summaries(
+        model, test_dataset_response, config, 500
+    )
     human_baseline_summaries = test_dataset_response["human_baseline"]
 
     import evaluate
