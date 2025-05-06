@@ -7,20 +7,9 @@ from huggingface_hub import snapshot_download
 import mlflow
 from mlflow.models import infer_signature
 import os
-from peft import (
-    AutoPeftModelForCausalLM,
-    LoraConfig,
-    get_peft_model,
-    prepare_model_for_kbit_training,
-)
+from peft import AutoPeftModelForCausalLM, LoraConfig, get_peft_model, prepare_model_for_kbit_training
 import torch
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    TrainingArguments,
-    set_seed,
-)
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments, set_seed
 from trl.commands.cli_utils import TrlParser
 import transformers
 from typing import Dict, Optional, Tuple
@@ -32,46 +21,60 @@ class ScriptArguments:
     Arguments for the script execution.
     """
 
-    lora_r: Optional[int] = field(default=8, metadata={"help": "lora_r"})
+    lora_r: Optional[int] = field(
+        default=8,
+        metadata={"help": "lora_r"}
+    )
 
-    lora_alpha: Optional[int] = field(default=16, metadata={"help": "lora_dropout"})
+    lora_alpha: Optional[int] = field(
+        default=16,
+        metadata={"help": "lora_dropout"}
+    )
 
     lora_dropout: Optional[float] = field(
-        default=0.1, metadata={"help": "lora_dropout"}
+        default=0.1,
+        metadata={"help": "lora_dropout"}
     )
 
     merge_weights: Optional[bool] = field(
-        default=False, metadata={"help": "Merge adapter with base model"}
+        default=False,
+        metadata={"help": "Merge adapter with base model"}
     )
 
     mlflow_uri: Optional[str] = field(
-        default=None, metadata={"help": "MLflow tracking ARN"}
+        default=None,
+        metadata={"help": "MLflow tracking ARN"}
     )
 
     mlflow_experiment_name: Optional[str] = field(
-        default=None, metadata={"help": "MLflow experiment name"}
+        default=None,
+        metadata={"help": "MLflow experiment name"}
     )
 
     model_id: str = field(
-        default=None, metadata={"help": "Model ID to use for SFT training"}
+        default=None,
+        metadata={"help": "Model ID to use for SFT training"}
     )
 
-    token: str = field(default=None, metadata={"help": "Hugging Face API token"})
+    token: str = field(
+        default=None,
+        metadata={"help": "Hugging Face API token"}
+    )
 
     train_dataset_path: Optional[str] = field(
-        default=None, metadata={"help": "Path to the training dataset"}
+        default=None,
+        metadata={"help": "Path to the training dataset"}
     )
 
     test_dataset_path: Optional[str] = field(
-        default=None, metadata={"help": "Path to the test dataset"}
+        default=None,
+        metadata={"help": "Path to the test dataset"}
     )
 
 
 def init_distributed():
     # Initialize the process group
-    torch.distributed.init_process_group(
-        backend="nccl", timeout=datetime.timedelta(seconds=5400)
-    )  # Use "gloo" backend for CPU
+    torch.distributed.init_process_group(backend="nccl", timeout=datetime.timedelta(seconds=5400))  # Use "gloo" backend for CPU
     local_rank = int(os.environ["LOCAL_RANK"])
     torch.cuda.set_device(local_rank)
 
@@ -121,6 +124,13 @@ def set_custom_env(env_vars: Dict[str, str]) -> None:
 def train(script_args, training_args, train_ds, test_ds):
     set_seed(training_args.seed)
 
+    mlflow_enabled = (
+        script_args.mlflow_uri is not None
+        and script_args.mlflow_experiment_name is not None
+        and script_args.mlflow_uri != ""
+        and script_args.mlflow_experiment_name != ""
+    )
+
     accelerator = Accelerator()
 
     if script_args.token is not None:
@@ -158,18 +168,16 @@ def train(script_args, training_args, train_ds, test_ds):
         torch_dtype = torch.float32
         model_configs = dict()
 
-    if (
-        training_args.fsdp is not None
-        and training_args.fsdp != ""
-        and training_args.fsdp_config is not None
-        and len(training_args.fsdp_config) > 0
-    ):
-        bnb_config_params = {"bnb_4bit_quant_storage": torch_dtype}
+    if training_args.fsdp is not None and training_args.fsdp != "" and \
+        training_args.fsdp_config is not None and len(training_args.fsdp_config) > 0:
+        bnb_config_params = {
+            "bnb_4bit_quant_storage": torch_dtype
+        }
 
         trainer_configs = {
             "fsdp": training_args.fsdp,
             "fsdp_config": training_args.fsdp_config,
-            "gradient_checkpointing_kwargs": {"use_reentrant": False},
+            "gradient_checkpointing_kwargs": {"use_reentrant": False}
         }
     else:
         bnb_config_params = dict()
@@ -182,7 +190,7 @@ def train(script_args, training_args, train_ds, test_ds):
         bnb_4bit_use_double_quant=True,
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch_dtype,
-        **bnb_config_params,
+        **bnb_config_params
     )
 
     model = AutoModelForCausalLM.from_pretrained(
@@ -191,21 +199,17 @@ def train(script_args, training_args, train_ds, test_ds):
         quantization_config=bnb_config,
         use_cache=not training_args.gradient_checkpointing,
         cache_dir="/tmp/.cache",
-        **model_configs,
+        **model_configs
     )
 
     if training_args.fsdp is None and training_args.fsdp_config is None:
-        model = prepare_model_for_kbit_training(
-            model, use_gradient_checkpointing=gradient_checkpointing
-        )
+        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=gradient_checkpointing)
 
         if training_args.gradient_checkpointing:
             model.gradient_checkpointing_enable()
     else:
         if training_args.gradient_checkpointing:
-            model.gradient_checkpointing_enable(
-                gradient_checkpointing_kwargs={"use_reentrant": False}
-            )
+            model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
 
     config = LoraConfig(
         r=script_args.lora_r,
@@ -213,7 +217,7 @@ def train(script_args, training_args, train_ds, test_ds):
         target_modules="all-linear",
         lora_dropout=script_args.lora_dropout,
         bias="none",
-        task_type="CAUSAL_LM",
+        task_type="CAUSAL_LM"
     )
 
     model = get_peft_model(model, config)
@@ -235,34 +239,23 @@ def train(script_args, training_args, train_ds, test_ds):
             ddp_find_unused_parameters=False,
             save_strategy="no",
             output_dir="outputs",
-            **trainer_configs,
+            **trainer_configs
         ),
         callbacks=None,
-        data_collator=transformers.DataCollatorForLanguageModeling(
-            tokenizer, mlm=False
-        ),
+        data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
     )
 
     if trainer.accelerator.is_main_process:
         trainer.model.print_trainable_parameters()
 
-    if (
-        script_args.mlflow_uri is not None
-        and script_args.mlflow_experiment_name is not None
-        and script_args.mlflow_uri != ""
-        and script_args.mlflow_experiment_name != ""
-    ):
+    if mlflow_enabled:
         print("MLflow tracking under ", script_args.mlflow_experiment_name)
         with mlflow.start_run(run_name=os.environ.get("MLFLOW_RUN_NAME", None)) as run:
-            train_dataset_mlflow = mlflow.data.from_pandas(
-                train_ds.to_pandas(), name="train_dataset"
-            )
+            train_dataset_mlflow = mlflow.data.from_pandas(train_ds.to_pandas(), name="train_dataset")
             mlflow.log_input(train_dataset_mlflow, context="train")
 
             if test_ds is not None:
-                test_dataset_mlflow = mlflow.data.from_pandas(
-                    test_ds.to_pandas(), name="test_dataset"
-                )
+                test_dataset_mlflow = mlflow.data.from_pandas(test_ds.to_pandas(), name="test_dataset")
                 mlflow.log_input(test_dataset_mlflow, context="test")
 
             trainer.train()
@@ -305,16 +298,9 @@ def train(script_args, training_args, train_ds, test_ds):
     if accelerator.is_main_process:
         tokenizer.save_pretrained(training_args.output_dir)
 
-        if (
-            script_args.mlflow_uri is not None
-            and script_args.mlflow_experiment_name is not None
-            and script_args.mlflow_uri != ""
-            and script_args.mlflow_experiment_name != ""
-        ):
+        if mlflow_enabled:
             # Model registration in MLFlow
-            print(
-                "MLflow model registration under ", script_args.mlflow_experiment_name
-            )
+            print("MLflow model registration under ", script_args.mlflow_experiment_name)
 
             params = {
                 "top_p": 0.9,
@@ -329,7 +315,7 @@ def train(script_args, training_args, train_ds, test_ds):
                 artifact_path="model",  # This is a relative path to save model files within MLflow run
                 model_config=params,
                 task="text-generation",
-                registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('Fine-tuning-')[-1]}",
+                registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('Fine-tuning-')[-1]}"
             )
 
     accelerator.wait_for_everyone()
@@ -347,12 +333,8 @@ if __name__ == "__main__":
 
     set_custom_env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
 
-    if (
-        script_args.mlflow_uri is not None
-        and script_args.mlflow_experiment_name is not None
-        and script_args.mlflow_uri != ""
-        and script_args.mlflow_experiment_name != ""
-    ):
+    if script_args.mlflow_uri is not None and script_args.mlflow_experiment_name is not None and \
+        script_args.mlflow_uri != "" and script_args.mlflow_experiment_name != "":
         print("mlflow init")
         mlflow.enable_system_metrics_logging()
         mlflow.autolog()
@@ -362,6 +344,8 @@ if __name__ == "__main__":
         current_datetime = datetime.datetime.now()
         formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M")
         set_custom_env({"MLFLOW_RUN_NAME": f"Fine-tuning-{formatted_datetime}"})
+        set_custom_env({"MLFLOW_EXPERIMENT_NAME": script_args.mlflow_experiment_name})
+
 
     # Load datasets
     train_ds = load_from_disk(script_args.train_dataset_path)
