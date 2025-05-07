@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from transformers import AutoTokenizer
 
 DATASET_NAME = "NousResearch/hermes-function-calling-v1"
-MODEL_ID = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
+MODEL_ID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 HF_TOKEN = ""
 
 

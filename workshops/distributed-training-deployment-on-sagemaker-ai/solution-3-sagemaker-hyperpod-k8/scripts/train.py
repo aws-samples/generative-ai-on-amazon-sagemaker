@@ -138,6 +138,13 @@ def set_custom_env(env_vars: Dict[str, str]) -> None:
 def train(script_args, training_args, train_ds, test_ds):
     set_seed(training_args.seed)
 
+    mlflow_enabled = (
+        script_args.mlflow_uri is not None
+        and script_args.mlflow_experiment_name is not None
+        and script_args.mlflow_uri != ""
+        and script_args.mlflow_experiment_name != ""
+    )
+
     accelerator = Accelerator()
 
     if script_args.token is not None:
@@ -275,12 +282,7 @@ def train(script_args, training_args, train_ds, test_ds):
     if trainer.accelerator.is_main_process:
         trainer.model.print_trainable_parameters()
 
-    if (
-        script_args.mlflow_uri is not None
-        and script_args.mlflow_experiment_name is not None
-        and script_args.mlflow_uri != ""
-        and script_args.mlflow_experiment_name != ""
-    ):
+    if mlflow_enabled:
         print("MLflow tracking under ", script_args.mlflow_experiment_name)
         with mlflow.start_run(run_name=os.environ.get("MLFLOW_RUN_NAME", None)) as run:
             train_dataset_mlflow = mlflow.data.from_pandas(
@@ -334,12 +336,7 @@ def train(script_args, training_args, train_ds, test_ds):
     if accelerator.is_main_process:
         tokenizer.save_pretrained(training_args.output_dir)
 
-        if (
-            script_args.mlflow_uri is not None
-            and script_args.mlflow_experiment_name is not None
-            and script_args.mlflow_uri != ""
-            and script_args.mlflow_experiment_name != ""
-        ):
+        if mlflow_enabled:
             # Model registration in MLFlow
             print(
                 "MLflow model registration under ", script_args.mlflow_experiment_name
@@ -391,6 +388,7 @@ if __name__ == "__main__":
         current_datetime = datetime.datetime.now()
         formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M")
         set_custom_env({"MLFLOW_RUN_NAME": f"Fine-tuning-{formatted_datetime}"})
+        set_custom_env({"MLFLOW_EXPERIMENT_NAME": script_args.mlflow_experiment_name})
 
     if script_args.wandb_token is not None and script_args.wandb_token != "":
         print("wandb init")
