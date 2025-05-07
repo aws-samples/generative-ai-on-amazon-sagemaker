@@ -72,7 +72,7 @@ spec:
             averageUtilization: 90
   pytorchReplicaSpecs:
     Worker:
-      replicas: 4
+      replicas: 2
       restartPolicy: OnFailure
       template:
         metadata:
@@ -126,12 +126,12 @@ spec:
                 - /bin/bash
                 - -c
                 - |
-                  pip install -r /data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/requirements.txt && \
+                  pip install -r /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/requirements.txt && \
                   torchrun \
-                  --nnodes=4 \
-                  --nproc_per_node=1 \
-                  /data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/scripts/train.py \
-                  --config /data/<STUDIO_USER_PROFILE>/workshops/distributed-training-deployment-on-sagemaker-ai/solution-3-sagemaker-hyperpod-k8/args.yaml
+                  --nnodes=2 \
+                  --nproc_per_node=4 \
+                  /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/scripts/train.py \
+                  --config /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/args.yaml
               volumeMounts:
                 - name: shmem
                   mountPath: /dev/shm
