@@ -13,9 +13,9 @@ from peft import AutoPeftModelForCausalLM, LoraConfig, get_peft_model, prepare_m
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments, set_seed
 from trl.commands.cli_utils import TrlParser
+from trl import SFTTrainer
 import transformers
 from typing import Dict, Optional, Tuple
-
 
 @dataclass
 class ScriptArguments:
@@ -26,6 +26,11 @@ class ScriptArguments:
     chunk_size: Optional[int] = field(
         default=2048,
         metadata={"help": "chunk_size"}
+    )
+
+    max_seq_length: int = field(
+        default=512,
+        metadata={"help": "The maximum sequence length for SFT Trainer"}
     )
 
     lora_r: Optional[int] = field(
@@ -206,17 +211,27 @@ def train(script_args, training_args, train_ds, test_ds):
     accelerator.wait_for_everyone()
 
     if training_args.bf16:
-        print("flash_attention_2 init")
-
+        print("flash_attention_2 init")      
         torch_dtype = torch.bfloat16
 
         model_configs = {
             "attn_implementation": "flash_attention_2",
             "torch_dtype": torch_dtype,
         }
+    elif training_args.fp16:
+        torch_dtype = torch.float16
+        
+        model_configs = {
+            "torch_dtype": torch_dtype,
+        }
     else:
         torch_dtype = torch.float32
-        model_configs = dict()
+        
+        model_configs = {
+            "torch_dtype": torch_dtype,
+        }
+
+    print(f"torch_dtype = {torch_dtype}")
 
     if training_args.fsdp is not None and training_args.fsdp != "" and \
         training_args.fsdp_config is not None and len(training_args.fsdp_config) > 0:
@@ -272,10 +287,13 @@ def train(script_args, training_args, train_ds, test_ds):
 
     model = get_peft_model(model, config)
 
-    trainer = transformers.Trainer(
+    print(f"max_seq_length: {script_args.max_seq_length}")
+    
+    trainer = SFTTrainer(
         model=model,
         train_dataset=lm_train_dataset,
         eval_dataset=lm_test_dataset if lm_test_dataset is not None else None,
+        max_seq_length=script_args.max_seq_length,
         args=transformers.TrainingArguments(
             per_device_train_batch_size=training_args.per_device_train_batch_size,
             per_device_eval_batch_size=training_args.per_device_eval_batch_size,
@@ -286,6 +304,7 @@ def train(script_args, training_args, train_ds, test_ds):
             num_train_epochs=training_args.num_train_epochs,
             learning_rate=training_args.learning_rate,
             bf16=training_args.bf16,
+            fp16=training_args.fp16,
             ddp_find_unused_parameters=False,
             save_strategy="no",
             output_dir="outputs",
@@ -316,6 +335,7 @@ def train(script_args, training_args, train_ds, test_ds):
         trainer.accelerator.state.fsdp_plugin.set_state_dict_type("FULL_STATE_DICT")
 
     if script_args.merge_weights:
+        print(f"merge adapter weights: {script_args.merge_weights}")
         output_dir = "/tmp/model"
 
         # merge adapter weights with base model and save
@@ -324,11 +344,14 @@ def train(script_args, training_args, train_ds, test_ds):
 
         if accelerator.is_main_process:
             # clear memory
+            print("clearing memory...")
             del model
             del trainer
-    
+
+            print("emptying cuda cache...")
             torch.cuda.empty_cache()
-    
+
+            print("loading base model...")
             # load PEFT model
             model = AutoPeftModelForCausalLM.from_pretrained(
                 output_dir,
@@ -336,13 +359,17 @@ def train(script_args, training_args, train_ds, test_ds):
                 low_cpu_mem_usage=True,
                 trust_remote_code=True,
             )
-    
+
+            print("merging adapter with base...")
             # Merge LoRA and base model and save
             model = model.merge_and_unload()
+
+            print("saving merged model...")
             model.save_pretrained(
                 training_args.output_dir, safe_serialization=True, max_shard_size="2GB"
             )
     else:
+        print(f"merge adapter weights: {script_args.merge_weights}")
         trainer.model.save_pretrained(training_args.output_dir, safe_serialization=True)
 
     if accelerator.is_main_process:
