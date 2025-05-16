@@ -1,21 +1,30 @@
+import os
+import datetime
+from typing import Dict, Optional, Tuple
+from dataclasses import dataclass, field
+from functools import partial
+from itertools import chain
+
 from accelerate import Accelerator
 import bitsandbytes as bnb
-from dataclasses import dataclass, field
-from datasets import load_dataset
-import datetime
-from functools import partial
+
 from huggingface_hub import snapshot_download
-from itertools import chain
+from datasets import load_dataset
+
 import mlflow
 from mlflow.models import infer_signature
-import os
-from peft import AutoPeftModelForCausalLM, LoraConfig, get_peft_model, prepare_model_for_kbit_training
+
 import torch
+
+import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments, set_seed
+from peft import AutoPeftModelForCausalLM, LoraConfig, get_peft_model, prepare_model_for_kbit_training
+
 from trl.commands.cli_utils import TrlParser
 from trl import SFTTrainer
-import transformers
-from typing import Dict, Optional, Tuple
+
+from sagemaker.s3 import S3Downloader
+import subprocess
 
 @dataclass
 class ScriptArguments:
@@ -94,13 +103,19 @@ def init_distributed():
 
 
 def download_model(model_name):
-    print("Downloading model ", model_name)
 
-    os.makedirs("/tmp/tmp_folder", exist_ok=True)
+    destination = "/tmp/tmp_folder"
+    
+    os.makedirs(destination, exist_ok=True)
+    
+    if model_name.startswith("s3://"):
+        print(f"Downloading model from S3: {model_name}")
+        subprocess.run(['aws', 's3', 'cp', model_name, destination, '--recursive'])
+    else:
+        print(f"Downloading model from HF: {model_name}")
+        snapshot_download(repo_id=model_name, local_dir=destination)
 
-    snapshot_download(repo_id=model_name, local_dir="/tmp/tmp_folder")
-
-    print(f"Model {model_name} downloaded under /tmp/tmp_folder")
+    print(f"Model {model_name} downloaded under {destination}")
 
 
 def group_texts(examples, block_size=2048):
@@ -187,9 +202,9 @@ def train(script_args, training_args, train_ds, test_ds):
 
     accelerator.wait_for_everyone()
 
-    script_args.model_id = "/tmp/tmp_folder"
+    model_location = "/tmp/tmp_folder"
 
-    tokenizer = AutoTokenizer.from_pretrained(script_args.model_id)
+    tokenizer = AutoTokenizer.from_pretrained(model_location)
 
     # Set Tokenizer pad Token
     tokenizer.pad_token = tokenizer.eos_token
@@ -259,7 +274,7 @@ def train(script_args, training_args, train_ds, test_ds):
     )
 
     model = AutoModelForCausalLM.from_pretrained(
-        script_args.model_id,
+        model_location,
         trust_remote_code=True,
         quantization_config=bnb_config,
         use_cache=not training_args.gradient_checkpointing,
