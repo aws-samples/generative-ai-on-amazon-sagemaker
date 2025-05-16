@@ -1,0 +1,273 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template for OpenSearch Serverless Collection
+
+Parameters:
+  CollectionName:
+    Type: String
+    Description: Name of the OpenSearch Serverless Collection
+    Default: "agent-ws-collection"
+  
+  StandbyReplicas:
+    Type: String
+    Description: Whether to enable standby replicas for the collection
+    Default: "DISABLED"
+    AllowedValues:
+      - "ENABLED"
+      - "DISABLED"
+  
+  NetworkPolicyName:
+    Type: String
+    Description: Name of the network policy for the collection
+    Default: "agent-ws-network-policy"
+  
+  EncryptionPolicyName:
+    Type: String
+    Description: Name of the encryption policy for the collection
+    Default: "agent-ws-encryption-policy"
+  
+  DataAccessPolicyName:
+    Type: String
+    Description: Name of the data access policy for the collection
+    Default: "agent-ws-data-access-policy"
+
+Resources:
+  # Network Policy for the Collection
+  OpenSearchNetworkPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    Properties:
+      Name: !Ref NetworkPolicyName
+      Type: "network"
+      Description: "Network policy for Agentic AI Workshop OpenSearch Collection"
+      Policy: !Sub |
+        [{
+          "Rules":[
+            {
+              "ResourceType":"collection",
+              "Resource":["collection/${CollectionName}"]
+            },
+            {
+              "ResourceType":"dashboard",
+              "Resource":["collection/${CollectionName}"]
+            }
+          ],
+          "AllowFromPublic":true
+        }]
+
+  # Encryption Policy for the Collection
+  OpenSearchEncryptionPolicy:
+    Type: AWS::OpenSearchServerless::SecurityPolicy
+    Properties:
+      Name: !Ref EncryptionPolicyName
+      Type: "encryption"
+      Description: "Encryption policy for Agentic AI Workshop OpenSearch Collection"
+      Policy: !Sub |
+        {
+          "Rules":[
+            {
+              "ResourceType":"collection",
+              "Resource":["collection/${CollectionName}"]
+            }
+          ],
+          "AWSOwnedKey":true
+        }
+
+  # Data Access Policy for the Collection
+  OpenSearchDataAccessPolicy:
+    Type: AWS::OpenSearchServerless::AccessPolicy
+    Properties:
+      Name: !Ref DataAccessPolicyName
+      Type: "data"
+      Description: "Data access policy for Agentic AI Workshop OpenSearch Collection"
+      Policy: !Sub |
+        [
+          {
+            "Rules":[
+              {
+                "ResourceType":"collection",
+                "Resource":["collection/${CollectionName}"],
+                "Permission":[
+                  "aoss:CreateCollectionItems",
+                  "aoss:DeleteCollectionItems",
+                  "aoss:UpdateCollectionItems",
+                  "aoss:DescribeCollectionItems"
+                ]
+              },
+              {
+                "ResourceType":"index",
+                "Resource":["index/${CollectionName}/*"],
+                "Permission":[
+                  "aoss:CreateIndex",
+                  "aoss:DeleteIndex",
+                  "aoss:UpdateIndex",
+                  "aoss:DescribeIndex",
+                  "aoss:ReadDocument",
+                  "aoss:WriteDocument"
+                ]
+              }
+            ],
+            "Principal":[
+              "arn:aws:iam::${AWS::AccountId}:root"
+            ]
+          }
+        ]
+
+  # OpenSearch Serverless Collection
+  OpenSearchCollection:
+    Type: AWS::OpenSearchServerless::Collection
+    DependsOn:
+      - OpenSearchDataAccessPolicy
+      - OpenSearchEncryptionPolicy
+      - OpenSearchNetworkPolicy
+    Properties:
+      Name: !Ref CollectionName
+      Type: SEARCH
+      Description: "OpenSearch Serverless Collection for Agentic AI Workshop"
+      StandbyReplicas: !Ref StandbyReplicas
+
+
+  # Lambda function to wait for collection to be active
+  CollectionStatusCheckFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt CollectionStatusCheckRole.Arn
+      Runtime: python3.9
+      Timeout: 600
+      Code:
+        ZipFile: |
+          import boto3
+          import cfnresponse
+          import time
+          import traceback
+          
+          aoss = boto3.client('opensearchserverless')
+          
+          def handler(event, context):
+              print(f"Collection status check event: {event}")
+              response_data = {}
+              
+              try:
+                  request_type = event['RequestType']
+                  print(f"Request type: {request_type}")
+                  
+                  # Only check status on Create or Update
+                  if request_type in ['Create', 'Update']:
+                      collection_name = event['ResourceProperties']['CollectionName']
+                      wait_for_collection_active(collection_name)
+                      
+                      # Get collection endpoint
+                      collection_info = get_collection_info(collection_name)
+                      response_data['CollectionId'] = collection_info['Id']
+                      response_data['CollectionEndpoint'] = collection_info['CollectionEndpoint']
+                      response_data['DashboardEndpoint'] = collection_info['DashboardEndpoint']
+                  
+                  # Always send SUCCESS to CFN
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+              
+              except Exception as e:
+                  print(f"Error: {str(e)}")
+                  print(traceback.format_exc())
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {"Error": str(e)})
+          
+          def wait_for_collection_active(collection_name):
+              print(f"Waiting for collection {collection_name} to become active")
+              max_wait_time = 600  # 10 minutes
+              start_time = time.time()
+              
+              while time.time() - start_time < max_wait_time:
+                  try:
+                      response = aoss.batch_get_collection(names=[collection_name])
+                      if not response['collectionDetails']:
+                          print(f"Collection {collection_name} not found, waiting...")
+                          time.sleep(15)
+                          continue
+                          
+                      status = response['collectionDetails'][0]['status']
+                      print(f"Collection status: {status}")
+                      
+                      if status == 'ACTIVE':
+                          print(f"Collection {collection_name} is now active")
+                          return True
+                      elif status in ['FAILED', 'DELETED']:
+                          raise Exception(f"Collection entered {status} state")
+                      
+                      # Wait before checking again
+                      time.sleep(15)
+                  except Exception as e:
+                      if 'ResourceNotFoundException' in str(e):
+                          print(f"Collection {collection_name} not found yet, waiting...")
+                          time.sleep(15)
+                      else:
+                          raise
+              
+              raise Exception(f"Timed out waiting for collection {collection_name} to become active")
+          
+          def get_collection_info(collection_name):
+              response = aoss.batch_get_collection(names=[collection_name])
+              if not response['collectionDetails']:
+                  raise Exception(f"Collection {collection_name} not found")
+                  
+              collection = response['collectionDetails'][0]
+              return {
+                  'Id': collection['id'],
+                  'CollectionEndpoint': collection['collectionEndpoint'],
+                  'DashboardEndpoint': collection['dashboardEndpoint']
+              }
+
+  # IAM Role for the Lambda function
+  CollectionStatusCheckRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: OpenSearchServerlessAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - aoss:BatchGetCollection
+                  - aoss:ListCollections
+                Resource: "*"
+        - PolicyName: CloudWatchLogsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+
+  # Custom resource to wait for collection to be active
+  CollectionStatusCheck:
+    Type: Custom::CollectionStatusCheck
+    DependsOn: OpenSearchCollection
+    Properties:
+      ServiceToken: !GetAtt CollectionStatusCheckFunction.Arn
+      CollectionName: !Ref CollectionName
+      ServiceTimeout: '600'
+
+Outputs:
+  CollectionId:
+    Description: "OpenSearch Serverless Collection ID"
+    Value: !GetAtt CollectionStatusCheck.CollectionId
+  
+  CollectionEndpoint:
+    Description: "OpenSearch Serverless Collection Endpoint"
+    Value: !GetAtt CollectionStatusCheck.CollectionEndpoint
+  
+  DashboardEndpoint:
+    Description: "OpenSearch Serverless Dashboard Endpoint"
+    Value: !GetAtt CollectionStatusCheck.DashboardEndpoint
+  
+  CollectionARN:
+    Description: "OpenSearch Serverless Collection ARN"
+    Value: !Sub "arn:aws:aoss:${AWS::Region}:${AWS::AccountId}:collection/${CollectionStatusCheck.CollectionId}"
