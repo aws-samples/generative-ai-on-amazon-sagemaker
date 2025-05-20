@@ -248,8 +248,8 @@ def train(script_args, training_args, train_ds, test_ds):
 
     print(f"torch_dtype = {torch_dtype}")
 
-    if training_args.fsdp is not None and training_args.fsdp != "" and \
-        training_args.fsdp_config is not None and len(training_args.fsdp_config) > 0:
+    if training_args.fsdp is not None and training_args.fsdp != "" and training_args.fsdp_config is not None and len(training_args.fsdp_config) > 0:
+
         bnb_config_params = {
             "bnb_4bit_quant_storage": torch_dtype
         }
