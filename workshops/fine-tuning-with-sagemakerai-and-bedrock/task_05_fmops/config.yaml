@@ -5,13 +5,11 @@ SageMaker:
       RemoteFunction:
         # role arn is not required if in SageMaker Notebook instance or SageMaker Studio
         # Uncomment the following line and replace with the right execution role if in a local IDE
-        # RoleArn: <update_role_arn>
-        ImageUri: 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.5.1-gpu-py311-cu124-ubuntu22.04-sagemaker # Update region
-        InstanceType: ml.g5.12xlarge
-        Dependencies: ./requirements.txt
+        # RoleArn: <replace the role arn here>
+        InstanceType: ml.m5.xlarge
+        Dependencies: ./scripts/requirements.txt
         IncludeLocalWorkDir: true
         CustomFileFilter:
           IgnoreNamePatterns: # files or directories to ignore
           - "*.ipynb" # all notebook files
-          - "__pycache__"
-          - ".conda" # all notebook files
+
