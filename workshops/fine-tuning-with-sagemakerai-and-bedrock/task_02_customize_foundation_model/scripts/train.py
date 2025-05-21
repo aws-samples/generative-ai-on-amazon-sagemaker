@@ -390,25 +390,25 @@ def train(script_args, training_args, train_ds, test_ds):
     if accelerator.is_main_process:
         tokenizer.save_pretrained(training_args.output_dir)
 
-        if mlflow_enabled:
-            # Model registration in MLFlow
-            print("MLflow model registration under ", script_args.mlflow_experiment_name)
+        # if mlflow_enabled:
+        #     # Model registration in MLFlow
+        #     print("MLflow model registration under ", script_args.mlflow_experiment_name)
 
-            params = {
-                "top_p": 0.9,
-                "temperature": 0.2,
-                "max_new_tokens": 2048,
-            }
-            signature = infer_signature("inputs", "generated_text", params=params)
+        #     params = {
+        #         "top_p": 0.9,
+        #         "temperature": 0.2,
+        #         "max_new_tokens": 2048,
+        #     }
+        #     signature = infer_signature("inputs", "generated_text", params=params)
 
-            mlflow.transformers.log_model(
-                transformers_model={"model": model, "tokenizer": tokenizer},
-                signature=signature,
-                artifact_path="model",  # This is a relative path to save model files within MLflow run
-                model_config=params,
-                task="text-generation",
-                registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('Fine-tuning-')[-1]}"
-            )
+        #     mlflow.transformers.log_model(
+        #         transformers_model={"model": model, "tokenizer": tokenizer},
+        #         signature=signature,
+        #         artifact_path="model",  # This is a relative path to save model files within MLflow run
+        #         model_config=params,
+        #         task="text-generation",
+        #         registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('Fine-tuning-')[-1]}"
+        #     )
 
     accelerator.wait_for_everyone()
 
