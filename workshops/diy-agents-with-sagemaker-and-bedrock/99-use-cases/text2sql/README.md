@@ -50,17 +50,15 @@ In this lab, you'll work with:
 ## Getting Started
 
 Before beginning this lab, you should have:
-- Completed Labs 1 and 2
 - Basic understanding of SQL and relational databases
 - Familiarity with AWS data analytics services
 
 To start working with the notebooks:
 
 1. Navigate to the `workshops/diy-agents-with-sagemaker-and-bedrock/99-use-cases/text2sql` folder in the cloned repository
-2. Open `1-create-db-tables` to begin setting up the Athena database and Glue crawler
+2. Open `1-create-db-tables` to begin setting up the Athena database and Glue Data Catalog
 3. Follow each notebook sequentially to implement text-to-SQL capabilities
 
-## Example Queries
 
 ## Next Steps
 
