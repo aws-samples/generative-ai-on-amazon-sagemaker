@@ -1,0 +1,1110 @@
+{
+  "guardduty-index": {
+    "mappings": {
+      "properties": {
+        "AccountId": {
+          "type": "text"
+        },
+        "Arn": {
+          "type": "text"
+        },
+        "AssociatedAttackSequenceArn": {
+          "type": "text"
+        },
+        "CreatedAt": {
+          "type": "date"
+        },
+        "Description": {
+          "type": "text"
+        },
+        "Id": {
+          "type": "text"
+        },
+        "Partition": {
+          "type": "text"
+        },
+        "Region": {
+          "type": "text"
+        },
+        "Resource": {
+          "properties": {
+            "AccessKeyDetails": {
+              "properties": {
+                "AccessKeyId": {
+                  "type": "text"
+                },
+                "PrincipalId": {
+                  "type": "text"
+                },
+                "UserName": {
+                  "type": "text"
+                },
+                "UserType": {
+                  "type": "text"
+                }
+              }
+            },
+            "ContainerDetails": {
+              "properties": {
+                "ContainerRuntime": {
+                  "type": "text"
+                },
+                "Id": {
+                  "type": "text"
+                },
+                "Image": {
+                  "type": "text"
+                },
+                "ImagePrefix": {
+                  "type": "text"
+                },
+                "Name": {
+                  "type": "text"
+                },
+                "SecurityContext": {
+                  "properties": {
+                    "Privileged": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "VolumeMounts": {
+                  "properties": {
+                    "MountPath": {
+                      "type": "text"
+                    },
+                    "Name": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "EbsVolumeDetails": {
+              "properties": {
+                "ScannedVolumeDetails": {
+                  "properties": {
+                    "DeviceName": {
+                      "type": "text"
+                    },
+                    "EncryptionType": {
+                      "type": "text"
+                    },
+                    "SnapshotArn": {
+                      "type": "text"
+                    },
+                    "VolumeArn": {
+                      "type": "text"
+                    },
+                    "VolumeSizeInGB": {
+                      "type": "long"
+                    },
+                    "VolumeType": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "EcsClusterDetails": {
+              "properties": {
+                "ActiveServicesCount": {
+                  "type": "long"
+                },
+                "Arn": {
+                  "type": "text"
+                },
+                "Name": {
+                  "type": "text"
+                },
+                "RegisteredContainerInstancesCount": {
+                  "type": "long"
+                },
+                "RunningTasksCount": {
+                  "type": "long"
+                },
+                "Status": {
+                  "type": "text"
+                },
+                "Tags": {
+                  "properties": {
+                    "Key": {
+                      "type": "text"
+                    },
+                    "Value": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "TaskDetails": {
+                  "properties": {
+                    "Arn": {
+                      "type": "text"
+                    },
+                    "Containers": {
+                      "properties": {
+                        "ContainerRuntime": {
+                          "type": "text"
+                        },
+                        "Id": {
+                          "type": "text"
+                        },
+                        "Image": {
+                          "type": "text"
+                        },
+                        "ImagePrefix": {
+                          "type": "text"
+                        },
+                        "Name": {
+                          "type": "text"
+                        },
+                        "SecurityContext": {
+                          "properties": {
+                            "Privileged": {
+                              "type": "boolean"
+                            }
+                          }
+                        },
+                        "VolumeMounts": {
+                          "properties": {
+                            "MountPath": {
+                              "type": "text"
+                            },
+                            "Name": {
+                              "type": "text"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "DefinitionArn": {
+                      "type": "text"
+                    },
+                    "Group": {
+                      "type": "text"
+                    },
+                    "LaunchType": {
+                      "type": "text"
+                    },
+                    "StartedAt": {
+                      "type": "date"
+                    },
+                    "StartedBy": {
+                      "type": "text"
+                    },
+                    "TaskCreatedAt": {
+                      "type": "date"
+                    },
+                    "Version": {
+                      "type": "text"
+                    },
+                    "Volumes": {
+                      "properties": {
+                        "HostPath": {
+                          "properties": {
+                            "Path": {
+                              "type": "text"
+                            }
+                          }
+                        },
+                        "Name": {
+                          "type": "text"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "EksClusterDetails": {
+              "properties": {
+                "Arn": {
+                  "type": "text"
+                },
+                "CreatedAt": {
+                  "type": "date"
+                },
+                "Name": {
+                  "type": "text"
+                },
+                "Status": {
+                  "type": "text"
+                },
+                "Tags": {
+                  "properties": {
+                    "Key": {
+                      "type": "text"
+                    },
+                    "Value": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "VpcId": {
+                  "type": "text"
+                }
+              }
+            },
+            "InstanceDetails": {
+              "properties": {
+                "AvailabilityZone": {
+                  "type": "text"
+                },
+                "IamInstanceProfile": {
+                  "properties": {
+                    "Arn": {
+                      "type": "text"
+                    },
+                    "Id": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "ImageDescription": {
+                  "type": "text"
+                },
+                "ImageId": {
+                  "type": "text"
+                },
+                "InstanceId": {
+                  "type": "text"
+                },
+                "InstanceState": {
+                  "type": "text"
+                },
+                "InstanceType": {
+                  "type": "text"
+                },
+                "LaunchTime": {
+                  "type": "date"
+                },
+                "NetworkInterfaces": {
+                  "properties": {
+                    "NetworkInterfaceId": {
+                      "type": "text"
+                    },
+                    "PrivateDnsName": {
+                      "type": "text"
+                    },
+                    "PrivateIpAddress": {
+                      "type": "text"
+                    },
+                    "PrivateIpAddresses": {
+                      "properties": {
+                        "PrivateDnsName": {
+                          "type": "text"
+                        },
+                        "PrivateIpAddress": {
+                          "type": "text"
+                        }
+                      }
+                    },
+                    "PublicDnsName": {
+                      "type": "text"
+                    },
+                    "PublicIp": {
+                      "type": "text"
+                    },
+                    "SecurityGroups": {
+                      "properties": {
+                        "GroupId": {
+                          "type": "text"
+                        },
+                        "GroupName": {
+                          "type": "text"
+                        }
+                      }
+                    },
+                    "SubnetId": {
+                      "type": "text"
+                    },
+                    "VpcId": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "OutpostArn": {
+                  "type": "text"
+                },
+                "ProductCodes": {
+                  "properties": {
+                    "Code": {
+                      "type": "text"
+                    },
+                    "ProductType": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "Tags": {
+                  "properties": {
+                    "Key": {
+                      "type": "text"
+                    },
+                    "Value": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "KubernetesDetails": {
+              "properties": {
+                "KubernetesUserDetails": {
+                  "properties": {
+                    "Groups": {
+                      "type": "text"
+                    },
+                    "ImpersonatedUser": {
+                      "properties": {
+                        "Groups": {
+                          "type": "text"
+                        },
+                        "Username": {
+                          "type": "text"
+                        }
+                      }
+                    },
+                    "SessionName": {
+                      "type": "text"
+                    },
+                    "Uid": {
+                      "type": "text"
+                    },
+                    "Username": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "KubernetesWorkloadDetails": {
+                  "properties": {
+                    "Containers": {
+                      "properties": {
+                        "Image": {
+                          "type": "text"
+                        },
+                        "ImagePrefix": {
+                          "type": "text"
+                        },
+                        "Name": {
+                          "type": "text"
+                        },
+                        "SecurityContext": {
+                          "properties": {
+                            "Privileged": {
+                              "type": "boolean"
+                            }
+                          }
+                        },
+                        "VolumeMounts": {
+                          "properties": {
+                            "MountPath": {
+                              "type": "text"
+                            },
+                            "Name": {
+                              "type": "text"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "Name": {
+                      "type": "text"
+                    },
+                    "Namespace": {
+                      "type": "text"
+                    },
+                    "ServiceAccountName": {
+                      "type": "text"
+                    },
+                    "Type": {
+                      "type": "text"
+                    },
+                    "Uid": {
+                      "type": "text"
+                    },
+                    "Volumes": {
+                      "properties": {
+                        "HostPath": {
+                          "properties": {
+                            "Path": {
+                              "type": "text"
+                            }
+                          }
+                        },
+                        "Name": {
+                          "type": "text"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "LambdaDetails": {
+              "properties": {
+                "Description": {
+                  "type": "text"
+                },
+                "FunctionArn": {
+                  "type": "text"
+                },
+                "FunctionName": {
+                  "type": "text"
+                },
+                "FunctionVersion": {
+                  "type": "text"
+                },
+                "LastModifiedAt": {
+                  "type": "date"
+                },
+                "RevisionId": {
+                  "type": "text"
+                },
+                "Role": {
+                  "type": "text"
+                },
+                "Tags": {
+                  "properties": {
+                    "Key": {
+                      "type": "text"
+                    },
+                    "Value": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "VpcConfig": {
+                  "properties": {
+                    "SecurityGroups": {
+                      "properties": {
+                        "GroupId": {
+                          "type": "text"
+                        },
+                        "GroupName": {
+                          "type": "text"
+                        }
+                      }
+                    },
+                    "SubnetIds": {
+                      "type": "text"
+                    },
+                    "VpcId": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "RdsDbInstanceDetails": {
+              "properties": {
+                "DbClusterIdentifier": {
+                  "type": "text"
+                },
+                "DbInstanceArn": {
+                  "type": "text"
+                },
+                "DbInstanceIdentifier": {
+                  "type": "text"
+                },
+                "Engine": {
+                  "type": "text"
+                },
+                "EngineVersion": {
+                  "type": "text"
+                },
+                "Tags": {
+                  "properties": {
+                    "Key": {
+                      "type": "text"
+                    },
+                    "Value": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "RdsDbUserDetails": {
+              "properties": {
+                "Application": {
+                  "type": "text"
+                },
+                "AuthMethod": {
+                  "type": "text"
+                },
+                "Database": {
+                  "type": "text"
+                },
+                "Ssl": {
+                  "type": "text"
+                },
+                "User": {
+                  "type": "text"
+                }
+              }
+            },
+            "RdsLimitlessDbDetails": {
+              "properties": {
+                "DbClusterIdentifier": {
+                  "type": "text"
+                },
+                "DbShardGroupArn": {
+                  "type": "text"
+                },
+                "DbShardGroupIdentifier": {
+                  "type": "text"
+                },
+                "DbShardGroupResourceId": {
+                  "type": "text"
+                },
+                "Engine": {
+                  "type": "text"
+                },
+                "EngineVersion": {
+                  "type": "text"
+                },
+                "Tags": {
+                  "properties": {
+                    "Key": {
+                      "type": "text"
+                    },
+                    "Value": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "ResourceType": {
+              "type": "text"
+            },
+            "S3BucketDetails": {
+              "properties": {
+                "Arn": {
+                  "type": "text"
+                },
+                "CreatedAt": {
+                  "type": "date"
+                },
+                "DefaultServerSideEncryption": {
+                  "properties": {
+                    "EncryptionType": {
+                      "type": "text"
+                    },
+                    "KmsMasterKeyArn": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "Name": {
+                  "type": "text"
+                },
+                "Owner": {
+                  "properties": {
+                    "Id": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "PublicAccess": {
+                  "properties": {
+                    "EffectivePermission": {
+                      "type": "text"
+                    },
+                    "PermissionConfiguration": {
+                      "properties": {
+                        "AccountLevelPermissions": {
+                          "properties": {
+                            "BlockPublicAccess": {
+                              "properties": {
+                                "BlockPublicAcls": {
+                                  "type": "boolean"
+                                },
+                                "BlockPublicPolicy": {
+                                  "type": "boolean"
+                                },
+                                "IgnorePublicAcls": {
+                                  "type": "boolean"
+                                },
+                                "RestrictPublicBuckets": {
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "BucketLevelPermissions": {
+                          "properties": {
+                            "AccessControlList": {
+                              "properties": {
+                                "AllowsPublicReadAccess": {
+                                  "type": "boolean"
+                                },
+                                "AllowsPublicWriteAccess": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "BlockPublicAccess": {
+                              "properties": {
+                                "BlockPublicAcls": {
+                                  "type": "boolean"
+                                },
+                                "BlockPublicPolicy": {
+                                  "type": "boolean"
+                                },
+                                "IgnorePublicAcls": {
+                                  "type": "boolean"
+                                },
+                                "RestrictPublicBuckets": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "BucketPolicy": {
+                              "properties": {
+                                "AllowsPublicReadAccess": {
+                                  "type": "boolean"
+                                },
+                                "AllowsPublicWriteAccess": {
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "S3ObjectDetails": {
+                  "properties": {
+                    "ETag": {
+                      "type": "text"
+                    },
+                    "Hash": {
+                      "type": "text"
+                    },
+                    "Key": {
+                      "type": "text"
+                    },
+                    "ObjectArn": {
+                      "type": "text"
+                    },
+                    "VersionId": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "Tags": {
+                  "properties": {
+                    "Key": {
+                      "type": "text"
+                    },
+                    "Value": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "Type": {
+                  "type": "text"
+                }
+              }
+            }
+          }
+        },
+        "SchemaVersion": {
+          "type": "text"
+        },
+        "Service": {
+          "properties": {
+            "Action": {
+              "properties": {
+                "ActionType": {
+                  "type": "text"
+                },
+                "AwsApiCallAction": {
+                  "properties": {
+                    "AffectedResources": {
+                      "properties": {
+                        "AWS::CloudTrail::Trail": {
+                          "type": "text"
+                        },
+                        "AWS::EC2::Instance": {
+                          "type": "text"
+                        },
+                        "AWS::S3::Bucket": {
+                          "type": "text"
+                        }
+                      }
+                    },
+                    "Api": {
+                      "type": "text"
+                    },
+                    "CallerType": {
+                      "type": "text"
+                    },
+                    "ErrorCode": {
+                      "type": "text"
+                    },
+                    "RemoteAccountDetails": {
+                      "properties": {
+                        "AccountId": {
+                          "type": "text"
+                        },
+                        "Affiliated": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "RemoteIpDetails": {
+                      "properties": {
+                        "City": {
+                          "properties": {
+                            "CityName": {
+                              "type": "text"
+                            }
+                          }
+                        },
+                        "Country": {
+                          "properties": {
+                            "CountryName": {
+                              "type": "text"
+                            }
+                          }
+                        },
+                        "GeoLocation": {
+                          "properties": {
+                            "Lat": {
+                              "type": "float"
+                            },
+                            "Lon": {
+                              "type": "float"
+                            }
+                          }
+                        },
+                        "IpAddressV4": {
+                          "type": "text"
+                        },
+                        "IpAddressV6": {
+                          "type": "text"
+                        },
+                        "Organization": {
+                          "properties": {
+                            "Asn": {
+                              "type": "text"
+                            },
+                            "AsnOrg": {
+                              "type": "text"
+                            },
+                            "Isp": {
+                              "type": "text"
+                            },
+                            "Org": {
+                              "type": "text"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "ServiceName": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "DnsRequestAction": {
+                  "properties": {
+                    "Blocked": {
+                      "type": "boolean"
+                    },
+                    "Domain": {
+                      "type": "text"
+                    },
+                    "DomainWithSuffix": {
+                      "type": "text"
+                    },
+                    "Protocol": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "KubernetesPermissionCheckedDetails": {
+                  "properties": {
+                    "Allowed": {
+                      "type": "boolean"
+                    },
+                    "Namespace": {
+                      "type": "text"
+                    },
+                    "Resource": {
+                      "type": "text"
+                    },
+                    "Verb": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "KubernetesRoleBindingDetails": {
+                  "properties": {
+                    "Kind": {
+                      "type": "text"
+                    },
+                    "Name": {
+                      "type": "text"
+                    },
+                    "RoleRefKind": {
+                      "type": "text"
+                    },
+                    "RoleRefName": {
+                      "type": "text"
+                    },
+                    "Uid": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "KubernetesRoleDetails": {
+                  "properties": {
+                    "Kind": {
+                      "type": "text"
+                    },
+                    "Name": {
+                      "type": "text"
+                    },
+                    "Uid": {
+                      "type": "text"
+                    }
+                  }
+                },
+                "RdsLoginAttemptAction": {
+                  "properties": {
+                    "RemoteIpDetails": {
+                      "properties": {
+                        "City": {
+                          "properties": {
+                            "CityName": {
+                              "type": "text"
+                            }
+                          }
+                        },
+                        "Country": {
+                          "properties": {
+                            "CountryName": {
+                              "type": "text"
+                            }
+                          }
+                        },
+                        "GeoLocation": {
+                          "properties": {
+                            "Lat": {
+                              "type": "float"
+                            },
+                            "Lon": {
+                              "type": "float"
+                            }
+                          }
+                        },
+                        "IpAddressV4": {
+                          "type": "text"
+                        },
+                        "IpAddressV6": {
+                          "type": "text"
+                        },
+                        "Organization": {
+                          "properties": {
+                            "Asn": {
+                              "type": "text"
+                            },
+                            "AsnOrg": {
+                              "type": "text"
+                            },
+                            "Isp": {
+                              "type": "text"
+                            },
+                            "Org": {
+                              "type": "text"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "DetectorId": {
+              "type": "text"
+            },
+            "EbsVolumeScanDetails": {
+              "properties": {
+                "ScanCompletedAt": {
+                  "type": "date"
+                },
+                "ScanDetections": {
+                  "properties": {
+                    "HighestSeverityThreatDetails": {
+                      "properties": {
+                        "Count": {
+                          "type": "long"
+                        },
+                        "Severity": {
+                          "type": "text"
+                        },
+                        "ThreatName": {
+                          "type": "text"
+                        }
+                      }
+                    },
+                    "ScannedItemCount": {
+                      "properties": {
+                        "Files": {
+                          "type": "long"
+                        },
+                        "TotalGb": {
+                          "type": "long"
+                        },
+                        "Volumes": {
+                          "type": "long"
+                        }
+                      }
+                    },
+                    "ThreatDetectedByName": {
+                      "properties": {
+                        "ItemCount": {
+                          "type": "long"
+                        },
+                        "Shortened": {
+                          "type": "boolean"
+                        },
+                        "ThreatNames": {
+                          "properties": {
+                            "FilePaths": {
+                              "properties": {
+                                "FileName": {
+                                  "type": "text"
+                                },
+                                "FilePath": {
+                                  "type": "text"
+                                },
+                                "Hash": {
+                                  "type": "text"
+                                },
+                                "VolumeArn": {
+                                  "type": "text"
+                                }
+                              }
+                            },
+                            "ItemCount": {
+                              "type": "long"
+                            },
+                            "Name": {
+                              "type": "text"
+                            },
+                            "Severity": {
+                              "type": "text"
+                            }
+                          }
+                        },
+                        "UniqueThreatNameCount": {
+                          "type": "long"
+                        }
+                      }
+                    },
+                    "ThreatsDetectedItemCount": {
+                      "properties": {
+                        "Files": {
+                          "type": "long"
+                        }
+                      }
+                    }
+                  }
+                },
+                "ScanId": {
+                  "type": "text"
+                },
+                "ScanStartedAt": {
+                  "type": "date"
+                },
+                "ScanType": {
+                  "type": "text"
+                },
+                "Sources": {
+                  "type": "text"
+                },
+                "TriggerFindingId": {
+                  "type": "text"
+                }
+              }
+            },
+            "EventFirstSeen": {
+              "type": "date"
+            },
+            "EventLastSeen": {
+              "type": "date"
+            },
+            "Evidence": {
+              "properties": {
+                "ThreatIntelligenceDetails": {
+                  "properties": {
+                    "ThreatListName": {
+                      "type": "text"
+                    },
+                    "ThreatNames": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "FeatureName": {
+              "type": "text"
+            },
+            "MalwareScanDetails": {
+              "properties": {
+                "Threats": {
+                  "properties": {
+                    "ItemPaths": {
+                      "properties": {
+                        "Hash": {
+                          "type": "text"
+                        },
+                        "NestedItemPath": {
+                          "type": "text"
+                        }
+                      }
+                    },
+                    "Name": {
+                      "type": "text"
+                    },
+                    "Source": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
+            "ResourceRole": {
+              "type": "text"
+            },
+            "ServiceName": {
+              "type": "text"
+            }
+          }
+        },
+        "Severity": {
+          "type": "float"
+        },
+        "Title": {
+          "type": "text"
+        },
+        "Type": {
+          "type": "text"
+        },
+        "UpdatedAt": {
+          "type": "date"
+        }
+      }
+    }
+  }
+}
