@@ -1,8 +1,3 @@
----
-title: 'Text-to-SQL Agent'
-weight: 6
----
-
 # Database RAG & Text to SQL using LangChain & SQL agent
 
 In this lab, you'll explore how to extend RAG capabilities beyond unstructured document retrieval to include structured data sources. You'll learn how to implement text-to-SQL conversion, enabling natural language querying of database information alongside traditional document retrieval. This powerful combination allows for comprehensive enterprise search applications that can access both unstructured documents and structured database records.
