@@ -1,8 +1,3 @@
----
-title: 'Text-to-DSL: Query OpenSearch with natural language using GenAI and MCP'
-weight: 6
----
-
 # No-SQL RAG & Text to DSL using LangGraph, OpenSearch Serverless and MCP
 
 In this lab, you'll explore how to extend RAG capabilities to NoSQL databases. Using a LLM powered text-to-DSL conversion and a Model Context Protocol(MCP) server which provides a connctivity to a OpenSearch Serverless Collection, this lab shows natural language querying of JSON documents with complex querying conditions. This powerful combination allows for comprehensive enterprise search applications that can access semi-structured data without transforming the data to structured format or generating embeddings using additional LLM costs.
