@@ -12,7 +12,7 @@ In this lab, you'll learn how to:
 
 ## Architecture
 
-![sagemaker-as-tool.png](sagemaker-as-tool.png)
+![endpoint-as-tool.png](endpoint-as-tool.png)
 
 The solution follows this workflow:
 
