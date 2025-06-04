@@ -10,9 +10,9 @@ import boto3
 from botocore.config import Config as BotocoreConfig
 from typing_extensions import Unpack, override
 
-from strands.types.content import Messages
-from strands.types.models import OpenAIModel
-from strands.types.tools import ToolSpec
+from ..types.content import Messages
+from ..types.models import OpenAIModel
+from ..types.tools import ToolSpec
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +25,12 @@ class UsageMetadata:
         total_tokens: Total number of tokens used in the request
         completion_tokens: Number of tokens used in the completion
         prompt_tokens: Number of tokens used in the prompt
+        prompt_tokens_details: Additional information about the prompt tokens (optional)
     """
-
     total_tokens: int
     completion_tokens: int
     prompt_tokens: int
-    prompt_tokens_details: int
+    prompt_tokens_details: Optional[int] = 0
 
 
 @dataclass
