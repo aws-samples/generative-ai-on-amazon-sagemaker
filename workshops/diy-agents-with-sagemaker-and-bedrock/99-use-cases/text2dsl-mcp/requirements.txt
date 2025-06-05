@@ -4,3 +4,4 @@ retry
 langchain_mcp_adapters 
 langgraph
 opensearch-py
+openpyxl
