@@ -1,7 +1,10 @@
-mcp==1.7.1
+mcp==1.9.2
 mcp[cli]
 retry
 langchain_mcp_adapters 
 langgraph
 opensearch-py
-openpyxl
+strands-agents
+strands-agents-tools
+strands-agents-builder
+nest_asyncio

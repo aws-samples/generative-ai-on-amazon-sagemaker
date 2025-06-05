@@ -5,3 +5,4 @@ langchain-community
 langchain-aws
 PyAthena
 s3fs
+openpyxl
