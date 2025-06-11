@@ -114,7 +114,6 @@ class SageMakerAIModel(OpenAIModel):
             boto_session: Boto Session to use when calling the SageMaker Runtime.
             boto_client_config: Configuration to use when creating the SageMaker-Runtime Boto Client.
         """
-        print(model_config)
         if model_config.get("stream", "") == "":
             model_config["stream"] = True
 
@@ -192,6 +191,11 @@ class SageMakerAIModel(OpenAIModel):
             # Add all key-values from the model config to the payload except endpoint_name and inference_component_name
             **{k: v for k, v in self.config.items() if k not in ["endpoint_name", "inference_component_name"]},
         }
+        
+        # Remove tools and tool_choice if tools = []
+        if payload["tools"] == []:
+            payload.pop("tools")
+            payload.pop("tool_choice", None)
 
         # TODO: this should be a @override of format_request_message
         for message in payload["messages"]:
