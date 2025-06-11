@@ -1,6 +1,8 @@
 import json
 from mcp.server.fastmcp import Context, FastMCP
+import boto3
 
+REGION = boto3.session.Session().region_name
 
 # Create a named server
 COLLECTION_NAME = "agent-ws-collection"
@@ -19,7 +21,7 @@ import json
 from retry import retry
 
 
-def get_opensearch_collection_endpoint(collection_name, region="us-west-2"):
+def get_opensearch_collection_endpoint(collection_name, region=REGION):
     """
     Get the OpenSearch Serverless collection endpoint from a collection name
     
@@ -63,7 +65,7 @@ def get_opensearch_collection_endpoint(collection_name, region="us-west-2"):
         raise
 
 
-def query_opensearch_with_dsl(collection_endpoint, dsl_json, index_name = 'guardduty-index', region="us-west-2"):
+def query_opensearch_with_dsl(collection_endpoint, dsl_json, index_name = 'guardduty-index', region=REGION):
     """
     Query an OpenSearch index using DSL with the OpenSearch Python client
     

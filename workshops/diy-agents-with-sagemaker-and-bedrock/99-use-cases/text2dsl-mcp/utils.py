@@ -1,5 +1,6 @@
 import boto3
 
+REGION = boto3.session.Session().region_name
 
 ###########################
 # GuardDuty
@@ -7,7 +8,7 @@ import boto3
 def create_sample_findings(detector_id = None, finding_types=None):
     try:
         # Create GuardDuty client
-        guardduty_client = boto3.client('guardduty')
+        guardduty_client = boto3.client('guardduty', region_name=REGION)
         
         # Prepare the parameters
         params = {
@@ -29,9 +30,9 @@ def create_sample_findings(detector_id = None, finding_types=None):
     except Exception as e:
         print(f"Error generating sample findings: {str(e)}")
 
-def get_guardduty_findings(detector_id=None):
+def get_guardduty_findings(detector_id=None, region=REGION):
     detector_id = get_detector_id() if detector_id is None else detector_id
-    guardduty_client = boto3.client('guardduty')
+    guardduty_client = boto3.client('guardduty', region_name=region)
     # Initialize variables for pagination
     all_findings = []
     next_token = None
@@ -80,7 +81,7 @@ def get_guardduty_findings(detector_id=None):
     return all_findings
 
 def get_detector_id():
-    guardduty_client = boto3.client('guardduty')
+    guardduty_client = boto3.client('guardduty', region_name=REGION)
     detectors = guardduty_client.list_detectors()
     if detectors['DetectorIds']:
         return detectors['DetectorIds'][0]
@@ -97,7 +98,7 @@ import json
 from retry import retry
 
 
-def create_oss_index(collection_name, index_name, region="us-west-2"):
+def create_oss_index(collection_name, index_name, region=REGION):
     service = 'aoss'
     credentials = boto3.Session().get_credentials()
     auth = AWSV4SignerAuth(credentials, region, service)
@@ -133,7 +134,7 @@ def create_oss_index(collection_name, index_name, region="us-west-2"):
     return create_response
 
 
-def delete_oss_index(host, index_name, region="us-west-2"):
+def delete_oss_index(host, index_name, region=REGION):
     service = 'aoss'
     credentials = boto3.Session().get_credentials()
     auth = AWSV4SignerAuth(credentials, region, service)
@@ -158,7 +159,7 @@ def delete_oss_index(host, index_name, region="us-west-2"):
 
 
 @retry(Exception, tries=5, delay=5)
-def index_document_oss(idx, doc, collection_name, index_name, region="us-west-2"):
+def index_document_oss(idx, doc, collection_name, index_name, region=REGION):
     service = 'aoss'
     credentials = boto3.Session().get_credentials()
     auth = AWSV4SignerAuth(credentials, region, service)
@@ -181,7 +182,7 @@ def index_document_oss(idx, doc, collection_name, index_name, region="us-west-2"
     return response
 
 
-def get_opensearch_collection_endpoint(collection_name, region="us-west-2"):
+def get_opensearch_collection_endpoint(collection_name, region=REGION):
     """
     Get the OpenSearch Serverless collection endpoint from a collection name
     
@@ -221,7 +222,7 @@ def get_opensearch_collection_endpoint(collection_name, region="us-west-2"):
         raise
 
 
-def check_opensearch_index_exists(collection_endpoint, index_name = 'guardduty-index', region="us-west-2"):
+def check_opensearch_index_exists(collection_endpoint, index_name = 'guardduty-index', region=REGION):
     """
     Check if an index exists in an OpenSearch Serverless collection
     
@@ -263,7 +264,7 @@ def check_opensearch_index_exists(collection_endpoint, index_name = 'guardduty-i
 
 
 
-def query_opensearch_with_dsl(collection_name, index_name, query_dsl, region="us-west-2"):
+def query_opensearch_with_dsl(collection_name, index_name, query_dsl, region=REGION):
     """
     Query an OpenSearch index using DSL with the OpenSearch Python client
     
