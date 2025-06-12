@@ -7,6 +7,9 @@ from flotorch_eval.agent_eval.core.evaluator import Evaluator
 from flotorch_eval.agent_eval.metrics.base import MetricResult
 from typing import List, Any
 import textwrap
+import json
+from pathlib import Path
+from flotorch_eval.agent_eval.core.schemas import Trajectory
 
 def get_all_spans(exporter: QueueSpanExporter)->list:
     """Extracts all spans from the queue exporter."""
@@ -102,3 +105,23 @@ def display_evaluation_results(results: Any):
 def initialize_evaluator(metrics: List[BaseMetric]) -> Evaluator:
     """Initializes the Evaluator with a given list of metric objects."""
     return Evaluator(metrics=metrics)
+
+
+def save_trajectory_to_json(trajectory: Trajectory, output_path: str | Path) -> None:
+    """
+    Save a Trajectory object as a pretty-printed JSON file.
+    
+    Args:
+        trajectory: The Trajectory object to save
+        output_path: Path where the JSON file should be saved
+    """
+    # Convert trajectory to dict and then to JSON with pretty printing
+    json_str = trajectory.model_dump_json(indent=2)
+    
+    # Ensure the output directory exists
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Write to file
+    with open(output_path, 'w') as f:
+        f.write(json_str) 
