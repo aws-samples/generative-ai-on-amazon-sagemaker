@@ -161,3 +161,4 @@ poetry.lock
 **/.DS_Store
 .ipynb_checkpoints
 repl_state
+generated-diagrams
