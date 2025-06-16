@@ -4,7 +4,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Iterable, Literal, Optional, TypedDict, cast, Union
+from typing import Any, Iterable, Literal, Optional, TypedDict, Union, cast
 
 import boto3
 from botocore.config import Config as BotocoreConfig
@@ -188,14 +188,15 @@ class SageMakerAIModel(OpenAIModel):
                 }
                 for tool_spec in tool_specs or []
             ],
+            "tool_choice": "auto",
             # Add all key-values from the model config to the payload except endpoint_name and inference_component_name
             **{k: v for k, v in self.config.items() if k not in ["endpoint_name", "inference_component_name"]},
         }
-        
+
         # Remove tools and tool_choice if tools = []
         if payload["tools"] == []:
             payload.pop("tools")
-            payload.pop("tool_choice", None)
+            payload.pop("tool_choice")
 
         # TODO: this should be a @override of format_request_message
         for message in payload["messages"]:
@@ -206,7 +207,7 @@ class SageMakerAIModel(OpenAIModel):
             elif message.get("role", "") == "tool":
                 logger.debug("message content:<%s> | streaming message content", message["content"])
                 logger.debug("message content type:<%s> | streaming message content type", type(message["content"]))
-                if type(message["content"]) == str:
+                if isinstance(message["content"], str):
                     message["content"] = json.loads(message["content"])["content"]
                 message["content"] = message["content"][0]["text"]
 
@@ -237,6 +238,7 @@ class SageMakerAIModel(OpenAIModel):
             An iterable of response events from the Amazon SageMaker AI model.
         """
         if self.config.get("stream", True):
+            logger.debug("request=<%s>", request)
             response = self.client.invoke_endpoint_with_response_stream(**request)
 
             # Message start
@@ -257,7 +259,26 @@ class SageMakerAIModel(OpenAIModel):
                     choice = content["choices"][0]
 
                     # Start yielding message chunks
-                    if choice["delta"].get("content", None):
+                    if choice["delta"].get("reasoning_content", None):
+                        # Then yield the reasoning content as a delta
+                        yield {
+                            "contentBlockDelta": {
+                                "delta": {
+                                    "reasoningContent": {"text": content["reasoningContent"]["reasoningText"]["text"]}
+                                }
+                            }
+                        }
+                        if "signature" in content["reasoningContent"]["reasoningText"]:
+                            yield {
+                                "contentBlockDelta": {
+                                    "delta": {
+                                        "reasoningContent": {
+                                            "signature": content["reasoningContent"]["reasoningText"]["signature"]
+                                        }
+                                    }
+                                }
+                            }
+                    elif choice["delta"].get("content", None):
                         yield {"chunk_type": "content_delta", "data_type": "text", "data": choice["delta"]["content"]}
                     for tool_call in choice["delta"].get("tool_calls", []):
                         tool_calls.setdefault(tool_call["index"], []).append(tool_call)
