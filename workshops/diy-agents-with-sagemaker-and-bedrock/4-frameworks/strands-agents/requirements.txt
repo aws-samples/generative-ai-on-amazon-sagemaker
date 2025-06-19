@@ -1,0 +1,11 @@
+strands-agents==0.1.6
+strands-agents-builder==0.1.2
+strands-agents-tools==0.1.4
+yfinance==0.2.62
+matplotlib==3.10.3
+beautifulsoup4==4.13.4
+pandas==2.3.0
+seaborn==0.13.2
+joblib==1.5.1
+requests==2.32.3
+scikit-learn==1.7.0

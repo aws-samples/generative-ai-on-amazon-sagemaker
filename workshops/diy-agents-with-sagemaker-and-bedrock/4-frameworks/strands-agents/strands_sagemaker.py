@@ -121,7 +121,7 @@ class SageMakerAIModel(OpenAIModel):
         logger.debug("config=<%s> | initializing", self.config)
 
         session = boto_session or boto3.Session(
-            region_name=region_name or os.getenv("AWS_REGION") or "us-west-2",
+            region_name=region_name or os.getenv("AWS_REGION") or boto3.Session().region_name or "us-west-2",
         )
 
         # Add strands-agents to the request user agent
