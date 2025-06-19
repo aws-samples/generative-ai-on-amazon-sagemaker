@@ -1,0 +1,7 @@
+aiohttp==3.12.13
+boto3==1.38.39
+botocore==1.38.39
+sagemaker==2.247.0
+strands-agents==0.1.8
+strands-agents-builder==0.1.2
+strands-agents-tools==0.1.6
