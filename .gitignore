@@ -162,3 +162,7 @@ poetry.lock
 .ipynb_checkpoints
 repl_state
 generated-diagrams
+news-*
+news_*
+model.tar.gz
+errors
