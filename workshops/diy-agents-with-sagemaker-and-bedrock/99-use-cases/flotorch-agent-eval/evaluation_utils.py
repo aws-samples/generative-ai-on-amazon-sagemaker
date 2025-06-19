@@ -5,7 +5,7 @@ from IPython.display import display, HTML
 from flotorch_eval.agent_eval.metrics.base import BaseMetric
 from flotorch_eval.agent_eval.core.evaluator import Evaluator
 from flotorch_eval.agent_eval.metrics.base import MetricResult
-from typing import List, Any
+from typing import List, Any, Dict
 import textwrap
 import json
 from pathlib import Path
@@ -24,13 +24,26 @@ def create_trajectory(spans:list):
     trajectory = converter.from_spans(spans)
     return trajectory
 
+def _format_latency_breakdown_recursive(items: List[Dict], level: int) -> List[str]:
+    """A helper function to recursively format the nested latency breakdown."""
+    lines = []
+    
+    indent = "&nbsp;&nbsp;&nbsp;&nbsp;" * level
+    for item in items:
+        step_name = item.get('step_name', 'Unknown Step')
+        latency = item.get('latency_ms', 'N/A')
+        lines.append(f"{indent}- {step_name}: {latency} ms")
+        
+        # If there are children, recurse
+        if item.get('children'):
+            lines.extend(_format_latency_breakdown_recursive(item['children'], level + 1))
+    return lines
+
+
 def display_evaluation_results(results: Any):
     """
     Displays evaluation results as a clean, styled HTML table,
-    correctly rendering newlines in the details column.
-
-    Args:
-        results: An object containing a list of metric result objects.
+    correctly rendering newlines and hierarchical indentation in the details column.
     """
     if not results or not getattr(results, 'scores', None):
         print("No evaluation results were generated.")
@@ -51,28 +64,29 @@ def display_evaluation_results(results: Any):
 
         elif 'total_latency_ms' in details_dict and 'latency_breakdown' in details_dict:
             latency_summary = []
-            latency_summary.append(f"Total Latency: {details_dict.pop('total_latency_ms')} ms")
             
-            if 'average_step_latency_ms' in details_dict:
-                latency_summary.append(f"Average Step Latency: {details_dict.pop('average_step_latency_ms')} ms")
+            breakdown_data = details_dict.pop('latency_breakdown', [])
+            total_latency = details_dict.pop('total_latency_ms')
+            avg_latency = details_dict.pop('average_step_latency_ms', None)
             
-            breakdown = details_dict.pop('latency_breakdown', [])
-            if breakdown:
+            latency_summary.append(f"Total Latency (Root Steps): {total_latency} ms")
+            if avg_latency is not None:
+                latency_summary.append(f"Average Root Step Latency: {avg_latency} ms")
+            
+            if breakdown_data:
                 latency_summary.append("Latency Breakdown:")
-                for item in breakdown:
-                    step_name = item.get('step_name', 'Unknown Step')
-                    latency = item.get('latency_ms', 'N/A')
-                    latency_summary.append(f"  - {step_name}: {latency} ms")
+                # Call the recursive helper function (which now uses &nbsp;)
+                formatted_lines = _format_latency_breakdown_recursive(breakdown_data, level=1)
+                latency_summary.extend(formatted_lines)
             
             display_parts.append("\n".join(latency_summary))
-
+        
         other_details = []
         if details_dict:
             if 'cost_breakdown' in details_dict and isinstance(details_dict['cost_breakdown'], list):
-                 details_dict['cost_breakdown'] = "\n" + "\n".join([f"    - {item}" for item in details_dict['cost_breakdown']])
-
+                details_dict['cost_breakdown'] = "\n" + "\n".join([f"    - {item}" for item in details_dict['cost_breakdown']])
             for key, value in details_dict.items():
-                 other_details.append(f"- {key}: {value}")
+                other_details.append(f"- {key}: {value}")
 
         if other_details:
             if display_parts:
@@ -92,10 +106,7 @@ def display_evaluation_results(results: Any):
 
     styled_df = df.style.set_properties(
         subset=['Details'],
-        **{
-            'white-space': 'pre-wrap',
-            'text-align': 'left'
-        }
+        **{'white-space': 'pre-wrap', 'text-align': 'left'}
     ).set_table_styles(
         [dict(selector="th", props=[("text-align", "left")])]
     ).hide(axis="index")
