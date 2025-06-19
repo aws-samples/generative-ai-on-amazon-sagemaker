@@ -5,3 +5,4 @@ sagemaker==2.247.0
 strands-agents==0.1.8
 strands-agents-builder==0.1.2
 strands-agents-tools==0.1.6
+litellm==1.72.2
