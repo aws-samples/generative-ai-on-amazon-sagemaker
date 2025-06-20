@@ -9,3 +9,4 @@ seaborn==0.13.2
 joblib==1.5.1
 requests==2.32.4
 scikit-learn==1.7.0
+uv==0.7.13

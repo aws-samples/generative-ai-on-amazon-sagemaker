@@ -122,10 +122,14 @@ def query_opensearch_with_dsl(collection_endpoint, dsl_json, index_name = 'guard
 ##################################
 # TOOLS
 @mcp.tool()
-def query_dsl(dsl_json: dict):
-    """Query input DSL to OpenSearch Collection. """
+def query_dsl(dsl_json: dict, region=REGION):
+    """Query input DSL to OpenSearch Collection.
+    Args:
+        dsl_json (dict): A DSL query
+        region (str): us-west-2 is the default value
+    """
     collection_endpoint = get_opensearch_collection_endpoint(COLLECTION_NAME)["collection_endpoint"].split("https://")[1]
-    return query_opensearch_with_dsl(collection_endpoint, dsl_json)
+    return query_opensearch_with_dsl(collection_endpoint, dsl_json, region=region)
 
 
 @mcp.tool()
@@ -144,6 +148,3 @@ def add_two_numbers(a: int, b: int) -> str:
 
 if __name__ == "__main__":
     mcp.run()
-
-
-
