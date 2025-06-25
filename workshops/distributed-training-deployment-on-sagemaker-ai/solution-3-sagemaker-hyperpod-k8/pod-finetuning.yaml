@@ -129,7 +129,7 @@ spec:
                   pip install -r /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/requirements.txt && \
                   torchrun \
                   --nnodes=2 \
-                  --nproc_per_node=4 \
+                  --nproc_per_node=1 \
                   /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/scripts/train.py \
                   --config /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/args.yaml
               volumeMounts:
