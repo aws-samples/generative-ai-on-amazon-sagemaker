@@ -9,11 +9,7 @@ Please follow [SageMaker Studio + Hyperpod Integration](https://catalog.workshop
 
 Before running the scripts, you need to make the following changes:
 
-### 1. Copy `solution-3-sagemaker-hyperpod-k8` folder in the FSx for Lustre volume
-
-In order to leverage the integration through shared FSx for Lustre volume between Amazon SageMaker Studio and SageMaker Hyperpod, copy the folder and the content of `solution-3-sagemaker-hyperpod-k8` in the FSx for Lustre volume mounted on both SageMaker Studio and the Hyperpod cluster.
-
-### 2. Update `args.yaml`
+### 1. Update `args.yaml`
 
 Replace all instances of `<STUDIO_USER_PROFILE>` with your SageMaker Studio user profile name:
 
