@@ -1,7 +1,7 @@
 strands-agents==1.0.0
 strands-agents-builder==0.1.7
 strands-agents-tools==0.2.1
-yfinance==0.2.62
+yfinance==0.2.65
 matplotlib==3.10.3
 beautifulsoup4==4.13.4
 pandas==2.3.0
