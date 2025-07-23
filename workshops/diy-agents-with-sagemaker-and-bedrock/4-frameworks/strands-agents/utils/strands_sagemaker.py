@@ -11,7 +11,7 @@ from botocore.config import Config as BotocoreConfig
 from typing_extensions import Unpack, override
 
 from strands.types.content import Messages
-from strands.types.models import OpenAIModel
+from strands.models.openai import OpenAIModel
 from strands.types.tools import ToolSpec
 
 logger = logging.getLogger(__name__)
