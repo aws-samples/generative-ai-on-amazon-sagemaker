@@ -1,7 +1,7 @@
-strands-agents==0.1.6
-strands-agents-builder==0.1.2
-strands-agents-tools==0.1.4
-yfinance==0.2.62
+strands-agents==1.0.0
+strands-agents-builder==0.1.7
+strands-agents-tools==0.2.1
+yfinance==0.2.65
 matplotlib==3.10.3
 beautifulsoup4==4.13.4
 pandas==2.3.0
@@ -9,3 +9,8 @@ seaborn==0.13.2
 joblib==1.5.1
 requests==2.32.4
 scikit-learn==1.7.0
+uv==0.7.13
+mem0ai==0.1.114
+opensearch-py
+ddgs==9.3.1
+faiss-cpu==1.11.0
