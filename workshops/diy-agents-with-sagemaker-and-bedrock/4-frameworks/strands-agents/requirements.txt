@@ -14,3 +14,4 @@ mem0ai==0.1.114
 opensearch-py
 ddgs==9.3.1
 faiss-cpu==1.11.0
+opensearch-py
