@@ -110,7 +110,7 @@ def download_model(model_name):
     
     if model_name.startswith("s3://"):
         print(f"Downloading model from S3: {model_name}")
-        subprocess.run(['aws', 's3', 'cp', model_name, destination, '--recursive'])
+        subprocess.run(['aws', 's3', 'cp', model_name, destination, '--recursive', '--quiet'])
     else:
         print(f"Downloading model from HF: {model_name}")
         snapshot_download(repo_id=model_name, local_dir=destination)
@@ -179,13 +179,6 @@ def set_custom_env(env_vars: Dict[str, str]) -> None:
 
 def train(script_args, training_args, train_ds, test_ds):
     set_seed(training_args.seed)
-
-    mlflow_enabled = (
-        script_args.mlflow_uri is not None
-        and script_args.mlflow_experiment_name is not None
-        and script_args.mlflow_uri != ""
-        and script_args.mlflow_experiment_name != ""
-    )
 
     accelerator = Accelerator()
 
@@ -332,19 +325,15 @@ def train(script_args, training_args, train_ds, test_ds):
     if trainer.accelerator.is_main_process:
         trainer.model.print_trainable_parameters()
 
-    if mlflow_enabled:
-        print("MLflow tracking under ", script_args.mlflow_experiment_name)
-        with mlflow.start_run(run_name=os.environ.get("MLFLOW_RUN_NAME", None)) as run:
-            train_dataset_mlflow = mlflow.data.from_pandas(train_ds.to_pandas(), name="train_dataset")
-            mlflow.log_input(train_dataset_mlflow, context="train")
+    print("MLflow tracking under ", script_args.mlflow_experiment_name)
+    
+    train_dataset_mlflow = mlflow.data.from_pandas(train_ds.to_pandas(), name="train_dataset")
+    mlflow.log_input(train_dataset_mlflow, context="train")
 
-            if test_ds is not None:
-                test_dataset_mlflow = mlflow.data.from_pandas(test_ds.to_pandas(), name="test_dataset")
-                mlflow.log_input(test_dataset_mlflow, context="test")
+    test_dataset_mlflow = mlflow.data.from_pandas(test_ds.to_pandas(), name="test_dataset")
+    mlflow.log_input(test_dataset_mlflow, context="test")
 
-            trainer.train()
-    else:
-        trainer.train()
+    trainer.train()
 
     if trainer.is_fsdp_enabled:
         trainer.accelerator.state.fsdp_plugin.set_state_dict_type("FULL_STATE_DICT")
@@ -425,35 +414,30 @@ if __name__ == "__main__":
 
     set_custom_env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
 
-    if script_args.mlflow_uri is not None and script_args.mlflow_experiment_name is not None and \
-        script_args.mlflow_uri != "" and script_args.mlflow_experiment_name != "":
-        print("mlflow init")
-        mlflow.enable_system_metrics_logging()
-        mlflow.autolog()
-        mlflow.set_tracking_uri(script_args.mlflow_uri)
-        mlflow.set_experiment(script_args.mlflow_experiment_name)
+    mlflow.set_tracking_uri(script_args.mlflow_uri)
+    mlflow.set_experiment(script_args.mlflow_experiment_name)
+    mlflow_run_id = os.environ.get("MLFLOW_RUN_ID")
+    with mlflow.start_run(run_id=mlflow_run_id):
+        with mlflow.start_run(run_name="Finetuning", nested=True) as training_run:
+        
+            mlflow.enable_system_metrics_logging()
+            mlflow.autolog()
 
-        current_datetime = datetime.datetime.now()
-        formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M")
-        set_custom_env({"MLFLOW_RUN_NAME": f"Fine-tuning-{formatted_datetime}"})
-        set_custom_env({"MLFLOW_EXPERIMENT_NAME": script_args.mlflow_experiment_name})
-
-
-    # Load datasets
-    train_ds = load_dataset(
-        "json",
-        data_files=os.path.join(script_args.train_dataset_path, "dataset.json"),
-        split="train"
-    )
-
-    if script_args.test_dataset_path:
-        test_ds = load_dataset(
-            "json",
-            data_files=os.path.join(script_args.test_dataset_path, "dataset.json"),
-            split="train"
-        )
-    else:
-        test_ds = None
-
-    # launch training
-    train(script_args, training_args, train_ds, test_ds)
+            # Load datasets
+            train_ds = load_dataset(
+                "json",
+                data_files=os.path.join(script_args.train_dataset_path, "dataset.json"),
+                split="train"
+            )
+        
+            if script_args.test_dataset_path:
+                test_ds = load_dataset(
+                    "json",
+                    data_files=os.path.join(script_args.test_dataset_path, "dataset.json"),
+                    split="train"
+                )
+            else:
+                test_ds = None
+        
+            # launch training
+            train(script_args, training_args, train_ds, test_ds)
