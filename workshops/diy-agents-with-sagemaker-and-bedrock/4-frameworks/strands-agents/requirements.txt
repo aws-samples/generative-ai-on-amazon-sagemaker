@@ -1,6 +1,7 @@
-strands-agents==1.0.0
-strands-agents-builder==0.1.7
-strands-agents-tools==0.2.1
+strands-agents==1.3.0
+strands-agents[sagemaker]
+strands-agents-tools
+strands-agents-builder
 yfinance==0.2.65
 matplotlib==3.10.3
 beautifulsoup4==4.13.4
@@ -15,3 +16,6 @@ opensearch-py
 ddgs==9.3.1
 faiss-cpu==1.11.0
 opensearch-py
+sagemaker==2.249.0
+openai==1.99.3
+aiohttp==3.12.15
