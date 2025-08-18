@@ -1,0 +1,121 @@
+charts:
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 7d
+        time_zone: America/Los_Angeles
+      query_type: MONITORING
+      queries:
+        - columns: ['visitor_location_country_id']
+          categories: ["Brazil", "Canada", "China", "France", "India", "Japan", "Mexico", "South Africa", "UK", "USA"]
+          metric: frequency
+          metric_type: statistic
+          query_key: c14666c3-2ac8-49a8-b2b5-8ffa543a61b6
+          viz_type: bar
+          model_name: search_ranking_trips
+    description: Daily Visitor Country of Origin
+    options:
+      queryNames: 
+        c14666c3-2ac8-49a8-b2b5-8ffa543a61b6: "Country"
+    query_type: MONITORING
+    title: Visitor Geographical Distribution
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 7d
+        time_zone: America/Los_Angeles
+      query_type: MONITORING
+      queries:
+        - columns: ['destination_country_id']
+          categories: ["USA", "UK", "Mexico", "Japan", "Canada"]
+          metric: frequency
+          metric_type: statistic
+          query_key: c14666c3-2ac8-49a8-b2b5-8ffa543a61b8
+          viz_type: bar
+          model_name: search_ranking_trips
+    description: Daily Volume of Request to Destinations
+    options:
+      queryNames: 
+        c14666c3-2ac8-49a8-b2b5-8ffa543a61b8: "Country"
+    query_type: MONITORING
+    title: Destination Geographical Distribution 
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 7d
+        time_zone: America/Los_Angeles
+      query_type: MONITORING
+      queries:
+        - columns: ["price_usd"]
+          metric: "average"
+          metric_type: "statistic"
+          query_key: d4f6dffe-4aea-436e-aa48-01f72fc5c889
+          segment: "No Click on Promo - USA"
+          viz_type: "line"
+          model_name: search_ranking_trips
+        - columns: ["price_usd"]
+          metric: "average"
+          metric_type: "statistic"
+          query_key: 2792ef36-4f71-495e-9b4f-c390c63b2f45
+          segment: "Clicked on Promo - USA"
+          viz_type: "line"
+          model_name: search_ranking_trips 
+    description: Tracking effects on price changed on user interaction with listing
+    options: 
+      queryNames: 
+        d4f6dffe-4aea-436e-aa48-01f72fc5c889: "Promo Not Clicked"
+        2792ef36-4f71-495e-9b4f-c390c63b2f45: "Clicked Promo"
+    query_type: MONITORING
+    title: Price effect on Clicks
+  - data_source:
+      filters:
+        bin_size: Day
+        time_label: 30d
+        time_zone: America/Los_Angeles
+      query_type: MONITORING
+      queries:
+        - columns: []
+          metric: map
+          metric_type: performance
+          query_key: c14666c3-2ac8-49a8-b2b5-8ffa543a61b1
+          segment: "Traveling to USA"
+          viz_type: line
+          model_name: search_ranking_trips
+        - columns: []
+          metric: map
+          metric_type: performance
+          query_key: c14666c3-2ac8-49a8-b2b5-8ffa543a61b2
+          segment: "Traveling to UK"
+          viz_type: line
+          model_name: search_ranking_trips       
+        - columns: []
+          metric: map
+          metric_type: performance
+          query_key: c14666c3-2ac8-49a8-b2b5-8ffa543a61b3
+          segment: "Traveling to Canada"
+          viz_type: line
+          model_name: search_ranking_trips
+        - columns: []
+          metric: map
+          metric_type: performance
+          query_key: c14666c3-2ac8-49a8-b2b5-8ffa543a61b4
+          segment: "Traveling to Japan"
+          viz_type: line
+          model_name: search_ranking_trips
+        - columns: []
+          metric: map
+          metric_type: performance
+          query_key: c14666c3-2ac8-49a8-b2b5-8ffa543a61b5
+          segment: "Traveling to Mexico"
+          viz_type: line
+          model_name: search_ranking_trips          
+    description: Daily Model Performance Segmented by Destination 
+    options:
+      queryNames: 
+        c14666c3-2ac8-49a8-b2b5-8ffa543a61b1: "USA"
+        c14666c3-2ac8-49a8-b2b5-8ffa543a61b2: "UK"
+        c14666c3-2ac8-49a8-b2b5-8ffa543a61b3: "Canada"
+        c14666c3-2ac8-49a8-b2b5-8ffa543a61b4: "Japan"
+        c14666c3-2ac8-49a8-b2b5-8ffa543a61b5: "Mexico"
+    query_type: MONITORING
+    title: Model Performance Segmented by Destination  
