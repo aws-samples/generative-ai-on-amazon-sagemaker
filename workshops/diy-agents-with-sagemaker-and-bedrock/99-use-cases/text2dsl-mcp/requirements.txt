@@ -1,0 +1,11 @@
+mcp==1.9.4
+mcp[cli]
+retry==0.9.2
+langchain_mcp_adapters==0.1.7
+langchain==0.3.27
+langgraph==0.6.1
+opensearch-py==2.8.0
+strands-agents==0.1.8
+strands-agents-tools==0.1.6
+strands-agents-builder==0.1.2
+nest_asyncio==1.6.0

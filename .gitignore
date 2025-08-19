@@ -160,3 +160,9 @@ poetry.lock
 .DS_Store
 **/.DS_Store
 .ipynb_checkpoints
+repl_state
+generated-diagrams
+news-*
+news_*
+model.tar.gz
+errors

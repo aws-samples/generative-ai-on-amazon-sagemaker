@@ -1,0 +1,141 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd
+spec:
+  ports:
+    - name: etcd-client-port
+      port: 2379
+      protocol: TCP
+      targetPort: 2379
+  selector:
+    app: etcd
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: etcd
+  name: etcd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etcd
+  template:
+    metadata:
+      labels:
+        app: etcd
+    spec:
+      containers:
+        - name: etcd
+          command: ["/usr/local/bin/etcd"]
+          args:
+            - "--data-dir"
+            - "/var/lib/etcd"
+            - "--enable-v2"
+            - "--listen-client-urls"
+            - "http://0.0.0.0:2379"
+            - "--advertise-client-urls"
+            - "http://0.0.0.0:2379"
+            - "--initial-cluster-state"
+            - "new"
+          image: quay.io/coreos/etcd:v3.5.19
+          ports:
+            - containerPort: 2379
+              name: client
+              protocol: TCP
+            - containerPort: 2380
+              name: server
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: "kubeflow.org/v1"
+kind: PyTorchJob
+metadata:
+  name: deepseek-r1-distill-qwen-7b-fine-tuning
+spec:
+  elasticPolicy:
+    rdzvBackend: etcd
+    rdzvHost: etcd
+    rdzvPort: 2379
+    minReplicas: 1
+    maxReplicas: 64
+    maxRestarts: 100
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 90
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: 2
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            app: deepseek-r1-distill-qwen-7b-fine-tuning
+        spec:
+          volumes:
+            - name: shmem
+              hostPath:
+                path: /dev/shm
+            - name: local
+              hostPath:
+                path: /mnt/k8s-disks/0
+            - name: fsx-volume
+              persistentVolumeClaim:
+                claimName: fsx-claim
+          serviceAccountName: eks-hyperpod-sa # Must match association
+          containers:
+            - name: pytorch
+              image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.5.1-gpu-py311-cu124-ubuntu22.04-ec2
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  nvidia.com/gpu: 1
+                  vpc.amazonaws.com/efa: 1
+                limits:
+                  nvidia.com/gpu: 1
+                  vpc.amazonaws.com/efa: 1
+              env:
+                - name: LOGLEVEL
+                  value: "DEBUG"
+                - name: TORCH_DISTRIBUTED_DEBUG
+                  value: "DETAIL"
+                - name: TORCH_NCCL_ENABLE_MONITORING
+                  value: "1"
+                - name: TORCH_NCCL_TRACE_BUFFER_SIZE
+                  value: "20000"
+                - name: TORCH_NCCL_DUMP_ON_TIMEOUT
+                  value: "1"
+                - name: TORCH_NCCL_DEBUG_INFO_TEMP_FILE
+                  value: "/local/nccl_trace_rank_"
+                - name: PYTORCH_CUDA_ALLOC_CONF
+                  value: "expandable_segments:True"
+                - name: NCCL_DEBUG
+                  value: "INFO"
+                - name: NCCL_SOCKET_IFNAME
+                  value: "^lo"
+                - name: TORCH_NCCL_ASYNC_ERROR_HANDLING
+                  value: "1"
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  pip install -r /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/requirements.txt && \
+                  torchrun \
+                  --nnodes=2 \
+                  --nproc_per_node=1 \
+                  /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/scripts/train.py \
+                  --config /data/<STUDIO_USER_PROFILE>/solution-3-sagemaker-hyperpod-k8/args.yaml
+              volumeMounts:
+                - name: shmem
+                  mountPath: /dev/shm
+                - name: local
+                  mountPath: /local
+                - name: fsx-volume
+                  mountPath: /data

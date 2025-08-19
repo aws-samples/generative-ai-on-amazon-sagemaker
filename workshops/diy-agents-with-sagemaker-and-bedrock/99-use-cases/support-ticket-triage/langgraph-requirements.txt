@@ -1,0 +1,10 @@
+boto3
+botocore
+sagemaker
+langchain
+langchain_aws
+langchain_experimental
+langchain-community
+duckduckgo-search 
+langgraph
+matplotlib
