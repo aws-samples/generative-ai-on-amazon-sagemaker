@@ -8,5 +8,5 @@ trl==0.9.6
 peft==0.12.0
 wandb
 py7zr
-mlflow==2.16.0 
+mlflow==3.1.0 
 sagemaker-mlflow==0.1.0 
