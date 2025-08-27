@@ -1,0 +1,262 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Deploy DeepChecks Partner AI App in SageMaker with required IAM roles and permissions'
+
+Parameters:
+  AppName:
+    Type: String
+    Default: 'deepchecksllmeval2'
+    Description: 'Name for the DeepChecks Partner AI App (alphanumeric only)'
+    AllowedPattern: '^[a-zA-Z0-9]+$'
+    MinLength: 1
+    MaxLength: 256
+
+  AppTier:
+    Type: String
+    Default: 'deepchecks-llm-evaluation.small'
+    Description: 'Tier for the DeepChecks app (impacts speed and capabilities)'
+    AllowedValues:
+      - 'deepchecks-llm-evaluation.small'
+      - 'deepchecks-llm-evaluation.medium'
+      - 'deepchecks-llm-evaluation.large'
+
+
+
+  EnableIamSessionBasedIdentity:
+    Type: String
+    Default: 'true'
+    Description: 'Enable IAM session-based identity propagation'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+Conditions:
+  EnableSessionIdentity: !Equals [!Ref EnableIamSessionBasedIdentity, 'true']
+
+Resources:
+  # IAM Role for Partner AI App Execution
+  PartnerAiAppExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AppName}-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: 
+              - sts:AssumeRole
+              - sts:TagSession
+      Policies:
+        - PolicyName: LicenseManagerPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - license-manager:CheckoutLicense
+                  - license-manager:CheckInLicense
+                  - license-manager:ExtendLicenseConsumption
+                  - license-manager:GetLicense
+                  - license-manager:GetLicenseUsage
+                Resource: '*'
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource: 
+                  - !Sub 'arn:aws:s3:::${AppName}-data-${AWS::AccountId}-${AWS::Region}/*'
+                  - !Sub 'arn:aws:s3:::${AppName}-data-${AWS::AccountId}-${AWS::Region}'
+        - PolicyName: BedrockAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                  - bedrock:GetFoundationModel
+                  - bedrock:ListFoundationModels
+                Resource: '*'
+
+  # IAM Role for Admin Users
+  PartnerAppAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AppName}-admin-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSMarketplaceManageSubscriptions
+      Policies:
+        - PolicyName: PartnerAppAdminPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sagemaker:CreatePartnerApp
+                  - sagemaker:DeletePartnerApp
+                  - sagemaker:UpdatePartnerApp
+                  - sagemaker:DescribePartnerApp
+                  - sagemaker:ListPartnerApps
+                  - sagemaker:CreatePartnerAppPresignedUrl
+                  - sagemaker:AddTags
+                  - sagemaker:ListTags
+                  - sagemaker:DeleteTags
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !GetAtt PartnerAiAppExecutionRole.Arn
+                Condition:
+                  StringEquals:
+                    'iam:PassedToService': 'sagemaker.amazonaws.com'
+
+  # IAM Role for End Users
+  PartnerAppUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AppName}-user-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 
+              - sts:AssumeRole
+              - sts:TagSession
+      Policies:
+        - PolicyName: PartnerAppUserPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sagemaker:DescribePartnerApp
+                  - sagemaker:ListPartnerApps
+                  - sagemaker:CreatePartnerAppPresignedUrl
+                  - sagemaker:CallPartnerAppApi
+                Resource: !Sub 'arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:partner-app/app-*'
+
+  # S3 Bucket for DeepChecks data
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AppName}-data-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # KMS Key for encryption
+  KMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'KMS Key for DeepChecks Partner AI App encryption'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow SageMaker Service
+            Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action:
+              - kms:Decrypt
+              - kms:GenerateDataKey
+            Resource: '*'
+
+  KMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub 'alias/${AppName}-key'
+      TargetKeyId: !Ref KMSKey
+
+  # DeepChecks Partner AI App
+  DeepChecksPartnerApp:
+    Type: AWS::SageMaker::PartnerApp
+    Properties:
+      Name: !Ref AppName
+      Type: 'deepchecks-llm-evaluation'
+      AuthType: 'IAM'
+      ExecutionRoleArn: !GetAtt PartnerAiAppExecutionRole.Arn
+      Tier: !Ref AppTier
+      KmsKeyId: !Ref KMSKey
+      EnableIamSessionBasedIdentity: !If [EnableSessionIdentity, true, false]
+      ApplicationConfig:
+        Arguments:
+          modelIds_comma_delimited: 'anthropic.claude-3-sonnet-20240229-v1:0,anthropic.claude-3-haiku-20240307-v1:0'
+          inferenceProfiles_comma_delimited: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0,us.anthropic.claude-3-5-haiku-20241022-v1:0'
+      Tags:
+        - Key: 'Application'
+          Value: 'DeepChecks'
+        - Key: 'Environment'
+          Value: 'Production'
+        - Key: 'ManagedBy'
+          Value: 'CloudFormation'
+
+Outputs:
+  PartnerAppArn:
+    Description: 'ARN of the DeepChecks Partner AI App'
+    Value: !GetAtt DeepChecksPartnerApp.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-PartnerAppArn'
+
+  PartnerAppBaseUrl:
+    Description: 'Base URL of the DeepChecks Partner AI App'
+    Value: !GetAtt DeepChecksPartnerApp.BaseUrl
+    Export:
+      Name: !Sub '${AWS::StackName}-PartnerAppBaseUrl'
+
+  ExecutionRoleArn:
+    Description: 'ARN of the Partner AI App execution role'
+    Value: !GetAtt PartnerAiAppExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ExecutionRoleArn'
+
+  AdminRoleArn:
+    Description: 'ARN of the Partner AI App admin role'
+    Value: !GetAtt PartnerAppAdminRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AdminRoleArn'
+
+  UserRoleArn:
+    Description: 'ARN of the Partner AI App user role'
+    Value: !GetAtt PartnerAppUserRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-UserRoleArn'
+
+  S3BucketName:
+    Description: 'Name of the S3 bucket for DeepChecks data'
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub '${AWS::StackName}-S3BucketName'
+
+  KMSKeyId:
+    Description: 'KMS Key ID for encryption'
+    Value: !Ref KMSKey
+    Export:
+      Name: !Sub '${AWS::StackName}-KMSKeyId'
