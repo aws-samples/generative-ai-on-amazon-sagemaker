@@ -1,0 +1,207 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IAM roles and policies for Partner AI App deployment'
+
+Parameters:
+  AppName:
+    Type: String
+    Default: 'partner-app'
+    Description: 'Name for the Partner AI App (alphanumeric only)'
+    AllowedPattern: '^[a-zA-Z0-9-]+$'
+    MinLength: 1
+    MaxLength: 256
+
+Resources:
+  # IAM Policies
+  LicenseManagerPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${AppName}-license-manager-policy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - license-manager:CheckoutLicense
+              - license-manager:CheckInLicense
+              - license-manager:ExtendLicenseConsumption
+              - license-manager:GetLicense
+              - license-manager:GetLicenseUsage
+            Resource: '*'
+      Roles:
+        - !Ref PartnerAiAppExecutionRole
+
+  S3AccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${AppName}-s3-access-policy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:ListBucket
+            Resource: '*'
+      Roles:
+        - !Ref PartnerAiAppExecutionRole
+
+  BedrockAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${AppName}-bedrock-access-policy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - bedrock:InvokeModel
+              - bedrock:InvokeModelWithResponseStream
+              - bedrock:GetFoundationModel
+              - bedrock:ListFoundationModels
+            Resource: '*'
+      Roles:
+        - !Ref PartnerAiAppExecutionRole
+
+  PartnerAppAdminPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${AppName}-admin-policy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sagemaker:CreatePartnerApp
+              - sagemaker:DeletePartnerApp
+              - sagemaker:UpdatePartnerApp
+              - sagemaker:DescribePartnerApp
+              - sagemaker:ListPartnerApps
+              - sagemaker:CreatePartnerAppPresignedUrl
+              - sagemaker:AddTags
+              - sagemaker:ListTags
+              - sagemaker:DeleteTags
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource: !GetAtt PartnerAiAppExecutionRole.Arn
+            Condition:
+              StringEquals:
+                'iam:PassedToService': 'sagemaker.amazonaws.com'
+      Roles:
+        - !Ref PartnerAppAdminRole
+
+  PartnerAppUserPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub '${AppName}-user-policy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sagemaker:DescribePartnerApp
+              - sagemaker:ListPartnerApps
+              - sagemaker:CreatePartnerAppPresignedUrl
+              - sagemaker:CallPartnerAppApi
+            Resource: !Sub 'arn:aws:sagemaker:${AWS::Region}:${AWS::AccountId}:partner-app/app-*'
+      Roles:
+        - !Ref PartnerAppUserRole
+
+  # IAM Roles
+  PartnerAiAppExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AppName}-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: 
+              - sts:AssumeRole
+              - sts:TagSession
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  PartnerAppAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AppName}-admin-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSMarketplaceManageSubscriptions
+
+  PartnerAppUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AppName}-user-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 
+              - sts:AssumeRole
+              - sts:TagSession
+
+Outputs:
+  # Policy Outputs
+  LicenseManagerPolicyArn:
+    Description: 'ARN of the License Manager policy'
+    Value: !Ref LicenseManagerPolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-LicenseManagerPolicyArn'
+
+  S3AccessPolicyArn:
+    Description: 'ARN of the S3 Access policy'
+    Value: !Ref S3AccessPolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-S3AccessPolicyArn'
+
+  BedrockAccessPolicyArn:
+    Description: 'ARN of the Bedrock Access policy'
+    Value: !Ref BedrockAccessPolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-BedrockAccessPolicyArn'
+
+  PartnerAppAdminPolicyArn:
+    Description: 'ARN of the Partner App Admin policy'
+    Value: !Ref PartnerAppAdminPolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-PartnerAppAdminPolicyArn'
+
+  PartnerAppUserPolicyArn:
+    Description: 'ARN of the Partner App User policy'
+    Value: !Ref PartnerAppUserPolicy
+    Export:
+      Name: !Sub '${AWS::StackName}-PartnerAppUserPolicyArn'
+
+  # Role Outputs
+  ExecutionRoleArn:
+    Description: 'ARN of the Partner AI App execution role'
+    Value: !GetAtt PartnerAiAppExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ExecutionRoleArn'
+
+  AdminRoleArn:
+    Description: 'ARN of the Partner AI App admin role'
+    Value: !GetAtt PartnerAppAdminRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-AdminRoleArn'
+
+  UserRoleArn:
+    Description: 'ARN of the Partner AI App user role'
+    Value: !GetAtt PartnerAppUserRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-UserRoleArn'

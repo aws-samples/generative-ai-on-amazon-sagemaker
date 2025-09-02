@@ -32,6 +32,14 @@ This repository provides comprehensive resources for working with generative AI 
 - Implement responsible AI with Bedrock Guardrails
 - Develop FMOps fine-tuning workflows with SageMaker Pipelines
 
+#### [Partner AI Apps with SageMaker AI](./workshops/partner-ai-apps-with-sagemakerai/)
+- Experiment Management with Comet [Image Classification, Fraud Detection]
+- Evaluting LLM applications with Comet Opik
+- Evaluating Agents with Opik
+- LLM Evaluation with Comet
+- Model Monitoring with Fiddler
+- RAG chatbot evaluation with Deepchecks
+
 ## Getting Started
 
 1. Clone this repository
