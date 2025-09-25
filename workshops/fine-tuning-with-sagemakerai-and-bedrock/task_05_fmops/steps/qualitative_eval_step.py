@@ -18,6 +18,7 @@ def qualitative_evaluate(
     experiment_name: str,
     run_id: str,
     endpoint_name: str,
+    mlflow_trace_attributes: dict
 ) -> dict:
     import os
     import json
@@ -32,14 +33,35 @@ def qualitative_evaluate(
     import uuid
     import traceback
     from datetime import datetime
-    
-    # MLflow LLM-as-a-judge imports (compatible with MLflow 2.x)
+    from mlflow.entities import SpanType
     from mlflow.metrics.genai import EvaluationExample, make_genai_metric
-    
+
+    @mlflow.trace(
+        name="call-local-llm", span_type=SpanType.LLM, attributes={
+            "model": mlflow_trace_attributes["model_id"],
+            "guardrail_id": mlflow_trace_attributes["guardrail_id"],
+            "guardrail_version": mlflow_trace_attributes["guardrail_version"]
+        }
+    )
     def invoke_sagemaker_endpoint(payload, endpoint_name):
         """
         Invoke a SageMaker endpoint with the given payload.
         """
+        bedrock_runtime = boto3.client('bedrock-runtime')
+        guardrail_id = mlflow_trace_attributes["guardrail_id"]
+        guardrail_version = mlflow_trace_attributes["guardrail_version"]
+        guardrail_response_input = bedrock_runtime.apply_guardrail(
+            guardrailIdentifier=guardrail_id,
+            guardrailVersion=guardrail_version,
+            source='INPUT',
+            content=[{'text': {'text': payload["inputs"]}}]
+        )
+        guardrailResult = guardrail_response_input["action"]
+    
+        if guardrailResult == "GUARDRAIL_INTERVENED":
+            reason = guardrail_response_input["assessments"]
+            return guardrail_response_input["outputs"][0]["text"], -1
+        
         try:
             start_time = time.time()
             response = sm_client.invoke_endpoint(
@@ -107,6 +129,7 @@ def qualitative_evaluate(
             ),
             examples=medical_accuracy_examples,
             version="v1",
+            # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
             model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
@@ -155,6 +178,7 @@ def qualitative_evaluate(
             ),
             examples=clinical_reasoning_examples,
             version="v1",
+            # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
             model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
@@ -201,6 +225,7 @@ def qualitative_evaluate(
             ),
             examples=patient_safety_examples,
             version="v1",
+            # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
             model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
@@ -211,7 +236,7 @@ def qualitative_evaluate(
             greater_is_better=True
         )
         
-        return [medical_accuracy]#, clinical_reasoning, patient_safety]
+        return [medical_accuracy, clinical_reasoning, patient_safety]
     
     def simple_judge_evaluation(predictions, questions, references):
         """
@@ -349,7 +374,7 @@ def qualitative_evaluate(
             
             # Extract metric results
             metric_results = {}
-            for metric_name in ["medical_accuracy/v1/mean"]:#, "clinical_reasoning/v1/mean", "patient_safety/v1/mean"]:
+            for metric_name in ["medical_accuracy/v1/mean", "clinical_reasoning/v1/mean", "patient_safety/v1/mean"]:
                 if metric_name in eval_results.metrics:
                     base_name = metric_name.split('/')[0]
                     metric_results[base_name] = eval_results.metrics[metric_name]
@@ -453,7 +478,7 @@ def qualitative_evaluate(
             mlflow.log_param("qualitative_evaluation_endpoint", endpoint_name)
             mlflow.log_param("qualitative_evaluation_num_samples", num_samples)
             mlflow.log_param("qualitative_evaluation_timestamp", datetime.now().isoformat())
-            mlflow.log_param("llm_judge_model", "bedrock:/anthropic.claude-3-haiku-20240307-v1:0")
+            mlflow.log_param("llm_judge_model", "bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0")
             
             # Load the test dataset
             try:

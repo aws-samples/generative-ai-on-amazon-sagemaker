@@ -18,6 +18,7 @@ def quantitative_evaluate(
     experiment_name: str,
     run_id: str,
     endpoint_name: str,
+    mlflow_trace_attributes: dict
 )-> dict:
     import os
     import json
@@ -33,8 +34,15 @@ def quantitative_evaluate(
     import traceback
     from datetime import datetime
     from rouge_score import rouge_scorer
+    from mlflow.entities import SpanType
         
-    # This function allows you to interact with a deployed SageMaker endpoint to get predictions from the DeepSeek model
+    @mlflow.trace(
+        name="call-local-llm", span_type=SpanType.LLM, attributes={
+            "model": mlflow_trace_attributes["model_id"],
+            "guardrail_id": mlflow_trace_attributes["guardrail_id"],
+            "guardrail_version": mlflow_trace_attributes["guardrail_version"]
+        }
+    )
     def invoke_sagemaker_endpoint(payload, endpoint_name):
         """
         Invoke a SageMaker endpoint with the given payload.
@@ -46,6 +54,21 @@ def quantitative_evaluate(
         Returns:
             dict: The response from the endpoint
         """
+        bedrock_runtime = boto3.client('bedrock-runtime')
+        guardrail_id = mlflow_trace_attributes["guardrail_id"]
+        guardrail_version = mlflow_trace_attributes["guardrail_version"]
+        guardrail_response_input = bedrock_runtime.apply_guardrail(
+            guardrailIdentifier=guardrail_id,
+            guardrailVersion=guardrail_version,
+            source='INPUT',
+            content=[{'text': {'text': payload["inputs"]}}]
+        )
+        guardrailResult = guardrail_response_input["action"]
+    
+        if guardrailResult == "GUARDRAIL_INTERVENED":
+            reason = guardrail_response_input["assessments"]
+            return guardrail_response_input["outputs"][0]["text"], -1
+        
         try:
             start_time = time.time()
             response = sm_client.invoke_endpoint(

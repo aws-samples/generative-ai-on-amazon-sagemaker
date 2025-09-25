@@ -32,57 +32,6 @@ def preprocess(
     experiment_name: str,
     run_name: str,
 ) -> tuple:
-    
-
-    # prompt_template = f"""
-    #     <|begin_of_text|>
-    #     <|start_header_id|>system<|end_header_id|>
-    #     You are a medical expert with advanced knowledge in clinical reasoning, diagnostics, and treatment planning. 
-    #     Below is an instruction that describes a task, paired with an input that provides further context. 
-    #     Write a response that appropriately completes the request.
-    #     Before answering, think carefully about the question and create a step-by-step chain of thoughts to ensure a logical and accurate response.
-    #     <|eot_id|><|start_header_id|>user<|end_header_id|>
-    #     {{question}}<|eot_id|>
-    #     <|start_header_id|>assistant<|end_header_id|>
-    #     {{complex_cot}}
-
-    #     {{answer}}
-    #     <|eot_id|>
-    #     """
-
-    # # Include template_dataset function directly here
-    # def template_dataset(sample):        
-    #     try:
-    #         sample["text"] = prompt_template.format(
-    #             question=sample["Question"],
-    #             complex_cot=sample["Complex_CoT"],
-    #             answer=sample["Response"]
-    #         )
-    #         return sample
-    #     except KeyError as e:
-    #         print(f"KeyError in template_dataset: {str(e)}")
-    #         # Provide default values for missing fields
-    #         missing_key = str(e).strip("'")
-    #         if missing_key == "Question":
-    #             sample["text"] = prompt_template.format(
-    #                 question="[Missing question]",
-    #                 complex_cot=sample.get("Complex_CoT", "[Missing CoT]"),
-    #                 answer=sample.get("Response", "[Missing response]")
-    #             )
-    #         elif missing_key == "Complex_CoT":
-    #             sample["text"] = prompt_template.format(
-    #                 question=sample["Question"],
-    #                 complex_cot="[Missing CoT]",
-    #                 answer=sample.get("Response", "[Missing response]")
-    #             )
-    #         elif missing_key == "Response":
-    #             sample["text"] = prompt_template.format(
-    #                 question=sample["Question"],
-    #                 complex_cot=sample.get("Complex_CoT", "[Missing CoT]"),
-    #                 answer="[Missing response]"
-    #             )
-    #         return sample
-
     mlflow.set_tracking_uri(tracking_server_arn)
     mlflow.set_experiment(experiment_name)
 

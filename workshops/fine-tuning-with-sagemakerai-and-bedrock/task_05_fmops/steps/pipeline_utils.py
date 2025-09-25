@@ -102,3 +102,67 @@ def invoke_sagemaker_endpoint(payload, endpoint_name):
     except Exception as e:
         print(f"Error invoking endpoint {endpoint_name}: {str(e)}")
         return None, -1
+
+
+def get_or_create_guardrail():
+    guardrail_client = boto3.client('bedrock')
+    guardrail_name = "ExampleMedicalGuardrail"
+    try:
+        # Try to get the guardrail
+        response = guardrail_client.list_guardrails()
+        for guardrail in response.get('guardrails', []):
+            if guardrail['name'] == guardrail_name:
+                guardrail_id = guardrail['id']
+        response = guardrail_client.get_guardrail(
+            guardrailIdentifier=guardrail_id
+        )
+        guardrail_version = response["version"]
+        print(f"Found Guardrail {guardrail_id}:{guardrail_version}")
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            # Guardrail doesn't exist, create it
+            try:
+                guardrail = guardrail_client.create_guardrail(
+                    name="ExampleMedicalGuardrail",
+                    description='Example of a Guardrail for Medical Use Cases',
+                    topicPolicyConfig={
+                        'topicsConfig': [{
+                            'name': 'Block Pharmaceuticals',
+                            'definition': 'This model cannot recommend one pharmaceutical over another. Generic prescriptions consistent with medical expertise and clinical diagnoses only.',
+                            'type': 'DENY',
+                            'inputAction': 'BLOCK',
+                            'outputAction': 'BLOCK',
+                        }]        
+                    },
+                    sensitiveInformationPolicyConfig={
+                        'piiEntitiesConfig': [
+                            {
+                                'type': 'UK_NATIONAL_HEALTH_SERVICE_NUMBER',
+                                'action': 'BLOCK',
+                                'inputAction': 'BLOCK',
+                                'outputAction': 'BLOCK'
+                            },
+                        ]
+                    },
+                    contextualGroundingPolicyConfig={
+                        'filtersConfig': [
+                            {
+                                'type': 'RELEVANCE',
+                                'threshold': 0.9,
+                                'action': 'BLOCK',
+                                'enabled': True
+                            },
+                        ]
+                    },
+                    blockedInputMessaging="ExampleMedicalGuardrail has blocked this input.",
+                    blockedOutputsMessaging="ExampleMedicalGuardrail has blocked this output."
+                )
+                guardrail_id = guardrail['guardrailId']
+                guardrail_version = guardrail['version']
+                
+                print(f"Created new guardrail '{guardrail_id}:{guardrail_version}'")
+            except botocore.exceptions.ClientError as create_error:
+                print(f"Error creating guardrail: {create_error}")
+        else:
+            print(f"Error checking guardrail: {e}")
+    return guardrail_id, guardrail_version
