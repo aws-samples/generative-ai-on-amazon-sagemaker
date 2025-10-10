@@ -1,27 +1,21 @@
 import os
 import datetime
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 from dataclasses import dataclass, field
-from functools import partial
-from itertools import chain
 
 from accelerate import Accelerator
-import bitsandbytes as bnb
 
 from huggingface_hub import snapshot_download
 from datasets import load_dataset
 
 import mlflow
-from mlflow.models import infer_signature
 
 import torch
 
-import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments, set_seed
-from peft import AutoPeftModelForCausalLM, LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import AutoPeftModelForCausalLM, LoraConfig, prepare_model_for_kbit_training
 
-from trl.commands.cli_utils import TrlParser
-from trl import SFTTrainer
+from trl import SFTTrainer, TrlParser
 
 from sagemaker.s3 import S3Downloader
 import subprocess
@@ -118,35 +112,6 @@ def download_model(model_name):
     print(f"Model {model_name} downloaded under {destination}")
 
 
-def group_texts(examples, block_size=2048):
-    """
-    Groups a list of tokenized text examples into fixed-size blocks for language model training.
-
-    Args:
-        examples (dict): A dictionary where keys are feature names (e.g., "input_ids") and values 
-                         are lists of tokenized sequences.
-        block_size (int, optional): The size of each chunk. Defaults to 2048.
-
-    Returns:
-        dict: A dictionary containing the grouped chunks for each feature. An additional "labels" key 
-              is included, which is a copy of the "input_ids" key.
-    """
-    # Concatenate all texts.
-    concatenated_examples = {k: list(chain(*examples[k])) for k in examples.keys()}
-    total_length = len(concatenated_examples[list(examples.keys())[0]])
-    # We drop the small remainder, we could add padding if the model supported it instead of this drop, you can
-    # customize this part to your needs.
-    if total_length >= block_size:
-        total_length = (total_length // block_size) * block_size
-    # Split by chunks of max_len.
-    result = {
-        k: [t[i : i + block_size] for i in range(0, total_length, block_size)]
-        for k, t in concatenated_examples.items()
-    }
-    result["labels"] = result["input_ids"].copy()
-    return result
-
-
 def set_custom_env(env_vars: Dict[str, str]) -> None:
     """
     Set custom environment variables.
@@ -176,9 +141,34 @@ def set_custom_env(env_vars: Dict[str, str]) -> None:
     for key, value in env_vars.items():
         print(f"  {key}: {value}")
 
+def load_data(training_data_location, test_data_location):
+    # Load datasets
+    train_ds = load_dataset(
+        "json",
+        data_files=os.path.join(training_data_location, "dataset.json"),
+        split="train"
+    )
 
-def train(script_args, training_args, train_ds, test_ds):
+    if script_args.test_dataset_path:
+        test_ds = load_dataset(
+            "json",
+            data_files=os.path.join(test_data_location, "dataset.json"),
+            split="train"
+        )
+    else:
+        test_ds = None
+
+    return train_ds, test_ds
+
+def train(script_args, training_args):
     set_seed(training_args.seed)
+
+    mlflow_enabled = (
+        script_args.mlflow_uri is not None
+        and script_args.mlflow_experiment_name is not None
+        and script_args.mlflow_uri != ""
+        and script_args.mlflow_experiment_name != ""
+    )
 
     accelerator = Accelerator()
 
@@ -202,19 +192,21 @@ def train(script_args, training_args, train_ds, test_ds):
     # Set Tokenizer pad Token
     tokenizer.pad_token = tokenizer.eos_token
 
-    # tokenize and chunk dataset
-    lm_train_dataset = train_ds.map(
-        lambda sample: tokenizer(sample["text"]), remove_columns=list(train_ds.features)
-    )
+    # # tokenize and chunk dataset
+    # lm_train_dataset = train_ds.map(
+    #     lambda sample: tokenizer(sample["text"]), remove_columns=list(train_ds.features)
+    # )
 
-    if test_ds is not None:
-        lm_test_dataset = test_ds.map(
-            lambda sample: tokenizer(sample["text"]), remove_columns=list(train_ds.features)
-        )
+    # if test_ds is not None:
+    #     lm_test_dataset = test_ds.map(
+    #         lambda sample: tokenizer(sample["text"]), remove_columns=list(train_ds.features)
+    #     )
 
-        print(f"Total number of test samples: {len(lm_test_dataset)}")
-    else:
-        lm_test_dataset = None
+    #     print(f"Total number of test samples: {len(lm_test_dataset)}")
+    # else:
+    #     lm_test_dataset = None
+
+    train_ds, test_ds = load_data(script_args.train_dataset_path, script_args.test_dataset_path)
 
     accelerator.wait_for_everyone()
 
@@ -276,7 +268,7 @@ def train(script_args, training_args, train_ds, test_ds):
     )
 
     if training_args.fsdp is None and training_args.fsdp_config is None:
-        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=gradient_checkpointing)
+        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=training_args.gradient_checkpointing)
 
         if training_args.gradient_checkpointing:
             model.gradient_checkpointing_enable()
@@ -284,7 +276,7 @@ def train(script_args, training_args, train_ds, test_ds):
         if training_args.gradient_checkpointing:
             model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
 
-    config = LoraConfig(
+    peft_config = LoraConfig(
         r=script_args.lora_r,
         lora_alpha=script_args.lora_alpha,
         target_modules="all-linear",
@@ -293,47 +285,42 @@ def train(script_args, training_args, train_ds, test_ds):
         task_type="CAUSAL_LM"
     )
 
-    model = get_peft_model(model, config)
-
     print(f"max_seq_length: {script_args.max_seq_length}")
+
+    print("Disabling checkpointing and setting up logging")
+    training_args.save_strategy="no"
+    training_args.logging_strategy="steps"
+    training_args.logging_steps=1
+    training_args.log_on_each_node=False
+    training_args.ddp_find_unused_parameters=False
     
     trainer = SFTTrainer(
         model=model,
-        train_dataset=lm_train_dataset,
-        eval_dataset=lm_test_dataset if lm_test_dataset is not None else None,
-        max_seq_length=script_args.max_seq_length,
-        args=transformers.TrainingArguments(
-            per_device_train_batch_size=training_args.per_device_train_batch_size,
-            per_device_eval_batch_size=training_args.per_device_eval_batch_size,
-            gradient_accumulation_steps=training_args.gradient_accumulation_steps,
-            logging_strategy="steps",
-            logging_steps=1,
-            log_on_each_node=False,
-            num_train_epochs=training_args.num_train_epochs,
-            learning_rate=training_args.learning_rate,
-            bf16=training_args.bf16,
-            fp16=training_args.fp16,
-            ddp_find_unused_parameters=False,
-            save_strategy="no",
-            output_dir="outputs",
-            **trainer_configs
-        ),
-        callbacks=None,
-        data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
+        args=training_args,
+        train_dataset=train_ds,
+        eval_dataset=test_ds if test_ds is not None else None,
+        processing_class=tokenizer,
+        peft_config=peft_config
     )
 
     if trainer.accelerator.is_main_process:
         trainer.model.print_trainable_parameters()
 
-    print("MLflow tracking under ", script_args.mlflow_experiment_name)
-    
-    train_dataset_mlflow = mlflow.data.from_pandas(train_ds.to_pandas(), name="train_dataset")
-    mlflow.log_input(train_dataset_mlflow, context="train")
+    if mlflow_enabled:
+        print("MLflow tracking under ", script_args.mlflow_experiment_name)
+        # mlflow.start_run(run_id=os.environ.get["MLFLOW_RUN_ID"])
+        # mlflow.start_run(run_name=os.environ.get["MLFLOW_RUN_NAME"], nested=True)
+        mlflow.start_run(run_name=os.environ.get("MLFLOW_RUN_NAME", None))
+        train_dataset_mlflow = mlflow.data.from_pandas(train_ds.to_pandas(), name="train_dataset")
+        mlflow.log_input(train_dataset_mlflow, context="train")
 
-    test_dataset_mlflow = mlflow.data.from_pandas(test_ds.to_pandas(), name="test_dataset")
-    mlflow.log_input(test_dataset_mlflow, context="test")
+        if test_ds is not None:
+            test_dataset_mlflow = mlflow.data.from_pandas(test_ds.to_pandas(), name="test_dataset")
+            mlflow.log_input(test_dataset_mlflow, context="test")
 
-    trainer.train()
+        trainer.train()
+    else:
+        trainer.train()
 
     if trainer.is_fsdp_enabled:
         trainer.accelerator.state.fsdp_plugin.set_state_dict_type("FULL_STATE_DICT")
@@ -344,7 +331,7 @@ def train(script_args, training_args, train_ds, test_ds):
 
         # merge adapter weights with base model and save
         # save int 4 model
-        trainer.model.save_pretrained(output_dir, safe_serialization=False)
+        trainer.save_model(output_dir)
 
         if accelerator.is_main_process:
             # clear memory
@@ -370,34 +357,15 @@ def train(script_args, training_args, train_ds, test_ds):
 
             print("saving merged model...")
             model.save_pretrained(
-                training_args.output_dir, safe_serialization=True, max_shard_size="2GB"
+                training_args.output_dir, 
+                safe_serialization=True
             )
     else:
         print(f"merge adapter weights: {script_args.merge_weights}")
-        trainer.model.save_pretrained(training_args.output_dir, safe_serialization=True)
+        trainer.save_model(training_args.output_dir)
 
     if accelerator.is_main_process:
         tokenizer.save_pretrained(training_args.output_dir)
-
-        # if mlflow_enabled:
-        #     # Model registration in MLFlow
-        #     print("MLflow model registration under ", script_args.mlflow_experiment_name)
-
-        #     params = {
-        #         "top_p": 0.9,
-        #         "temperature": 0.2,
-        #         "max_new_tokens": 2048,
-        #     }
-        #     signature = infer_signature("inputs", "generated_text", params=params)
-
-        #     mlflow.transformers.log_model(
-        #         transformers_model={"model": model, "tokenizer": tokenizer},
-        #         signature=signature,
-        #         artifact_path="model",  # This is a relative path to save model files within MLflow run
-        #         model_config=params,
-        #         task="text-generation",
-        #         registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('Fine-tuning-')[-1]}"
-        #     )
 
     accelerator.wait_for_everyone()
 
@@ -414,30 +382,19 @@ if __name__ == "__main__":
 
     set_custom_env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
 
-    mlflow.set_tracking_uri(script_args.mlflow_uri)
-    mlflow.set_experiment(script_args.mlflow_experiment_name)
-    mlflow_run_id = os.environ.get("MLFLOW_RUN_ID")
-    with mlflow.start_run(run_id=mlflow_run_id):
-        with mlflow.start_run(run_name="Finetuning", nested=True) as training_run:
-        
-            mlflow.enable_system_metrics_logging()
-            mlflow.autolog()
+    if script_args.mlflow_uri is not None and script_args.mlflow_experiment_name is not None and \
+        script_args.mlflow_uri != "" and script_args.mlflow_experiment_name != "":
+        print("mlflow init")
+        mlflow.enable_system_metrics_logging()
+        mlflow.autolog()
+        mlflow.set_tracking_uri(script_args.mlflow_uri)
+        mlflow.set_experiment(script_args.mlflow_experiment_name)
 
-            # Load datasets
-            train_ds = load_dataset(
-                "json",
-                data_files=os.path.join(script_args.train_dataset_path, "dataset.json"),
-                split="train"
-            )
-        
-            if script_args.test_dataset_path:
-                test_ds = load_dataset(
-                    "json",
-                    data_files=os.path.join(script_args.test_dataset_path, "dataset.json"),
-                    split="train"
-                )
-            else:
-                test_ds = None
-        
-            # launch training
-            train(script_args, training_args, train_ds, test_ds)
+        current_datetime = datetime.datetime.now()
+        formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M")
+        model_name = script_args.model_id.split("/")[-1]
+        set_custom_env({"MLFLOW_RUN_NAME": f"Fine-tuning-{model_name}-{formatted_datetime}"})
+        set_custom_env({"MLFLOW_EXPERIMENT_NAME": script_args.mlflow_experiment_name})
+    
+    # launch training    
+    train(script_args, training_args)
