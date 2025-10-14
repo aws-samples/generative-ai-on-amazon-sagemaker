@@ -115,23 +115,13 @@ def deploy(
             )
         
             print(f"deploying endpoint: {endpoint_name}")
-        
-            data_capture_config = DataCaptureConfig(
-                enable_capture=True,
-                sampling_percentage=100,
-                destination_s3_uri='s3://sagemaker-us-east-1-329542461890/data-capture/',
-                capture_options=["REQUEST", "RESPONSE"],
-                csv_content_types=["text/csv"],
-                json_content_types=["application/json"]
-            )
-            
+
             predictor = model.deploy(
                 endpoint_name=endpoint_name,
                 initial_instance_count=instance_count,
                 instance_type=instance_type,
                 container_startup_health_check_timeout=health_check_timeout,
                 model_data_download_timeout=model_data_download_timeout,
-                data_capture_config=data_capture_config
             )
             
             # Log deployment metrics

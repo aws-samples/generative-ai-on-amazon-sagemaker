@@ -470,7 +470,7 @@ def qualitative_evaluate(
             
             # Define the model to evaluate
             model_to_evaluate = {
-                "name": "Fine-tuned DeepSeek-R1-Distill-Llama-8B", 
+                "name": "Fine-tuned Qwen3-4B-Instruct-2507",
                 "endpoint": endpoint_name
             }
             
