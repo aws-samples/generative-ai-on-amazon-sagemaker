@@ -37,7 +37,7 @@ def deploy(
             sagemaker_session = sagemaker.Session()
             instance_count = 1
             instance_type = "ml.g5.2xlarge"
-            health_check_timeout = 700
+            health_check_timeout = 3600
             model_data_download_timeout = 3600
 
             model_config = {
