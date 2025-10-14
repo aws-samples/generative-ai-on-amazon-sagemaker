@@ -4,6 +4,8 @@
 
 from sagemaker.workflow.function_step import step
 from .pipeline_utils import PIPELINE_INSTANCE_TYPE
+from .pipeline_utils import SYSTEM_PROMPT
+from .pipeline_utils import convert_to_messages
 
 
 @step(
@@ -61,7 +63,7 @@ def quantitative_evaluate(
             guardrailIdentifier=guardrail_id,
             guardrailVersion=guardrail_version,
             source='INPUT',
-            content=[{'text': {'text': payload["inputs"]}}]
+            content=[{'text': {'text': payload["messages"][0]["content"]}}]
         )
         guardrailResult = guardrail_response_input["action"]
     
@@ -71,15 +73,29 @@ def quantitative_evaluate(
         
         try:
             start_time = time.time()
-            response = sm_client.invoke_endpoint(
-                EndpointName=endpoint_name,
-                ContentType='application/json',
-                Body=json.dumps(payload)
-            )
-            inference_time = time.time() - start_time
+            # response = sm_client.invoke_endpoint(
+            #     EndpointName=endpoint_name,
+            #     ContentType='application/json',
+            #     Body=json.dumps(payload)
+            # )
+            # inference_time = time.time() - start_time
             
-            response_body = response['Body'].read().decode('utf-8')
-            return json.loads(response_body), inference_time
+            # response_body = response['Body'].read().decode('utf-8')
+            # return json.loads(response_body), inference_time
+
+            from sagemaker.predictor import Predictor
+            from sagemaker.serializers import JSONSerializer
+            from sagemaker.deserializers import JSONDeserializer
+            
+            predictor = Predictor(
+                endpoint_name=f"{endpoint_name}",
+                serializer=JSONSerializer(),
+                deserializer=JSONDeserializer()
+            )
+            
+            response = predictor.predict(payload)['choices'][0]['message']['content']
+            inference_time = time.time() - start_time
+            return response, inference_time
         except Exception as e:
             print(f"Error invoking endpoint {endpoint_name}: {str(e)}")
             return None, -1
@@ -167,29 +183,14 @@ def quantitative_evaluate(
         failed_generations = 0
     
         for example in tqdm(dataset, desc="Generating Responses"):
-            question = example["Question"]
-    
-            # Prepare the prompt for the model
-            prompt = f"""
-            <|begin_of_text|>
-            <|start_header_id|>system<|end_header_id|>
-            You are a medical expert with advanced knowledge in clinical reasoning, diagnostics, and treatment planning. 
-            Below is an instruction that describes a task, paired with an input that provides further context. 
-            Write a response that appropriately completes the request.
-            Before answering, think carefully about the question and create a step-by-step chain of thoughts to ensure a logical and accurate response.
-            <|eot_id|><|start_header_id|>user<|end_header_id|>
-            {question}<|eot_id|>
-            <|start_header_id|>assistant<|end_header_id|>"""
-    
-            # Payload for SageMaker endpoint
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": 512,
-                    "top_p": 0.9,
-                    "temperature": 0.6,
-                    "return_full_text": False
-                }
+            payload = {}
+            messages_prompt = convert_to_messages(example, SYSTEM_PROMPT)
+            payload["messages"] = messages_prompt["messages"]
+            payload["parameters"] = {
+                "max_new_tokens": 512,
+                "top_p": 0.9,
+                "temperature": 0.6,
+                "return_full_text": False
             }
     
             # Call the model endpoint
