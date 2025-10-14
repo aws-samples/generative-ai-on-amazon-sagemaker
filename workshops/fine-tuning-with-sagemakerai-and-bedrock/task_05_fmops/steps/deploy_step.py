@@ -100,17 +100,15 @@ def deploy(
                 print(f"Endpoint {endpoint_name} does not exist, proceeding with deployment")
             
             # Continue with model deployment
-            image_uri = sagemaker.image_uris.retrieve(
-                framework="djl-lmi",
-                region=sagemaker_session.boto_session.region_name,
-                version="latest"
-            )
+            region = sagemaker_session.boto_session.region_name
+            inference_image_uri = f"763104351884.dkr.ecr.{region}.amazonaws.com/djl-inference:0.33.0-lmi15.0.0-cu128"
+            mlflow.log_param("inference_image_uri", inference_image_uri)
             
             model_data = model_artifacts_s3_path
             
             # Create model only once
             model = Model(
-                image_uri=image_uri,
+                image_uri=inference_image_uri,
                 model_data=model_data,
                 role=get_execution_role(),
                 env=model_config
