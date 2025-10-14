@@ -145,8 +145,8 @@ def qualitative_evaluate(
             ),
             examples=medical_accuracy_examples,
             version="v1",
-            # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
-            model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
+            model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
+            # model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
                 "temperature": 0.0,
@@ -194,8 +194,8 @@ def qualitative_evaluate(
             ),
             examples=clinical_reasoning_examples,
             version="v1",
-            # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
-            model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
+            model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
+            # model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
                 "temperature": 0.0,
@@ -241,8 +241,8 @@ def qualitative_evaluate(
             ),
             examples=patient_safety_examples,
             version="v1",
-            # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
-            model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
+            model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
+            # model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
                 "temperature": 0.0,
@@ -481,7 +481,7 @@ def qualitative_evaluate(
             mlflow.log_param("qualitative_evaluation_endpoint", endpoint_name)
             mlflow.log_param("qualitative_evaluation_num_samples", num_samples)
             mlflow.log_param("qualitative_evaluation_timestamp", datetime.now().isoformat())
-            mlflow.log_param("llm_judge_model", "bedrock:/anthropic.claude-3-haiku-20240307-v1:0")
+            mlflow.log_param("llm_judge_model", "bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0")
             
             # Load the test dataset
             try:
