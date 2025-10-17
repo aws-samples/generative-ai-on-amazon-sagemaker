@@ -1,4 +1,4 @@
-sagemaker==2.235.2
+sagemaker==2.237.3
 datasets==4.1.1
 pandas==2.2.3
 matplotlib==3.10.6
