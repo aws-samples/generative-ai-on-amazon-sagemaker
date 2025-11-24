@@ -184,7 +184,7 @@ def generate_sql(question, endpoint_name, smr_client):
             {"role": "system", "content": system},
             {"role": "user", "content": query},
         ],
-        'max_tokens': 128,
+        'max_tokens': 256,
         'temperature': 0.0,
         'stream': True,
     }
