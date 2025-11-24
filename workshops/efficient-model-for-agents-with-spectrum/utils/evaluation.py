@@ -1,3 +1,4 @@
+import io
 import boto3
 import json
 import time
@@ -139,7 +140,34 @@ def collect_athena_metrics(sql_query, db_name, s3_output, query_id):
         }
 
 
-def generate_sql(question, predictor):
+class LineIterator:
+    def __init__(self, stream):
+        self.byte_iterator = iter(stream)
+        self.buffer = io.BytesIO()
+        self.read_pos = 0
+    def __iter__(self):
+        return self
+    def __next__(self):
+        while True:
+            self.buffer.seek(self.read_pos)
+            line = self.buffer.readline()
+            if line and line[-1] == ord("\n"):
+                self.read_pos += len(line)
+                return line[:-1]
+            try:
+                chunk = next(self.byte_iterator)
+            except StopIteration:
+                if self.read_pos < self.buffer.getbuffer().nbytes:
+                    continue
+                raise
+            if "PayloadPart" not in chunk:
+                print("Unknown event type:" + chunk)
+                continue
+            self.buffer.seek(0, io.SEEK_END)
+            self.buffer.write(chunk["PayloadPart"]["Bytes"])
+            
+            
+def generate_sql(question, endpoint_name, smr_client):
     """Generate SQL using SageMaker predictor."""
     system = """You are an expert SQL developer. Given the provided database schema and the following user question, generate a syntactically correct SQL query. 
     Only reply with the SQL query, nothing else. Do NOT use the backticks to identify the code, just reply with the pure SQL query."""
@@ -156,13 +184,35 @@ def generate_sql(question, predictor):
             {"role": "system", "content": system},
             {"role": "user", "content": query},
         ],
-        "enable_thinking": False,
-        'parameters': {'max_new_tokens': 128, 'temperature': 0.0}
+        'max_tokens': 128,
+        'temperature': 0.0,
+        'stream': True,
     }
 
-    res = predictor.predict(payload)
-    sql_content = extract_sql(res["choices"][0]["message"]["content"])
-    return sql_content
+    resp = smr_client.invoke_endpoint_with_response_stream(
+        EndpointName=endpoint_name,
+        Body=json.dumps(payload),
+        ContentType="application/json",
+    )
+
+    event_stream = resp["Body"]
+    start_json = b"{"
+    full_response = ""
+    # start_time = time.time()
+    token_count = 0
+    for line in LineIterator(event_stream):
+        if line != b"" and start_json in line:
+            data = json.loads(line[line.find(start_json):].decode("utf-8"))
+            token_text = data['choices'][0]['delta'].get('content', '')
+            full_response += token_text
+            token_count += 1
+            # # For timing inference and clearing cell in jupyter
+            # Calculate tokens per second
+            # elapsed_time = time.time() - start_time
+            # tps = token_count / elapsed_time if elapsed_time > 0 else 0
+            # Clear the output and reprint everything
+            # clear_output(wait=True) # requires 'from IPython.display import clear_output'
+    return full_response
 
 
 def analyze_qwen_results(results_file, eval_data_file=None):
