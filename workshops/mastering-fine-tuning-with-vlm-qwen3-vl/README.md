@@ -4,9 +4,9 @@ This workshop demonstrates end-to-end fine-tuning, evaluation, and deployment of
 
 ## Overview
 
-Model: [Qwen/Qwen3-VL-2B-Instruct](Qwen/Qwen3-VL-2B-Instruct) (or [Qwen/Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct))
-Dataset: [pranavvmurthy26/DoclingMatix_500](https://huggingface.co/datasets/pranavvmurthy26/DoclingMatix_500)
-License: `Apache-2.0`
+- Model: [Qwen/Qwen3-VL-2B-Instruct](Qwen/Qwen3-VL-2B-Instruct) (or [Qwen/Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct))
+- Dataset: [pranavvmurthy26/DoclingMatix_500](https://huggingface.co/datasets/pranavvmurthy26/DoclingMatix_500)
+- License: `Apache-2.0`
 
 ## Workflow
 
