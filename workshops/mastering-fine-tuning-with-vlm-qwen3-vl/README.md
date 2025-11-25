@@ -1,62 +1,81 @@
-# RIV 2025 AIM 412 || Mastering foundation model customization with Amazon SageMaker AI
+# Mastering foundation model customization with Amazon SageMaker AI
 
-## Setup
+This workshop demonstrates end-to-end fine-tuning, evaluation, and deployment of vision-language models using Amazon SageMaker AI.
 
-Model Choice: Qwen/Qwen3-VL-2B-Instruct or Qwen/Qwen3-VL-4B-Instruct
+## Overview
 
-Dataset: [pranavvmurthy26/DoclingMatix_5K](https://huggingface.co/datasets/pranavvmurthy26/DoclingMatix_5K)
+Model: [Qwen/Qwen3-VL-2B-Instruct](Qwen/Qwen3-VL-2B-Instruct) (or [Qwen/Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct))
+Dataset: [pranavvmurthy26/DoclingMatix_500](https://huggingface.co/datasets/pranavvmurthy26/DoclingMatix_500)
+License: `Apache-2.0`
 
-## Prep Dataset
+## Workflow
 
-Run `finetune--Qwen--Qwen3-VL-2B-Instruct.ipynb` or `finetune--Qwen--Qwen3-VL-4B-Instruct.ipynb` Notebook (Data prep stage).
+### Lab 1: Data Preparation & Fine-Tuning Setup
+**Notebook:** `1-2-finetune--Qwen--Qwen3-VL-2B-Instruct.ipynb`
 
-> [NOTE]
-> If you're running this inside an EC2 move the JSONL file to /opt/ml/input/data/training/HuggingFaceM4--DoclingMatix.jsonl before running ft task.
+1. Load and prepare the DoclingMatix dataset for multimodal instruction tuning
+2. Convert dataset to messages format with base64-encoded images
+3. Upload training data to S3
+4. Configure and launch SageMaker training job using:
+   - PyTorch Estimator with ModelTrainer
+   - PeFT/LoRA strategy (4-bit quantization)
+   - DeepSpeed ZeRO-3 optimization
+   - Optional MLflow tracking for metrics
+5. Monitor training progress and retrieve model artifacts
 
+**Key Outputs:**
+- Training dataset in JSONL format
+- Fine-tuned model artifacts in S3
+- Training job name for downstream tasks
 
-## How to Run
+### Lab 2: Model Evaluation
+**Notebook:** `3-evaluation-stream--Qwen--Qwen3-VL-2B-Instruct.ipynb`
 
-If you're running this inside EC2 (using capacity blocks)
+1. Generate predictions from both base and fine-tuned models
+2. Run statistical evaluation metrics:
+   - ROUGE scores (rouge1, rouge2, rougeL)
+   - BERTScore (precision, recall, F1)
+   - Semantic similarity using sentence transformers
+3. Run qualitative evaluation using LLM-as-a-Judge:
+   - Amazon Nova Pro evaluates outputs on factual accuracy, completeness, relevance, and clarity
+   - Scores generated on 0-100 scale
+4. Compare results between base and fine-tuned models
+5. Visualize improvements with histograms and box plots
 
-```bash
+**Key Outputs:**
+- Statistical metrics logged to MLflow
+- LLM judge evaluation results
+- Comparative analysis showing fine-tuning improvements
 
-sudo apt-get update -y
+### Lab 3: Model Deployment
+**Notebook:** `4-deploy--Qwen--Qwen3-VL-2B-Instruct.ipynb`
 
-sudo apt-get install python3-pip
+1. Clean up pre-existing endpoints (if any)
+2. Create SageMaker endpoint configuration
+3. Deploy endpoint with vLLM inference container
+4. Create inference component with:
+   - Custom vLLM image for Qwen3-VL
+   - GPU memory optimization (85% utilization)
+   - Streaming response support
+5. Test deployed endpoint with sample image + text prompts
 
-sudo pip install uv
+**Key Outputs:**
+- Production-ready SageMaker endpoint
+- Streaming inference capability
+- Real-time multimodal inference API
 
-uv venv py312 --python 3.12
+## Quick Start with SageMaker
 
-source py312/bin/activate 
+The recommended approach is to use the Jupyter notebooks in sequence (Lab 1 → Lab 2 → Lab 3).
 
-uv pip install riv2025-aim412-mastering-fm-fine-tuning/sagemaker_code/requirements.txt
+## Key Features
 
-accelerate launch --config_file configs/accelerate/ds_zero3.yaml --num_processes 1 sft.py --config hf_recipes/Qwen/Qwen3-VL-2B-Instruct-vanilla-peft-qlora.yaml
-
-```
-
-
-## Use Docker
-
-```
-
-aws configure
-
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 763104351884.dkr.ecr.us-east-1.amazonaws.com
-
-docker run -it --gpus all -v /home/ubuntu/pranavvm/riv2025-aim412-mastering-fm-fine-tuning/:/app 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.8.0-gpu-py312-cu129-ubuntu22.04-sagemaker /bin/bash
-
-cd /app/riv2025-aim412-mastering-fm-fine-tuning/sagemaker_code
-
-./sm_accelerate_train.sh --config hf_recipes/Qwen/Qwen3-VL-2B-Instruct-vanilla-peft-qlora.yaml
-
-```
-
-
-## SageMaker Workflow
-
-WIP
+- Multimodal fine-tuning with vision + text inputs
+- Efficient training with PeFT/LoRA and 4-bit quantization
+- Comprehensive evaluation (statistical + LLM-as-a-Judge)
+- Production deployment with vLLM for optimized inference
+- MLflow integration for experiment tracking
+- Streaming inference support for real-time applications
 
 
 
