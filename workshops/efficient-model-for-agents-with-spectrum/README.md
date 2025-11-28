@@ -2,6 +2,8 @@
 
 Join us to learn a practical and cost-effective way to customize AI models using spectrum-aware fine-tuning using the fully managed training experience provided by Amazon SageMaker training jobs. We'll demonstrate how this method precisely updates only the most important parts of an AI model, making the process faster and more affordable than traditional approaches. Through real-world examples, we'll show how to train language models for high-accuracy task completion and decision-making in agentic workflows. This session will provide you with hands-on knowledge to make your AI training more efficient, helping you save both time and money while building more capable AI agents.
 
+![fine-tuned-model-performances.png](./images/fine-tuned-model-performances.png)
+
 ## Architecture
 
 ### Model Training and Deployment
