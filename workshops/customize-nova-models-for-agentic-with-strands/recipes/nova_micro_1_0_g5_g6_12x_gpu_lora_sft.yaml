@@ -1,0 +1,45 @@
+# Note:
+# This recipe can run on g5.12xlarge and g6.12xlarge instance types.
+
+## Run config
+run:
+  name: "my-lora-run"             # A descriptive name for your training job
+  model_type: "amazon.nova-micro-v1:0:128k"  # Model variant specification, do not change
+  model_name_or_path: "nova-micro/prod"      # Base model path, do not change
+  replicas: 1                     # Number of compute instances for training, allowed value is 1
+  data_s3_path: ""                # Customer data path
+  output_s3_path: ""              # Output artifact path, Sagemaker Hyperpod job-specific configuration - not compatible with standard Sagemaker Training jobs
+
+## Training specific configs
+training_config:
+  max_length: 8192               # Maximum context window size (tokens). Should be between [1024, 8192] and multiple of 1024.
+  global_batch_size: 64           # Global batch size, allowed values are 16, 32, 64
+
+  trainer:
+    max_epochs: 2                # Number of training epochs
+
+  model:
+    hidden_dropout: 0.0          # Dropout for hidden states, must be between 0.0 and 1.0
+    attention_dropout: 0.0       # Dropout for attention weights, must be between 0.0 and 1.0
+    ffn_dropout: 0.0             # Dropout for feed-forward networks, must be between 0.0 and 1.0
+
+    optim:
+      lr: 1e-5                 # Learning rate
+      name: distributed_fused_adam  # Optimizer algorithm, do not change
+      adam_w_mode: true        # Enable AdamW mode
+      eps: 1e-06               # Epsilon for numerical stability
+      weight_decay: 0.0        # L2 regularization strength, must be between 0.0 and 1.0
+      betas:                   # Adam optimizer betas, must be between 0.0 and 1.0
+        - 0.9
+        - 0.999
+      sched:
+        warmup_steps: 10     # Learning rate warmup steps
+        constant_steps: 0    # Steps at constant learning rate
+        min_lr: 1e-6         # Minimum learning rate
+
+    peft:
+      peft_scheme: "lora"      # Enable LoRA for parameter-efficient fine-tuning
+      lora_tuning:
+        loraplus_lr_ratio: 16.0  # LoRA+ learning rate scaling factor, must be between 0.0 and 100.0
+        alpha: 128            # Scaling factor for LoRA weights. Allowed values are 32, 64, 96, 128, 160 and 192
+        adapter_dropout: 0.01  # Regularization for LoRA parameters. Must be between 0.0 and 1.0
