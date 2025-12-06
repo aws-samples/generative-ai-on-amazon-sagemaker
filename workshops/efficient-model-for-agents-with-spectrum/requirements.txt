@@ -87,7 +87,7 @@ types-awscrt==0.28.2
 types-s3transfer==0.14.0
 typing-extensions==4.15.0
 typing-inspection==0.4.2
-urllib3==2.5.0
+urllib3==2.6.0
 uvicorn==0.38.0
 watchdog==6.0.0
 wcwidth==0.2.14
