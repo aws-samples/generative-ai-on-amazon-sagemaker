@@ -18,7 +18,7 @@ docstring-parser==0.17.0
 et-xmlfile==2.0.0
 executing==2.2.1
 fastapi==0.119.1
-filelock==3.20.0
+filelock==3.20.1
 frozenlist==1.8.0
 fsspec==2025.9.0
 hf-xet==1.1.10
