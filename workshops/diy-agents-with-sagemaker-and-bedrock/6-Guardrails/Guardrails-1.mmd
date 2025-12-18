@@ -1,0 +1,23 @@
+
+```mermaid
+graph LR
+    subgraph Guardrail["AWS Bedrock Guardrail"]
+        TP[Topic Policy<br/>6 Denied Topics]
+        CF[Content Filters<br/>Hate/Violence/Misconduct]
+        WF[Word Filters<br/>17 Food Safety Terms]
+        PII[PII Protection<br/>Anonymization]
+    end
+    
+    Input[User/Agent Input] --> Guardrail
+    Guardrail --> Decision{Safe?}
+    Decision -->|Yes| Allow[✓ Allow]
+    Decision -->|No| Block[✗ Block]
+    
+    style Guardrail fill:#fff3cd,stroke:#ffc107,stroke-width:3px
+    style TP fill:#d1ecf1,stroke:#0c5460
+    style CF fill:#d1ecf1,stroke:#0c5460
+    style WF fill:#d1ecf1,stroke:#0c5460
+    style PII fill:#d1ecf1,stroke:#0c5460
+    style Allow fill:#d4edda,stroke:#155724
+    style Block fill:#f8d7da,stroke:#721c24
+```

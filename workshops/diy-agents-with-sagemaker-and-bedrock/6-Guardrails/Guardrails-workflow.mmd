@@ -1,0 +1,36 @@
+
+```mermaid
+flowchart TD
+    Start([User Input<br/>Natural Language Request]) --> GR1{AWS Bedrock<br/>Guardrail<br/>Input Check}
+    
+    GR1 -->|✓ Safe| Agent1[Agent 1: Preference Analyzer<br/>Converts text to JSON]
+    GR1 -->|✗ Blocked| Block1[❌ Blocked:<br/>Unsafe content detected]
+    
+    Agent1 --> GR2{Guardrail<br/>Output Check}
+    GR2 -->|✓ Safe| Agent2[Agent 2: Recipe Generator<br/>Creates 3 recipes + search]
+    GR2 -->|✗ Blocked| Block2[❌ Blocked:<br/>Unsafe response]
+    
+    Agent2 --> GR3{Guardrail<br/>Output Check}
+    GR3 -->|✓ Safe| Extract[Title Extraction<br/>Regex H2 parsing]
+    GR3 -->|✗ Blocked| Block3[❌ Blocked:<br/>Unsafe recipe]
+    
+    Extract --> Agent3[Agent 3: Video Finder<br/>YouTube search for tutorials]
+    
+    Agent3 --> GR4{Guardrail<br/>Output Check}
+    GR4 -->|✓ Safe| Output([Final Output<br/>Recipes + Video Links])
+    GR4 -->|✗ Blocked| Block4[❌ Blocked:<br/>Unsafe videos]
+    
+    style GR1 fill:#ff9999,stroke:#cc0000,stroke-width:3px
+    style GR2 fill:#ff9999,stroke:#cc0000,stroke-width:3px
+    style GR3 fill:#ff9999,stroke:#cc0000,stroke-width:3px
+    style GR4 fill:#ff9999,stroke:#cc0000,stroke-width:3px
+    style Agent1 fill:#99ccff,stroke:#0066cc,stroke-width:2px
+    style Agent2 fill:#99ccff,stroke:#0066cc,stroke-width:2px
+    style Agent3 fill:#99ccff,stroke:#0066cc,stroke-width:2px
+    style Start fill:#99ff99,stroke:#006600,stroke-width:2px
+    style Output fill:#99ff99,stroke:#006600,stroke-width:2px
+    style Block1 fill:#ffcccc,stroke:#990000
+    style Block2 fill:#ffcccc,stroke:#990000
+    style Block3 fill:#ffcccc,stroke:#990000
+    style Block4 fill:#ffcccc,stroke:#990000
+```
