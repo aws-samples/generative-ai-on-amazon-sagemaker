@@ -17,7 +17,7 @@ ddgs==9.3.1
 faiss-cpu==1.11.0
 sagemaker==2.249.0
 openai==1.99.3
-aiohttp==3.12.15
+aiohttp==3.13.3
 boto3==1.39.8
 bedrock-agentcore==0.1.1
 bedrock-agentcore-starter-toolkit==0.1.5
