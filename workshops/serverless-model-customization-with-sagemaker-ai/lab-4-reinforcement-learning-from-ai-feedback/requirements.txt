@@ -1,0 +1,5 @@
+datasets
+boto3
+sagemaker
+pandas
+scikit-learn
