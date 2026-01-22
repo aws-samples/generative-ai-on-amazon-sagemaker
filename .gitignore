@@ -166,3 +166,8 @@ news-*
 news_*
 model.tar.gz
 errors
+
+# tmp folders
+tmp/
+*/**/tmp
+*/**/tmp/*
