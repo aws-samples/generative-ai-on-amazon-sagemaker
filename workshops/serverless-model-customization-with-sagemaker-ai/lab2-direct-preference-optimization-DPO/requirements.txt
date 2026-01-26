@@ -1,0 +1,4 @@
+sagemaker>=3.3.1
+mlflow
+sagemaker-mlflow==0.2.0
+datasets
