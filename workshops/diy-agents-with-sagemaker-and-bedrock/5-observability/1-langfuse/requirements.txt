@@ -2,7 +2,7 @@ strands-agents==1.3.0
 strands-agents[sagemaker]
 strands-agents-tools
 aiohttp==3.12.15
-sagemaker==2.249.0
+sagemaker==2.256.0
 litellm==1.75.2
 openai==1.99.3
 langfuse==3.2.3
