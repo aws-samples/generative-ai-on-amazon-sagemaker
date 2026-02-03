@@ -1,7 +1,7 @@
 aiohttp==3.12.14
 boto3==1.39.8
 botocore==1.39.8
-sagemaker==2.247.0
+sagemaker==2.256.0
 strands-agents==1.0.0
 strands-agents-builder==0.1.7
 strands-agents-tools==0.2.1
