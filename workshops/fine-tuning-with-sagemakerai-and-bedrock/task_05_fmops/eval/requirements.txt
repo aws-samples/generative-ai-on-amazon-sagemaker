@@ -1,9 +1,9 @@
 datasets==3.5.0
 pandas==2.2.3
 matplotlib==3.10.1
-mlflow==3.4.0
+mlflow==3.9.0
 numpy==1.26.4
-boto3==1.37.1
+boto3==1.40.47
 tqdm==4.67.1
 lighteval[math]==0.9.2
 torch

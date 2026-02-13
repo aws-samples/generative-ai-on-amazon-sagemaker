@@ -1,7 +1,7 @@
 # ### 7. Model Registration Step
 # This step registers the fine-tuned model in MLflow model registry and SageMaker AI model registry
 
-from sagemaker.workflow.function_step import step
+from sagemaker.mlops.workflow.function_step import step
 from .pipeline_utils import PIPELINE_INSTANCE_TYPE
 
 

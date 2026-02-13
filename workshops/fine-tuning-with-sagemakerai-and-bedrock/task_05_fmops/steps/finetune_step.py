@@ -2,7 +2,7 @@
 
 # This is where the actual model adaptation occurs. The step takes the preprocessed data and applies it to fine-tune the base LLM (in this case, a Qwen model). It incorporates the LoRA technique for efficient adaptation.
 
-import sagemaker
+from sagemaker.core.helper.session_helper import Session, get_execution_role
 import boto3
 import mlflow
 import yaml
@@ -13,15 +13,16 @@ import os
 import traceback
 import tempfile
 from pathlib import Path
-from sagemaker.pytorch import PyTorch
-from sagemaker.workflow.function_step import step
+
+from sagemaker.mlops.workflow.function_step import step
 from .pipeline_utils import PIPELINE_INSTANCE_TYPE
 
-from sagemaker import image_uris
-from sagemaker.modules.configs import Compute, InputData, OutputDataConfig, SourceCode, StoppingCondition
-from sagemaker.modules.distributed import Torchrun
-from sagemaker.modules.train import ModelTrainer
-from sagemaker.modules.configs import InputData
+from sagemaker.core import image_uris
+from sagemaker.core.training.configs import Compute, SourceCode
+from sagemaker.core.shapes import OutputDataConfig
+from sagemaker.train.model_trainer import InputData, StoppingCondition
+from sagemaker.train.model_trainer import Torchrun
+from sagemaker.train.model_trainer import ModelTrainer
 
 @step(
     name="ModelFineTuning",
@@ -112,8 +113,8 @@ def train(
                 # Log the metric definitions we're using
                 mlflow.log_param("tracked_metrics", [m['Name'] for m in metric_definitions])
 
-                sagemaker_session = sagemaker.Session()
-                image_uri = sagemaker.image_uris.retrieve(
+                sagemaker_session = Session()
+                image_uri = image_uris.retrieve(
                     framework="pytorch",
                     version="2.6.0",
                     instance_type="ml.g5.2xlarge",
