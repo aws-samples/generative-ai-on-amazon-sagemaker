@@ -240,7 +240,7 @@ def register_model(
                         ]
                     },
                     ValidationSpecification={
-                        'ValidationRole': 'dummy-role',  # Required but not used
+                        'ValidationRole': 'dummy-role-dummy-role',  # Required but not used
                         'ValidationProfiles': [
                             {
                                 'ProfileName': 'ValidationProfile1',
@@ -268,6 +268,8 @@ def register_model(
                     MetadataProperties={
                         'GeneratedBy': pipeline_name,
                         'Repository': model_id,
+                    },
+                    CustomerMetadataProperties={
                         'EvaluationScore': str(evaluation_score)
                     },
                     ModelMetrics={
