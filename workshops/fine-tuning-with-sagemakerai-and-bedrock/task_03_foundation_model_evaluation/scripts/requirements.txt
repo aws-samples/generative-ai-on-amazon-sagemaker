@@ -1,8 +1,9 @@
 sagemaker==3.4.0
-datasets==4.1.1
-pandas==2.2.3
-matplotlib==3.10.6
+sagemaker-core>=2.4.1
+datasets==4.5.0
+pandas==2.3.3
+matplotlib==3.10.8
 numpy==1.26.4
-boto3==1.40.47
-tqdm==4.67.1
-lighteval==0.10.0
+boto3==1.42.51
+tqdm==4.67.3
+rouge-score==0.1.2
