@@ -6,4 +6,4 @@ sagemaker==2.256.0
 litellm==1.75.2
 openai==1.99.3
 langfuse==3.2.3
-uv==0.8.6
+uv==0.9.5
