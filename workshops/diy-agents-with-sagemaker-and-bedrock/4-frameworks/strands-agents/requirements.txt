@@ -15,7 +15,7 @@ mem0ai==0.1.114
 opensearch-py
 ddgs==9.3.1
 faiss-cpu==1.11.0
-sagemaker==2.249.0
+sagemaker==2.256.0
 openai==1.99.3
 aiohttp==3.13.3
 boto3
