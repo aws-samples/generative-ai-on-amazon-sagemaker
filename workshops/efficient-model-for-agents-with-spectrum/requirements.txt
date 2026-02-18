@@ -49,7 +49,7 @@ opentelemetry-sdk==1.38.0
 opentelemetry-semantic-conventions==0.59b0
 pandas==2.3.3
 parso==0.8.5
-pillow==11.3.0
+pillow==12.1.1
 platformdirs==4.5.0
 prompt-toolkit==3.0.52
 propcache==0.4.1
