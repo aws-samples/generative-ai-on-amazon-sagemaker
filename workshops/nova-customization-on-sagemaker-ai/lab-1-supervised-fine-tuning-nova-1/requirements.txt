@@ -1,0 +1,6 @@
+boto3
+botocore
+amzn-nova-customization-sdk==1.0.83
+datasets==3.5.1
+sagemaker==3.4.1
+scikit-learn==1.6.1
