@@ -7,7 +7,7 @@ evaluate==0.4.3
 huggingface_hub[hf_transfer]==0.33.4
 mlflow==2.22.2
 safetensors>=0.4.5
-sagemaker==2.252.0
+sagemaker==2.256.0
 sagemaker-mlflow==0.1.0
 sentencepiece==0.2.0
 scikit-learn==1.6.1
