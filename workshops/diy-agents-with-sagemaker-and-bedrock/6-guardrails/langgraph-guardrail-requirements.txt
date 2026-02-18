@@ -12,6 +12,7 @@ boto3>=1.34.0
 
 # Search tools
 duckduckgo-search>=6.0.0
+ddgs>=0.6.0
 youtube-search>=2.1.0
 
 # Jupyter notebook support
