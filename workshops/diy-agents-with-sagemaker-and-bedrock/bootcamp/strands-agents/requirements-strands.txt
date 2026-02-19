@@ -10,7 +10,7 @@ seaborn==0.13.2
 joblib==1.5.1
 requests>=2.32.4
 scikit-learn==1.7.0
-uv==0.8.6
+uv==0.9.6
 mem0ai==0.1.114
 opensearch-py
 ddgs==9.3.1
