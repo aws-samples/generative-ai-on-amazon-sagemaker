@@ -840,11 +840,19 @@ def _load_dataset_auto(path: str) -> Dataset:
             logger.info(f"DatasetDict detected, using split '{split}'")
             ds = ds[split]
         return ds
-    # Fallback: look for dataset.json in directory
-    return load_dataset(
-        "json",
-        data_files=os.path.join(path, "dataset.json"),
-        split="train",
+    # Fallback: look for JSON/JSONL files in directory
+    import glob as _glob
+
+    json_files = sorted(
+        _glob.glob(os.path.join(path, "*.json"))
+        + _glob.glob(os.path.join(path, "*.jsonl"))
+    )
+    if json_files:
+        logger.info(f"Found JSON file(s) in directory: {json_files}")
+        return load_dataset("json", data_files=json_files, split="train")
+    raise FileNotFoundError(
+        f"No supported dataset files found in '{path}'. "
+        "Expected .json, .jsonl, .arrow files or a HuggingFace dataset directory."
     )
 
 
