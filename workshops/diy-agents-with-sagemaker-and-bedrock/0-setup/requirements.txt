@@ -1,9 +1,9 @@
 aiohttp>=3.13.0
-boto3>=1.35.0
-botocore>=1.35.0
-sagemaker>=3.0.0
+boto3>=1.36.0
+botocore>=1.36.0
+sagemaker>=3.4.0
 sagemaker-mlflow>=0.2.0
-strands-agents>=1.20.0
+strands-agents>=1.25.0
 strands-agents-builder>=0.1.7
 strands-agents-tools>=0.2.10
-litellm>=1.70.0
+litellm>=1.80.0
