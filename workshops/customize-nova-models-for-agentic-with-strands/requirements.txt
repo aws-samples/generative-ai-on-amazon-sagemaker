@@ -4,6 +4,6 @@ datasets==4.0.0
 sagemaker==2.254.1
 scikit-learn==1.7.1
 tiktoken==0.12.0
-transformers==4.49.0
+transformers==4.53.0
 pandas==2.3.3
 nvidia-ml-py3==7.352.0
