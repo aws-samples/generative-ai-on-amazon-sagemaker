@@ -2,7 +2,7 @@
 
 # After fine-tuning, this step assesses the model's quantitative performance.
 
-from sagemaker.workflow.function_step import step
+from sagemaker.mlops.workflow.function_step import step
 from .pipeline_utils import PIPELINE_INSTANCE_TYPE
 from .pipeline_utils import SYSTEM_PROMPT
 from .pipeline_utils import convert_to_messages
@@ -83,17 +83,16 @@ def quantitative_evaluate(
             # response_body = response['Body'].read().decode('utf-8')
             # return json.loads(response_body), inference_time
 
-            from sagemaker.predictor import Predictor
-            from sagemaker.serializers import JSONSerializer
-            from sagemaker.deserializers import JSONDeserializer
+            from sagemaker.core.resources import Endpoint
             
-            predictor = Predictor(
-                endpoint_name=f"{endpoint_name}",
-                serializer=JSONSerializer(),
-                deserializer=JSONDeserializer()
+            ep = Endpoint.get(endpoint_name=endpoint_name)
+            resp = ep.invoke(
+                body=json.dumps(payload),
+                content_type="application/json",
+                accept="application/json",
             )
-            
-            response = predictor.predict(payload)['choices'][0]['message']['content']
+            result = json.loads(resp.body.read().decode("utf-8"))
+            response = result['choices'][0]['message']['content']
             inference_time = time.time() - start_time
             return response, inference_time
         except Exception as e:

@@ -17,7 +17,6 @@ from peft import AutoPeftModelForCausalLM, LoraConfig, prepare_model_for_kbit_tr
 
 from trl import SFTTrainer, TrlParser
 
-from sagemaker.s3 import S3Downloader
 import subprocess
 
 @dataclass
