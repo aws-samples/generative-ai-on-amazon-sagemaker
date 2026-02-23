@@ -95,9 +95,52 @@ kubectl logs -f qwen3-4b-instruct-cpt-worker-0
 kubectl get pytorchjob qwen3-4b-instruct-cpt
 ```
 
+## Deploy the model
+
+After training completes, you can deploy the fine-tuned model as an inference endpoint using the HyperPod Inference Operator.
+
+### 4. Update `deployment.yaml`
+
+Replace `<your-fsx-filesystem-id>` with your FSx for Lustre filesystem ID:
+
+```yaml
+fsxStorage:
+  fileSystemId: <your-fsx-filesystem-id>
+```
+
+To find your filesystem ID:
+
+```bash
+kubectl get pv -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.csi.volumeHandle}{"\n"}{end}'
+```
+
+### 5. Deploy the inference endpoint
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+### Monitor the deployment
+
+```bash
+# Check endpoint status
+kubectl describe inferenceendpointconfig qwen3-4b-instruct-cpt-endpoint
+
+# Check deployment and pods
+kubectl get deployments,pods -n default
+
+# Check operator logs for errors
+kubectl logs -n hyperpod-inference-system \
+  $(kubectl get pods -n hyperpod-inference-system -o jsonpath='{.items[0].metadata.name}') \
+  --tail=30
+```
+
 ## Cleanup
 
 ```bash
+# Delete the inference endpoint
+kubectl delete inferenceendpointconfig qwen3-4b-instruct-cpt-endpoint
+
 # Delete the training job
 kubectl delete pytorchjob qwen3-4b-instruct-cpt
 
