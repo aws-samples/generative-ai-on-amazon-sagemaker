@@ -1,0 +1,7 @@
+datasets>=4.5.0
+boto3
+sagemaker>=3.3.1
+pandas
+scikit-learn
+rich
+matplotlib
