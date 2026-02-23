@@ -7,18 +7,23 @@ This repository provides comprehensive resources for working with generative AI 
 ### Workshops
 
 #### [Building RAG Workflows with SageMaker and Bedrock](./workshops/building-rag-workflows-with-sagemaker-and-bedrock/)
+
 - Build experimental RAG applications
 - Implement RAG with SageMaker and OpenSearch
 - Fine-tune embedding models
 - Customize models with RAFT
 - Apply guardrails to LLM outputs
 
-#### [Distributed Training and Deployment on SageMaker AI](./workshops/distributed-training-deployment-on-sagemaker-ai/)
-- Use SageMaker JumpStart for fine-tuning
-- Implement distributed training with FSDP and QLoRA
-- Deploy models on SageMaker HyperPod with Kubernetes
+#### [Advanced Model Customization on SageMaker AI](./workshops/distributed-training-deployment-on-sagemaker-ai/)
+
+- Explore different customization techniques, such as Continued Pre-Training (CPT), Supervised Fine-Tuning (SFT), and Reinforcement Learning Techniques such as Direct Preference Optimization (DPO)
+- Implement distribution strategies such as Fully-Sharded Data Parallel (FSDP) and optimization techniques such as LoRA
+- Execute workloads on SageMaker Training jobs and SageMaker HyperPod
+- Deploy models on SageMaker Managed Inference and on SageMaker HyperPod with Inference Operator
+- Evaluate models using Statistical evaluations and LLM as Judge with Amazon Bedrock
 
 #### [DIY Agents with SageMaker and Bedrock](./workshops/diy-agents-with-sagemaker-and-bedrock/)
+
 - Basic inference with Bedrock and SageMaker
 - Implement tool calling capabilities
 - Build agent patterns (autonomous, orchestrator-worker, etc.)
@@ -26,6 +31,7 @@ This repository provides comprehensive resources for working with generative AI 
 - Add observability with Langfuse and MLflow
 
 #### [Fine-tuning with SageMaker AI and Bedrock](./workshops/fine-tuning-with-sagemakerai-and-bedrock/)
+
 - Set up a Foundation Model Playground
 - Customize foundation models
 - Evaluate models with LightEval
@@ -33,6 +39,7 @@ This repository provides comprehensive resources for working with generative AI 
 - Develop FMOps fine-tuning workflows with SageMaker Pipelines
 
 #### [Partner AI Apps with SageMaker AI](./workshops/partner-ai-apps-with-sagemakerai/)
+
 - Experiment Management with Comet [Image Classification, Fraud Detection]
 - Evaluting LLM applications with Comet Opik
 - Evaluating Agents with Opik
