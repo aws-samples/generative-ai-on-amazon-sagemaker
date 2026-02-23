@@ -1,9 +1,9 @@
 from accelerate import Accelerator
-import bitsandbytes as bnb
 from dataclasses import dataclass, field
-from datasets import Dataset, load_dataset
+from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
 import datetime
 from huggingface_hub import snapshot_download
+import json
 import logging
 import mlflow
 from mlflow.models import infer_signature
@@ -12,21 +12,27 @@ from peft import (
     AutoPeftModelForCausalLM,
     LoraConfig,
     get_peft_model,
-    prepare_model_for_kbit_training,
 )
+import subprocess
+import sys
+import textwrap
 import torch
+import torch.distributed as dist
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    TrainingArguments,
+    EarlyStoppingCallback,
+    Mxfp4Config,
     set_seed,
 )
 from trl import DPOConfig, DPOTrainer, TrlParser
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.integrations import WandbCallback
+import contextlib
 from typing import Any, Dict, List, Optional, Tuple
 import wandb
+from distutils.util import strtobool
 
 # Configure logging
 logging.basicConfig(
@@ -38,51 +44,185 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ScriptArguments:
-    """
-    Arguments for the script execution.
-    """
+    """Arguments for the script execution."""
 
+    attn_implementation: Optional[str] = field(
+        default="flash_attention_2", metadata={"help": "Attention implementation"}
+    )
+    auto_calculate_lengths: bool = field(
+        default=False,
+        metadata={
+            "help": "Auto-calculate max_length, max_prompt_length, max_completion_length from dataset"
+        },
+    )
     checkpoint_dir: str = field(default=None, metadata={"help": "Checkpoint directory"})
-
+    deserialize_messages: bool = field(
+        default=False,
+        metadata={"help": "Deserialize JSON-encoded prompt, chosen, rejected fields"},
+    )
+    use_checkpoints: bool = field(
+        default=False, metadata={"help": "Whether to use checkpointing"}
+    )
+    early_stopping: bool = field(
+        default=False, metadata={"help": "Whether to use early stopping"}
+    )
+    load_in_4bit: bool = field(
+        default=True, metadata={"help": "Load model in 4-bit quantization"}
+    )
     lora_r: Optional[int] = field(default=8, metadata={"help": "lora_r"})
-
-    lora_alpha: Optional[int] = field(default=16, metadata={"help": "lora_dropout"})
-
+    lora_alpha: Optional[int] = field(default=16, metadata={"help": "lora_alpha"})
     lora_dropout: Optional[float] = field(
         default=0.1, metadata={"help": "lora_dropout"}
     )
-
     merge_weights: Optional[bool] = field(
         default=False, metadata={"help": "Merge adapter with base model"}
     )
-
     mlflow_uri: Optional[str] = field(
         default=None, metadata={"help": "MLflow tracking ARN"}
     )
-
     mlflow_experiment_name: Optional[str] = field(
         default=None, metadata={"help": "MLflow experiment name"}
     )
-
     model_id: str = field(
-        default=None, metadata={"help": "Model ID to use for SFT training"}
+        default=None, metadata={"help": "Model ID to use for DPO training"}
     )
-
     token: str = field(default=None, metadata={"help": "Hugging Face API token"})
-
     train_dataset_path: Optional[str] = field(
         default=None, metadata={"help": "Path to the training dataset"}
     )
-
-    test_dataset_path: Optional[str] = field(
-        default=None, metadata={"help": "Path to the test dataset"}
+    use_mxfp4: bool = field(
+        default=False,
+        metadata={"help": "Use MXFP4 quantization instead of BitsAndBytes"},
     )
-
+    use_peft: bool = field(default=True, metadata={"help": "Use PEFT for training"})
+    use_snapshot_download: bool = field(
+        default=True,
+        metadata={"help": "Use snapshot download instead of Hugging Face Hub"},
+    )
+    val_dataset_path: Optional[str] = field(
+        default=None, metadata={"help": "Path to the val dataset"}
+    )
     wandb_token: str = field(default="", metadata={"help": "Wandb API token"})
-
     wandb_project: str = field(
         default="project", metadata={"help": "Wandb project name"}
     )
+    target_modules: Optional[List[str]] = field(
+        default=None, metadata={"help": "Target modules for LoRA"}
+    )
+    torch_dtype: Optional[str] = field(
+        default="auto",
+        metadata={"help": "Torch dtype (auto, bfloat16, float16, float32)"},
+    )
+
+
+class ModelConfigBuilder:
+    """Centralized model configuration builder to eliminate duplicate logic."""
+
+    def __init__(self, script_args: ScriptArguments, training_args: DPOConfig):
+        self.script_args = script_args
+        self.training_args = training_args
+        self._torch_dtype = None
+        self._quantization_config = None
+        self._use_deepspeed = None
+        self._use_fsdp = None
+
+    @property
+    def torch_dtype(self) -> torch.dtype:
+        """Get torch dtype with single source of truth."""
+        if self._torch_dtype is None:
+            if self.script_args.torch_dtype in ["auto", None]:
+                self._torch_dtype = (
+                    torch.bfloat16 if self.training_args.bf16 else torch.float32
+                )
+            else:
+                self._torch_dtype = getattr(torch, self.script_args.torch_dtype)
+        return self._torch_dtype
+
+    @property
+    def use_deepspeed(self) -> bool:
+        """Check if DeepSpeed is enabled."""
+        if self._use_deepspeed is None:
+            self._use_deepspeed = strtobool(
+                os.environ.get("ACCELERATE_USE_DEEPSPEED", "false")
+            )
+        return self._use_deepspeed
+
+    @property
+    def use_fsdp(self) -> bool:
+        """Check if FSDP is enabled."""
+        if self._use_fsdp is None:
+            self._use_fsdp = strtobool(os.environ.get("ACCELERATE_USE_FSDP", "false"))
+        return self._use_fsdp
+
+    @property
+    def quantization_config(self) -> Optional[Any]:
+        """Get quantization configuration."""
+        if self._quantization_config is None and self.script_args.load_in_4bit:
+            if self.script_args.use_mxfp4:
+                self._quantization_config = Mxfp4Config(dequantize=True)
+                logger.info("Using MXFP4 quantization")
+            else:
+                self._quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_compute_dtype=self.torch_dtype,
+                    bnb_4bit_quant_storage=self.torch_dtype,
+                )
+                logger.info("Using BitsAndBytes quantization")
+        return self._quantization_config
+
+    def build_model_kwargs(self) -> Dict[str, Any]:
+        """Build complete model loading arguments."""
+        if (
+            self.script_args.attn_implementation is not None
+            and self.script_args.attn_implementation != ""
+        ):
+            model_kwargs = {
+                "attn_implementation": self.script_args.attn_implementation,
+                "torch_dtype": self.torch_dtype,
+                "use_cache": not self.training_args.gradient_checkpointing,
+                "trust_remote_code": True,
+                "cache_dir": "/tmp/.cache",
+            }
+        else:
+            model_kwargs = {
+                "torch_dtype": self.torch_dtype,
+                "use_cache": not self.training_args.gradient_checkpointing,
+                "trust_remote_code": True,
+                "cache_dir": "/tmp/.cache",
+            }
+
+        # Set low_cpu_mem_usage based on DeepSpeed usage
+        if not self.use_deepspeed:
+            model_kwargs["low_cpu_mem_usage"] = True
+
+        # Add quantization config if enabled
+        if self.quantization_config is not None:
+            model_kwargs["quantization_config"] = self.quantization_config
+
+        return model_kwargs
+
+    def build_trainer_kwargs(self) -> Dict[str, Any]:
+        """Build trainer-specific configuration."""
+        trainer_kwargs = {}
+
+        if self.use_fsdp or (self.training_args.fsdp and self.training_args.fsdp != ""):
+            logger.info("Using FSDP configuration")
+            if self.training_args.gradient_checkpointing_kwargs is None:
+                trainer_kwargs["gradient_checkpointing_kwargs"] = {
+                    "use_reentrant": False
+                }
+        elif self.use_deepspeed:
+            logger.info("Using DeepSpeed configuration")
+        else:
+            logger.info("Using DDP configuration")
+            if self.training_args.gradient_checkpointing_kwargs is None:
+                trainer_kwargs["gradient_checkpointing_kwargs"] = {
+                    "use_reentrant": False
+                }
+
+        return trainer_kwargs
 
 
 class CustomWandbCallback(WandbCallback):
@@ -90,47 +230,76 @@ class CustomWandbCallback(WandbCallback):
 
     def on_log(self, args, state, control, model=None, logs=None, **kwargs):
         if state.is_world_process_zero and logs:
-            # Format logs to include GPU index
             logs = {f"gpu_{i}_{k}": v for i in range(8) for k, v in logs.items()}
             super().on_log(args, state, control, model, logs, **kwargs)
 
 
-def init_distributed():
-    # Initialize the process group
-    torch.distributed.init_process_group(
-        backend="nccl", timeout=datetime.timedelta(seconds=5400)
-    )  # Use "gloo" backend for CPU
-    local_rank = int(os.environ["LOCAL_RANK"])
-    torch.cuda.set_device(local_rank)
+@contextlib.contextmanager
+def gpu_memory_manager():
+    """Context manager for GPU memory cleanup."""
+    try:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        yield
+    finally:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            logger.info(
+                f"GPU memory freed: {torch.cuda.memory_allocated() / 1e9:.2f}GB allocated"
+            )
 
-    return local_rank
+
+@contextlib.contextmanager
+def model_lifecycle(model_name: str):
+    """Context manager for model loading/cleanup lifecycle."""
+    model = None
+    try:
+        logger.info(f"Loading model: {model_name}")
+        yield model
+    except Exception as e:
+        logger.error(f"Error in model lifecycle for {model_name}: {e}")
+        raise
+    finally:
+        if model is not None:
+            logger.info(f"Cleaning up model: {model_name}")
+            del model
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+
+def patch_dpo_trainer_dtype(trainer):
+    """Patch DPOTrainer to fix input_ids dtype issue with tool calling.
+
+    This is a known bug in DPOTrainer where concatenated_forward incorrectly
+    casts input_ids to the model's dtype (bfloat16) instead of keeping them as long.
+    See: https://github.com/huggingface/trl/issues/2101
+    """
+    original_concatenated_forward = trainer.concatenated_forward
+
+    def safe_concatenated_forward(model, batch, is_ref_model=False):
+        # Fix all tensor dtypes in the batch before forward pass
+        for key in batch.keys():
+            if batch[key] is not None and isinstance(batch[key], torch.Tensor):
+                # Input IDs, labels, and attention masks must be long
+                if any(x in key for x in ["input_ids", "labels", "attention_mask"]):
+                    if batch[key].dtype != torch.long:
+                        batch[key] = batch[key].long()
+
+        return original_concatenated_forward(model, batch, is_ref_model)
+
+    trainer.concatenated_forward = safe_concatenated_forward
+    return trainer
 
 
 def download_model(model_name):
     print("Downloading model ", model_name)
-
     os.makedirs("/tmp/tmp_folder", exist_ok=True)
-
     snapshot_download(repo_id=model_name, local_dir="/tmp/tmp_folder")
-
     print(f"Model {model_name} downloaded under /tmp/tmp_folder")
 
 
 def set_custom_env(env_vars: Dict[str, str]) -> None:
-    """
-    Set custom environment variables.
-
-    Args:
-        env_vars (Dict[str, str]): A dictionary of environment variables to set.
-                                   Keys are variable names, values are their corresponding values.
-
-    Returns:
-        None
-
-    Raises:
-        TypeError: If env_vars is not a dictionary.
-        ValueError: If any key or value in env_vars is not a string.
-    """
+    """Set custom environment variables."""
     if not isinstance(env_vars, dict):
         raise TypeError("env_vars must be a dictionary")
 
@@ -139,23 +308,13 @@ def set_custom_env(env_vars: Dict[str, str]) -> None:
             raise ValueError("All keys and values in env_vars must be strings")
 
     os.environ.update(env_vars)
-
-    # Optionally, print the updated environment variables
     print("Updated environment variables:")
     for key, value in env_vars.items():
         print(f"  {key}: {value}")
 
 
 def is_mlflow_enabled(script_args: ScriptArguments) -> bool:
-    """
-    Check if MLflow is enabled based on script arguments.
-
-    Args:
-        script_args: Script arguments
-
-    Returns:
-        True if MLflow is enabled, False otherwise
-    """
+    """Check if MLflow is enabled based on script arguments."""
     return (
         script_args.mlflow_uri is not None
         and script_args.mlflow_experiment_name is not None
@@ -165,12 +324,7 @@ def is_mlflow_enabled(script_args: ScriptArguments) -> bool:
 
 
 def setup_mlflow(script_args: ScriptArguments) -> None:
-    """
-    Set up MLflow tracking.
-
-    Args:
-        script_args: Script arguments
-    """
+    """Set up MLflow tracking."""
     if not is_mlflow_enabled(script_args):
         return
 
@@ -184,22 +338,14 @@ def setup_mlflow(script_args: ScriptArguments) -> None:
     formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M")
     set_custom_env(
         {
-            "MLFLOW_RUN_NAME": f"Fine-tuning-{formatted_datetime}",
+            "MLFLOW_RUN_NAME": f"DPO-{formatted_datetime}",
             "MLFLOW_EXPERIMENT_NAME": script_args.mlflow_experiment_name,
         }
     )
 
 
 def setup_wandb(script_args: ScriptArguments) -> None:
-    """
-    Set up Weights & Biases tracking.
-
-    Args:
-        script_args: Script arguments
-
-    Returns:
-        List of callbacks or None
-    """
+    """Set up Weights & Biases tracking."""
     if script_args.wandb_token and script_args.wandb_token != "":
         logger.info("Initializing Wandb")
         set_custom_env({"WANDB_API_KEY": script_args.wandb_token})
@@ -210,191 +356,155 @@ def setup_wandb(script_args: ScriptArguments) -> None:
         return None
 
 
-def get_model_config(
-    training_args: TrainingArguments,
-) -> Tuple[torch.dtype, Dict[str, Any], Dict[str, Any], Dict[str, Any]]:
+def ensure_uniform_dtype(
+    model: AutoModelForCausalLM, target_dtype: torch.dtype
+) -> AutoModelForCausalLM:
+    """Ensure all model parameters have uniform dtype for FSDP compatibility.
+
+    This is especially important for MoE (Mixture of Experts) models like Nemotron
+    where router/gate modules may initialize in float32 even when bfloat16 is specified.
     """
-    Get model configuration based on training arguments.
+    mixed_dtypes = set()
+    for name, param in model.named_parameters():
+        if param.dtype != target_dtype:
+            mixed_dtypes.add((name, param.dtype))
 
-    Args:
-        training_args: Training arguments
+    if mixed_dtypes:
+        logger.warning(
+            f"Found {len(mixed_dtypes)} parameters with non-uniform dtype. Converting to {target_dtype}"
+        )
+        for name, dtype in list(mixed_dtypes)[:5]:  # Log first 5 examples
+            logger.warning(f"  - {name}: {dtype}")
+        if len(mixed_dtypes) > 5:
+            logger.warning(f"  ... and {len(mixed_dtypes) - 5} more")
 
-    Returns:
-        Tuple containing torch dtype, model configs, BnB config params, and trainer configs
-    """
-    # Set up model configuration based on training arguments
-    if training_args.bf16:
-        logger.info("Using flash_attention_2")
-        torch_dtype = torch.bfloat16
-        model_configs = {
-            "attn_implementation": "flash_attention_2",
-            "torch_dtype": torch_dtype,
-        }
-    else:
-        logger.info("Using torch.float32")
-        torch_dtype = torch.float32
-        model_configs = {}
+        # Cast all parameters to target dtype
+        model = model.to(target_dtype)
 
-    # Set up FSDP configuration if enabled
-    if (
-        training_args.fsdp is not None
-        and training_args.fsdp != ""
-        and training_args.fsdp_config is not None
-        and len(training_args.fsdp_config) > 0
-    ):
-        logger.info("Using FSDP configuration")
-        bnb_config_params = {"bnb_4bit_quant_storage": torch_dtype}
-        trainer_configs = {
-            "fsdp": training_args.fsdp,
-            "fsdp_config": training_args.fsdp_config,
-            "gradient_checkpointing_kwargs": {"use_reentrant": False},
-        }
-    else:
-        logger.info("Using DDP in case of distribution")
-        bnb_config_params = {}
-        trainer_configs = {
-            "gradient_checkpointing": training_args.gradient_checkpointing,
-        }
-
-    return torch_dtype, model_configs, bnb_config_params, trainer_configs
+    return model
 
 
-def load_model_and_tokenizer(
-    script_args: ScriptArguments, training_args: TrainingArguments
-) -> Tuple[AutoModelForCausalLM, AutoTokenizer]:
-    """
-    Load model and tokenizer.
+def load_model(
+    config_builder: ModelConfigBuilder, script_args: ScriptArguments
+) -> AutoModelForCausalLM:
+    """Load model using centralized configuration."""
+    model_kwargs = config_builder.build_model_kwargs()
 
-    Args:
-        script_args: Script arguments
-        training_args: Training arguments
-
-    Returns:
-        Tuple containing model and tokenizer
-    """
-    # Get model configuration
-    torch_dtype, model_configs, bnb_config_params, _ = get_model_config(training_args)
-
-    # Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(script_args.model_id)
-
-    # Configure quantization
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch_dtype,
-        **bnb_config_params,
-    )
-
-    # Load model with quantization
     try:
         model = AutoModelForCausalLM.from_pretrained(
-            script_args.model_id,
-            trust_remote_code=True,
-            quantization_config=bnb_config,
-            use_cache=not training_args.gradient_checkpointing,
-            cache_dir="/tmp/.cache",
-            **model_configs,
+            script_args.model_id, **model_kwargs
         )
 
+        # # Ensure uniform dtype for FSDP compatibility (critical for MoE models like Nemotron)
+        # if not script_args.load_in_4bit:
+        #     model = ensure_uniform_dtype(model, config_builder.torch_dtype)
+
         # Apply gradient checkpointing configuration
-        if training_args.fsdp is None and training_args.fsdp_config is None:
-            model = prepare_model_for_kbit_training(
-                model, use_gradient_checkpointing=training_args.gradient_checkpointing
+        if config_builder.training_args.gradient_checkpointing:
+            model.gradient_checkpointing_enable(
+                gradient_checkpointing_kwargs={"use_reentrant": False}
             )
 
-            if training_args.gradient_checkpointing:
-                model.gradient_checkpointing_enable()
-        else:
-            if training_args.gradient_checkpointing:
-                model.gradient_checkpointing_enable(
-                    gradient_checkpointing_kwargs={"use_reentrant": False}
-                )
-
-        return model, tokenizer
-
+        return model
     except Exception as e:
-        logger.error(f"Error loading model: {e}")
+        logger.error(f"Error loading model {script_args.model_id}: {e}")
         raise
 
 
-def apply_lora_config(
-    model: AutoModelForCausalLM, script_args: ScriptArguments
+def load_tokenizer(script_args: ScriptArguments) -> AutoTokenizer:
+    """Load tokenizer."""
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(script_args.model_id)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        return tokenizer
+    except Exception as e:
+        logger.error(f"Error loading tokenizer {script_args.model_id}: {e}")
+        raise
+
+
+def extract_tools_from_dataset(dataset: Dataset) -> Optional[List[Dict]]:
+    """Extract tools from first sample if available."""
+    if "tools" in dataset.column_names and dataset[0]["tools"]:
+        return dataset[0]["tools"]
+    return None
+
+
+def _merge_adapter_in_process(
+    temp_dir: str, final_output_dir: str
 ) -> AutoModelForCausalLM:
-    """
-    Apply LoRA configuration to the model.
+    """Merge LoRA adapter in the current process (for FSDP/DDP)."""
+    with gpu_memory_manager():
+        model = AutoPeftModelForCausalLM.from_pretrained(
+            temp_dir,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+            trust_remote_code=True,
+        )
+        model = model.merge_and_unload()
+        model.save_pretrained(
+            final_output_dir, safe_serialization=True, max_shard_size="2GB"
+        )
+        return model
 
-    Args:
-        model: The model to apply LoRA to
-        script_args: Script arguments
 
-    Returns:
-        Model with LoRA applied
+def _merge_adapter_via_subprocess(temp_dir: str, final_output_dir: str) -> None:
+    """Merge LoRA adapter in a clean subprocess to avoid DeepSpeed env conflicts."""
+    merge_script = textwrap.dedent(
+        f"""\
+        import torch
+        from peft import AutoPeftModelForCausalLM
+
+        print("Loading adapter for merging...")
+        model = AutoPeftModelForCausalLM.from_pretrained(
+            "{temp_dir}",
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+            trust_remote_code=True,
+        )
+
+        print("Merging LoRA weights...")
+        model = model.merge_and_unload()
+
+        print("Saving merged model...")
+        model.save_pretrained(
+            "{final_output_dir}",
+            safe_serialization=True,
+            max_shard_size="2GB",
+        )
+
+        print("Merge complete!")
     """
-    config = LoraConfig(
-        r=script_args.lora_r,
-        lora_alpha=script_args.lora_alpha,
-        target_modules="all-linear",
-        lora_dropout=script_args.lora_dropout,
-        bias="none",
-        task_type="CAUSAL_LM",
     )
 
-    return get_peft_model(model, config)
+    clean_env = {
+        k: v
+        for k, v in os.environ.items()
+        if "DEEPSPEED" not in k and "ACCELERATE" not in k
+    }
 
-
-def setup_trainer(
-    model: AutoModelForCausalLM,
-    tokenizer: AutoTokenizer,
-    train_ds: Dataset,
-    script_args: ScriptArguments,
-    training_args: TrainingArguments,
-    test_ds: Optional[Dataset] = None,
-    callbacks: Optional[List] = None,
-) -> DPOTrainer:
-    """
-    Set up the Trainer.
-
-    Args:
-        model: Model to train
-        tokenizer: Tokenizer to use in the training loop
-        train_ds: Training dataset
-        script_args: Script arguments
-        training_args: Training arguments
-        test_ds: Evaluation dataset
-        callbacks: List of callbacks
-
-    Returns:
-        Configured Trainer
-    """
-    _, _, _, trainer_configs = get_model_config(training_args)
-
-    return DPOTrainer(
-        model=model,
-        train_dataset=train_ds,
-        eval_dataset=test_ds if test_ds is not None else None,
-        args=DPOConfig(
-            per_device_train_batch_size=training_args.per_device_train_batch_size,
-            per_device_eval_batch_size=training_args.per_device_eval_batch_size,
-            gradient_accumulation_steps=training_args.gradient_accumulation_steps,
-            logging_strategy="steps",
-            logging_steps=1,
-            log_on_each_node=False,
-            num_train_epochs=training_args.num_train_epochs,
-            learning_rate=training_args.learning_rate,
-            bf16=training_args.bf16,
-            ddp_find_unused_parameters=False,
-            save_strategy="steps",
-            save_steps=training_args.save_steps,
-            save_total_limit=1,
-            output_dir=script_args.checkpoint_dir,
-            ignore_data_skip=True,
-            **trainer_configs,
-        ),
-        callbacks=callbacks,
-        processing_class=tokenizer,
+    result = subprocess.run(
+        [sys.executable, "-c", merge_script],
+        env=clean_env,
+        capture_output=True,
+        text=True,
     )
+
+    if result.returncode != 0:
+        logger.error(f"Merge subprocess failed: {result.stderr}")
+        raise RuntimeError(f"Merge failed: {result.stderr}")
+
+    logger.info(f"Merge subprocess output: {result.stdout}")
+
+
+def _detect_distributed_strategy(trainer: DPOTrainer) -> Tuple[bool, bool]:
+    """Detect whether DeepSpeed or FSDP is active."""
+    use_deepspeed = (
+        hasattr(trainer.accelerator.state, "deepspeed_plugin")
+        and trainer.accelerator.state.deepspeed_plugin is not None
+    )
+    use_fsdp = trainer.is_fsdp_enabled
+    return use_deepspeed, use_fsdp
 
 
 def save_model(
@@ -402,164 +512,419 @@ def save_model(
     model: AutoModelForCausalLM,
     tokenizer: AutoTokenizer,
     script_args: ScriptArguments,
-    training_args: TrainingArguments,
     accelerator: Accelerator,
     mlflow_enabled: bool,
+    final_output_dir: str,
 ) -> None:
-    """
-    Save the trained model.
+    """Save the trained model with proper DeepSpeed ZeRO-3 handling and online merging."""
+    logger.info("STARTING MODEL SAVE PROCESS")
 
-    Args:
-        trainer: The trainer instance
-        model: The model to save
-        tokenizer: The tokenizer to save
-        script_args: Script arguments
-        training_args: Training arguments
-        accelerator: Accelerator instance
-        mlflow_enabled: Whether MLflow is enabled
-    """
-    if trainer.is_fsdp_enabled:
+    accelerator.wait_for_everyone()
+
+    use_deepspeed, use_fsdp = _detect_distributed_strategy(trainer)
+    logger.info(f"Distributed strategy - DeepSpeed: {use_deepspeed}, FSDP: {use_fsdp}")
+
+    if use_fsdp:
         trainer.accelerator.state.fsdp_plugin.set_state_dict_type("FULL_STATE_DICT")
 
-    if script_args.merge_weights:
-        output_dir = "/tmp/model"
+    if script_args.use_peft and script_args.merge_weights:
+        temp_dir = "/tmp/adapter_temp"
+        os.makedirs(temp_dir, exist_ok=True)
 
-        # Save adapter weights with base model
-        trainer.model.save_pretrained(output_dir, safe_serialization=False)
+        if use_deepspeed:
+            # Trainer.save_model handles ZeRO-3 state dict gathering
+            trainer.save_model(temp_dir)
+            accelerator.wait_for_everyone()
+
+            if accelerator.is_main_process:
+                torch.cuda.empty_cache()
+                _merge_adapter_via_subprocess(temp_dir, final_output_dir)
+                tokenizer.save_pretrained(final_output_dir)
+                if mlflow_enabled:
+                    logger.info(
+                        "Skipping MLflow registration (model merged in subprocess)"
+                    )
+        else:
+            trainer.model.save_pretrained(temp_dir, safe_serialization=False)
+            accelerator.wait_for_everyone()
+
+            if accelerator.is_main_process:
+                del model, trainer
+                merged_model = _merge_adapter_in_process(temp_dir, final_output_dir)
+                tokenizer.save_pretrained(final_output_dir)
+                if mlflow_enabled:
+                    register_model_in_mlflow(merged_model, tokenizer, script_args)
+
+        accelerator.wait_for_everyone()
+
+    else:
+        # Covers both PEFT without merge and non-PEFT models
+        trainer.save_model(final_output_dir)
+        accelerator.wait_for_everyone()
 
         if accelerator.is_main_process:
-            # Clear memory
-            del model
-            del trainer
-            torch.cuda.empty_cache()
+            tokenizer.save_pretrained(final_output_dir)
+            if mlflow_enabled:
+                register_model_in_mlflow(trainer.model, tokenizer, script_args)
 
-            try:
-                # Load PEFT model
-                model = AutoPeftModelForCausalLM.from_pretrained(
-                    output_dir,
-                    torch_dtype=torch.float16,
-                    low_cpu_mem_usage=True,
-                    trust_remote_code=True,
-                )
+        accelerator.wait_for_everyone()
 
-                # Merge LoRA and base model and save
-                model = model.merge_and_unload()
-                model.save_pretrained(
-                    training_args.output_dir,
-                    safe_serialization=True,
-                    max_shard_size="2GB",
-                )
-            except Exception as e:
-                logger.error(f"Error merging model weights: {e}")
-                raise
-    else:
-        trainer.model.save_pretrained(training_args.output_dir, safe_serialization=True)
-
-    if accelerator.is_main_process:
-        tokenizer.save_pretrained(training_args.output_dir)
-
-        if mlflow_enabled:
-            register_model_in_mlflow(model, tokenizer, script_args)
+    logger.info("MODEL SAVE PROCESS COMPLETED SUCCESSFULLY")
 
 
 def register_model_in_mlflow(
     model: AutoModelForCausalLM, tokenizer: AutoTokenizer, script_args: ScriptArguments
 ) -> None:
-    """
-    Register the model in MLflow.
-
-    Args:
-        model: The model to register
-        tokenizer: The tokenizer to register
-        script_args: Script arguments
-    """
+    """Register the model in MLflow."""
     logger.info(f"MLflow model registration under {script_args.mlflow_experiment_name}")
 
     try:
-        params = {
-            "top_p": 0.9,
-            "temperature": 0.2,
-            "max_new_tokens": 2048,
-        }
+        params = {"top_p": 0.9, "temperature": 0.2, "max_new_tokens": 1024 * 4}
         signature = infer_signature("inputs", "generated_text", params=params)
 
         mlflow.transformers.log_model(
             transformers_model={"model": model, "tokenizer": tokenizer},
             signature=signature,
-            artifact_path="model",
-            model_config=params,
+            name="model",
             task="text-generation",
-            registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('Fine-tuning-')[-1]}",
+            registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('DPO-')[-1]}",
         )
     except Exception as e:
         logger.error(f"Error registering model in MLflow: {e}")
         raise
 
 
-def train(script_args, training_args, train_ds, test_ds):
+def calculate_optimal_dpo_lengths(
+    tokenizer: AutoTokenizer,
+    dataset: Dataset,
+    sample_size: int = 1000,
+    percentile: float = 0.95,
+) -> Tuple[int, int, int]:
+    """Calculate optimal max_length, max_prompt_length, and max_completion_length for DPO.
+
+    Uses apply_chat_template to get accurate token counts for conversational data.
     """
-    Train the model.
+    sample_indices = torch.randperm(len(dataset))[: min(sample_size, len(dataset))]
+    sample_data = dataset.select(sample_indices)
 
-    Args:
-        script_args: Script arguments
-        training_args: Training arguments
-        train_ds: Training dataset
-        test_ds: Evaluation dataset
+    prompt_lengths = []
+    chosen_lengths = []
+    rejected_lengths = []
+    total_lengths = []
+
+    for sample in sample_data:
+        prompt = sample["prompt"]
+        chosen = sample["chosen"]
+        rejected = sample["rejected"]
+        tools = sample.get("tools")
+        if isinstance(tools, str):
+            tools = json.loads(tools)
+
+        prompt_ids = tokenizer.apply_chat_template(
+            prompt,
+            tools=tools,
+            add_generation_prompt=True,
+            tokenize=True,
+        )
+        chosen_ids = tokenizer.apply_chat_template(
+            prompt + chosen, tools=tools, tokenize=True
+        )
+        rejected_ids = tokenizer.apply_chat_template(
+            prompt + rejected, tools=tools, tokenize=True
+        )
+
+        prompt_lengths.append(len(prompt_ids))
+        chosen_lengths.append(len(chosen_ids) - len(prompt_ids))
+        rejected_lengths.append(len(rejected_ids) - len(prompt_ids))
+        total_lengths.append(max(len(chosen_ids), len(rejected_ids)))
+
+    # Calculate percentiles
+    max_prompt_length = int(
+        sorted(prompt_lengths)[int(percentile * len(prompt_lengths))]
+    )
+    max_completion_length = int(
+        sorted(chosen_lengths + rejected_lengths)[
+            int(percentile * len(chosen_lengths + rejected_lengths))
+        ]
+    )
+    max_length = int(sorted(total_lengths)[int(percentile * len(total_lengths))])
+
+    logger.info(f"Analyzed {len(sample_data)} samples")
+    logger.info(
+        f"Average prompt length: {sum(prompt_lengths) / len(prompt_lengths):.1f}"
+    )
+    logger.info(f"{percentile*100}th percentile prompt length: {max_prompt_length}")
+    logger.info(
+        f"Average completion length: {sum(chosen_lengths + rejected_lengths) / len(chosen_lengths + rejected_lengths):.1f}"
+    )
+    logger.info(
+        f"{percentile*100}th percentile completion length: {max_completion_length}"
+    )
+    logger.info(f"{percentile*100}th percentile total length: {max_length}")
+
+    return max_length, max_prompt_length, max_completion_length
+
+
+def load_json_file(file_path: str) -> List[Dict]:
+    """Load JSON or JSONL file manually to avoid schema inference issues."""
+    data = []
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read().strip()
+        # Try to parse as JSON array first
+        if content.startswith("["):
+            data = json.loads(content)
+        else:
+            # Parse as JSONL (one JSON object per line)
+            for line in content.split("\n"):
+                if line.strip():
+                    data.append(json.loads(line))
+    return data
+
+
+def deserialize_conversations(dataset: Dataset) -> Dataset:
+    """Deserialize JSON-encoded message fields for DPOTrainer conversational format.
+
+    Parses JSON-serialized prompt/chosen/rejected string fields back into message
+    lists. Merges the system field into prompt as a system message. DPOTrainer
+    then handles apply_chat_template internally.
+
+    Requires consistent message schemas across rows (e.g., tool_calls key always
+    present, arguments as JSON strings) for Arrow compatibility.
     """
-    # Set random seed for reproducibility
-    set_seed(training_args.seed)
 
-    # Check if MLflow is enabled
-    mlflow_enabled = is_mlflow_enabled(script_args)
+    def process(sample):
+        prompt = (
+            json.loads(sample["prompt"])
+            if isinstance(sample["prompt"], str)
+            else sample["prompt"]
+        )
+        chosen = (
+            json.loads(sample["chosen"])
+            if isinstance(sample["chosen"], str)
+            else sample["chosen"]
+        )
+        rejected = (
+            json.loads(sample["rejected"])
+            if isinstance(sample["rejected"], str)
+            else sample["rejected"]
+        )
 
-    # Initialize accelerator
-    accelerator = Accelerator()
+        # Prepend system message to prompt if present
+        messages = []
+        if sample.get("system"):
+            messages.append({"role": "system", "content": sample["system"]})
+        messages.extend(prompt)
 
-    # Set up Hugging Face token if provided
-    if script_args.token is not None:
-        os.environ.update({"HF_TOKEN": script_args.token})
-        accelerator.wait_for_everyone()
+        result = {
+            "prompt": messages,
+            "chosen": chosen,
+            "rejected": rejected,
+        }
 
-    # Download model
-    download_model(script_args.model_id)
-    accelerator.wait_for_everyone()
+        # Preserve any extra fields (e.g., tools, score_chosen, score_rejected)
+        for key in sample:
+            if key not in ("system", "prompt", "chosen", "rejected"):
+                result[key] = sample[key]
 
-    # Update model path to local directory
-    script_args.model_id = "/tmp/tmp_folder"
+        return result
 
-    # Load model and tokenizer
-    model, tokenizer = load_model_and_tokenizer(script_args, training_args)
+    columns_to_remove = ["system"] if "system" in dataset.column_names else []
+    return dataset.map(process, remove_columns=columns_to_remove)
 
-    # Apply LoRA configuration
-    model = apply_lora_config(model, script_args)
 
-    # Set up Weights & Biases
-    callbacks = setup_wandb(script_args)
-
-    # Set up trainer
-    trainer = setup_trainer(
-        model,
-        tokenizer,
-        train_ds,
-        script_args,
-        training_args,
-        test_ds,
-        callbacks,
+def _is_hf_dataset_dir(path: str) -> bool:
+    """Check if path is a HuggingFace dataset directory (Arrow format)."""
+    return os.path.isdir(path) and os.path.exists(
+        os.path.join(path, "dataset_info.json")
     )
 
-    # Print trainable parameters
+
+def _load_dataset_auto(path: str) -> Dataset:
+    """Load a dataset from path, automatically detecting format (JSON, JSONL, or Arrow)."""
+    if path.endswith(".jsonl") or path.endswith(".json"):
+        return load_dataset("json", data_files=path, split="train")
+    if path.endswith(".arrow"):
+        logger.info(f"Loading Arrow file from {path}")
+        return load_dataset("arrow", data_files=path, split="train")
+    if _is_hf_dataset_dir(path):
+        logger.info(f"Detected HuggingFace Arrow dataset format at {path}")
+        ds = load_from_disk(path)
+        if isinstance(ds, DatasetDict):
+            split = "train" if "train" in ds else list(ds.keys())[0]
+            logger.info(f"DatasetDict detected, using split '{split}'")
+            ds = ds[split]
+        return ds
+    # Fallback: look for JSON/JSONL files in directory
+    import glob as _glob
+
+    json_files = sorted(
+        _glob.glob(os.path.join(path, "*.json"))
+        + _glob.glob(os.path.join(path, "*.jsonl"))
+    )
+    if json_files:
+        logger.info(f"Found JSON file(s) in directory: {json_files}")
+        return load_dataset("json", data_files=json_files, split="train")
+    raise FileNotFoundError(
+        f"No supported dataset files found in '{path}'. "
+        "Expected .json, .jsonl, .arrow files or a HuggingFace dataset directory."
+    )
+
+
+def load_datasets(script_args: ScriptArguments) -> Tuple[Dataset, Optional[Dataset]]:
+    """Load training and test datasets.
+
+    When deserialize_messages=True, parses JSON-serialized prompt/chosen/rejected
+    fields back into message lists and merges system messages into prompt.
+    DPOTrainer then handles apply_chat_template internally.
+    """
+    try:
+        logger.info(f"Loading training dataset from {script_args.train_dataset_path}")
+        train_ds = _load_dataset_auto(script_args.train_dataset_path)
+
+        if script_args.deserialize_messages:
+            logger.info("Deserializing JSON-encoded message fields")
+            train_ds = deserialize_conversations(train_ds)
+
+        test_ds = None
+        if script_args.val_dataset_path:
+            logger.info(f"Loading test dataset from {script_args.val_dataset_path}")
+            test_ds = _load_dataset_auto(script_args.val_dataset_path)
+
+            if script_args.deserialize_messages:
+                logger.info("Deserializing val JSON-encoded message fields")
+                test_ds = deserialize_conversations(test_ds)
+
+        return train_ds, test_ds
+    except Exception as e:
+        logger.error(f"Error loading datasets: {e}")
+        raise
+
+
+def train(script_args, training_args, train_ds, test_ds):
+    """Train the model using centralized configuration."""
+    set_seed(training_args.seed)
+
+    # Create centralized config builder
+    config_builder = ModelConfigBuilder(script_args, training_args)
+    mlflow_enabled = is_mlflow_enabled(script_args)
+
+    if script_args.token is not None:
+        os.environ.update({"HF_TOKEN": script_args.token})
+        if dist.is_initialized():
+            logger.info("Waiting for all processes after setting HF token")
+            dist.barrier()
+
+    if script_args.use_snapshot_download:
+        download_model(script_args.model_id)
+        if dist.is_initialized():
+            logger.info("Waiting for all processes after model download")
+            dist.barrier()
+        script_args.model_id = "/tmp/tmp_folder"
+
+    # Load model and tokenizer using centralized config
+    model = load_model(config_builder, script_args)
+    tokenizer = load_tokenizer(script_args)
+
+    # Auto-calculate lengths if enabled
+    if script_args.auto_calculate_lengths:
+        logger.info("Auto-calculating optimal lengths from dataset...")
+        max_length, max_prompt_length, max_completion_length = (
+            calculate_optimal_dpo_lengths(tokenizer, train_ds)
+        )
+        training_args.max_length = max_length
+        training_args.max_prompt_length = max_prompt_length
+        training_args.max_completion_length = max_completion_length
+        logger.info(
+            f"Set max_length={max_length}, max_prompt_length={max_prompt_length}, max_completion_length={max_completion_length}"
+        )
+
+    # Extract tools from dataset if available
+    tools = extract_tools_from_dataset(train_ds)
+    if tools:
+        logger.info(f"Found {len(tools)} tools in dataset")
+        training_args.tools = tools
+
+    # Apply PEFT before trainer (same as SFT) for FSDP compatibility
+    if script_args.use_peft:
+        peft_config = LoraConfig(
+            r=script_args.lora_r,
+            lora_alpha=script_args.lora_alpha,
+            target_modules=(
+                "all-linear"
+                if script_args.target_modules is None
+                else script_args.target_modules
+            ),
+            lora_dropout=script_args.lora_dropout,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        model = get_peft_model(model, peft_config)
+
+    callbacks = setup_wandb(script_args)
+    if script_args.early_stopping:
+        if callbacks is None:
+            callbacks = []
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=3))
+
+        training_args.load_best_model_at_end = True
+        training_args.metric_for_best_model = "eval_loss"
+        training_args.greater_is_better = False
+
+    # Apply trainer kwargs from centralized config
+    trainer_kwargs = config_builder.build_trainer_kwargs()
+    for key, value in trainer_kwargs.items():
+        setattr(training_args, key, value)
+
+    # Set report_to based on enabled tracking services
+    report_to = []
+    if os.environ.get("WANDB_DISABLED", "false").lower() != "true":
+        report_to.append("wandb")
+    if is_mlflow_enabled(script_args):
+        report_to.append("mlflow")
+    training_args.report_to = report_to
+
+    # Initialize DPO trainer
+    # Note: peft_config is NOT passed here — model is already wrapped with PEFT above.
+    # DPOTrainer auto-detects PeftModel and uses adapter disabling for reference logits.
+    trainer = DPOTrainer(
+        model=model,
+        args=training_args,
+        processing_class=tokenizer,
+        train_dataset=train_ds,
+        eval_dataset=test_ds,
+        callbacks=callbacks,
+    )
+
+    # Patch trainer to fix input_ids dtype bug with tool calling
+    trainer = patch_dpo_trainer_dtype(trainer)
+
     if trainer.accelerator.is_main_process:
         trainer.model.print_trainable_parameters()
 
-    # Create checkpoint directory if needed
     if script_args.checkpoint_dir is not None:
         os.makedirs(script_args.checkpoint_dir, exist_ok=True)
+
+        original_output_dir = training_args.output_dir
+        training_args.output_dir = script_args.checkpoint_dir
+    else:
+        original_output_dir = training_args.output_dir
 
     # Start training
     if mlflow_enabled:
         logger.info(f"MLflow tracking under {script_args.mlflow_experiment_name}")
-        with mlflow.start_run(run_name=os.environ.get("MLFLOW_RUN_NAME", None)) as run:
-            # Log training dataset
+        mlflow.set_system_metrics_node_id(
+            f"node_{trainer.accelerator.process_index // torch.cuda.device_count()}"
+        )
+        if trainer.accelerator.is_main_process:
+            mlflow.start_run(run_name=os.environ.get("MLFLOW_RUN_NAME", None))
+            mlflow.log_params(
+                {
+                    "total_gpus": trainer.accelerator.num_processes,
+                    "nodes": trainer.accelerator.num_processes
+                    // torch.cuda.device_count(),
+                    "gpus_per_node": torch.cuda.device_count(),
+                }
+            )
             try:
                 train_dataset_mlflow = mlflow.data.from_pandas(
                     train_ds.to_pandas(), name="train_dataset"
@@ -568,91 +933,42 @@ def train(script_args, training_args, train_ds, test_ds):
             except Exception as e:
                 logger.warning(f"Failed to log dataset to MLflow: {e}")
 
-            # Resume training from checkpoint if available
-            if get_last_checkpoint(script_args.checkpoint_dir) is not None:
-                trainer.train(resume_from_checkpoint=True)
-            else:
-                trainer.train()
+    if (
+        script_args.checkpoint_dir
+        and get_last_checkpoint(script_args.checkpoint_dir) is not None
+        and script_args.use_checkpoints
+    ):
+        train_result = trainer.train(resume_from_checkpoint=True)
     else:
-        # Resume training from checkpoint if available
-        if get_last_checkpoint(script_args.checkpoint_dir) is not None:
-            trainer.train(resume_from_checkpoint=True)
-        else:
-            trainer.train()
+        train_result = trainer.train()
 
-    # Save and register model
+    metrics = train_result.metrics
+    metrics["train_samples"] = len(train_ds)
+    trainer.log_metrics("train", metrics)
+    trainer.save_metrics("train", metrics)
+    trainer.save_state()
+
     save_model(
         trainer,
         model,
         tokenizer,
         script_args,
-        training_args,
-        accelerator,
+        trainer.accelerator,
         mlflow_enabled,
+        original_output_dir,
     )
-
-    # Wait for all processes to finish
-    accelerator.wait_for_everyone()
-
-
-def load_datasets(script_args: ScriptArguments) -> Tuple[Dataset, Optional[Dataset]]:
-    """
-    Load training and test datasets.
-
-    Args:
-        script_args: Script arguments
-
-    Returns:
-        Tuple of (train_dataset, test_dataset)
-    """
-    try:
-        logger.info(f"Loading training dataset from {script_args.train_dataset_path}")
-        train_ds = load_dataset(
-            "json",
-            data_files=os.path.join(script_args.train_dataset_path, "dataset.json"),
-            split="train",
-        )
-
-        test_ds = None
-        if script_args.test_dataset_path:
-            logger.info(f"Loading test dataset from {script_args.test_dataset_path}")
-            test_ds = load_dataset(
-                "json",
-                data_files=os.path.join(script_args.test_dataset_path, "dataset.json"),
-                split="train",
-            )
-
-        return train_ds, test_ds
-    except Exception as e:
-        logger.error(f"Error loading datasets: {e}")
-        raise
+    trainer.accelerator.wait_for_everyone()
 
 
 def main() -> None:
     """Main function to parse arguments and start training."""
-    # Call this function at the beginning of your script
-    local_rank = init_distributed()
-
-    # Now you can use distributed functionalities
-    torch.distributed.barrier(device_ids=[local_rank])
-
-    # Parse arguments
-    parser = TrlParser((ScriptArguments, TrainingArguments))
+    parser = TrlParser((ScriptArguments, DPOConfig))
     script_args, training_args = parser.parse_args_and_config()
 
-    # Set up environment
     set_custom_env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
-
-    # Set up MLflow if enabled
     setup_mlflow(script_args)
 
-    # Set up Weights & Biases
-    setup_wandb(script_args)
-
-    # Load datasets
     train_ds, test_ds = load_datasets(script_args)
-
-    # Launch training
     train(script_args, training_args, train_ds, test_ds)
 
 
