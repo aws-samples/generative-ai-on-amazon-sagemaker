@@ -43,7 +43,7 @@ kubectl cp ./option-1-continued-pre-training fsx-upload:/data/shared
 
 ### 2. Update `args.yaml`
 
-Update the following paths to match your FSx directory structure:
+If needed, update the following paths to match your FSx directory structure:
 
 ```yaml
 output_dir: "/data/shared/option-1-continued-pre-training/model/"
@@ -52,7 +52,7 @@ train_dataset_path: "/data/shared/option-1-continued-pre-training/data/train/"
 
 ### 3. Update `pod-finetuning.yaml`
 
-Update the paths in the container command to match your FSx directory structure:
+If needed, update the paths in the container command to match your FSx directory structure:
 
 ```yaml
 command:
@@ -70,11 +70,6 @@ command:
     /data/shared/option-1-continued-pre-training/scripts/train.py \
     --config /data/shared/option-1-continued-pre-training/args.yaml
 ```
-
-**Important notes:**
-
-- The `nodeSelector` in `pod-finetuning.yaml` targets `training-efa-medium` which provisions `ml.g5.12xlarge` instances (4 GPUs). Make sure `--nproc_per_node` matches the number of GPUs on the target instance.
-- Do not request `vpc.amazonaws.com/efa` resources unless the target instance supports EFA. In the g5 family, only `ml.g5.48xlarge` supports EFA.
 
 ## Run the training job
 
