@@ -10,7 +10,7 @@ from PIL import Image, ImageChops, ImageEnhance
 
 def convert_to_ela_image(path, quality):
     filename = path
-    resaved_filename = f'/tmp/{path.split('/')[-1]}.jpg'
+    resaved_filename = f'/tmp/{path.split("/")[-1]}.jpg'
     im = Image.open(filename)
     bm = im.convert('RGB')
     im.close()
