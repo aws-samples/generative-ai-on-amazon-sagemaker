@@ -171,3 +171,4 @@ errors
 tmp/
 */**/tmp
 */**/tmp/*
+*/**/.claude
