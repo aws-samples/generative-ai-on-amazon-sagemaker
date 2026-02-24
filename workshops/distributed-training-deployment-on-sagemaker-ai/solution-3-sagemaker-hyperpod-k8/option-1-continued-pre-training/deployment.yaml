@@ -1,0 +1,45 @@
+apiVersion: inference.sagemaker.aws.amazon.com/v1alpha1
+kind: InferenceEndpointConfig
+metadata:
+  name: qwen3-4b-instruct-cpt-endpoint
+  namespace: default
+spec:
+  modelName: qwen3-4b-instruct-cpt
+  endpointName: qwen3-4b-instruct-cpt-endpoint
+  instanceType: ml.g5.12xlarge
+  invocationEndpoint: invocations
+  modelSourceConfig:
+    modelSourceType: fsx
+    fsxStorage:
+      fileSystemId: fs-0b9db1cc49760474b
+    modelLocation: shared/option-1-continued-pre-training/model
+  worker:
+    resources:
+      limits:
+        nvidia.com/gpu: 4
+      requests:
+        nvidia.com/gpu: 4
+    image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/vllm:0.14.0-gpu-py312-cu129-ubuntu22.04-sagemaker
+    modelInvocationPort:
+      containerPort: 8080
+      name: http
+    modelVolumeMount:
+      name: model-weights
+      mountPath: /opt/ml/model
+    environmentVariables:
+      - name: SM_VLLM_MODEL
+        value: "/opt/ml/model"
+      - name: SM_VLLM_DTYPE
+        value: "bfloat16"
+      - name: SM_VLLM_GPU_MEMORY_UTILIZATION
+        value: "0.8"
+      - name: SM_VLLM_MAX_MODEL_LEN
+        value: "8192"
+      - name: SM_VLLM_MAX_NUM_SEQS
+        value: "8"
+      - name: SM_VLLM_ENABLE_CHUNKED_PREFILL
+        value: "true"
+      - name: SM_VLLM_KV_CACHE_DTYPE
+        value: "auto"
+      - name: SM_VLLM_TENSOR_PARALLEL_SIZE
+        value: "4"
