@@ -173,4 +173,10 @@ tmp/
 */**/tmp/*
 */**/.claude
 */**/tmp_output
+<<<<<<< HEAD
 */**/tmp_output/*
+=======
+*/**/tmp_output/*
+*/**/data
+*/**/data/*
+>>>>>>> nova-workshop
