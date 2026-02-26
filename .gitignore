@@ -174,3 +174,5 @@ tmp/
 */**/.claude
 */**/tmp_output
 */**/tmp_output/*
+*/**/data
+*/**/data/*
