@@ -47,6 +47,14 @@ This repository provides comprehensive resources for working with generative AI 
 - Model Monitoring with Fiddler
 - RAG chatbot evaluation with Deepchecks
 
+#### [Serverless Model Customization with SageMaker AI](./workshops/serverless-model-customization-with-sagemaker-ai/)
+
+- Fine-tune LLMs using serverless customization APIs (no infrastructure management)
+- Explore four techniques: Supervised Fine-Tuning (SFT), Direct Preference Optimization (DPO), Reinforcement Learning from Verifiable Rewards (RLVR), and Reinforcement Learning from AI Feedback (RLAIF)
+- Register datasets, models, and evaluators in the SageMaker AI Registry
+- Evaluate models using LLM-as-a-Judge with custom metrics and benchmark evaluations
+- Deploy fine-tuned models with DJL LMI and vLLM on SageMaker Real-time Endpoints
+
 ## Getting Started
 
 1. Clone this repository
