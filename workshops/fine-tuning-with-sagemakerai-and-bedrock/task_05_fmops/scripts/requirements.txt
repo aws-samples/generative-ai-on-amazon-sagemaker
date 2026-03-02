@@ -15,7 +15,6 @@ tokenizers>=0.21.0
 trl==0.18.0
 psutil==7.1.0
 py7zr==1.0.0
-pynvml==13.0.1
 xtarfile==0.2.1
 rouge-score==0.1.2
 nvidia-ml-py==13.590.48
