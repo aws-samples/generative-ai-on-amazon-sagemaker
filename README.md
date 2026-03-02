@@ -47,6 +47,13 @@ This repository provides comprehensive resources for working with generative AI 
 - Model Monitoring with Fiddler
 - RAG chatbot evaluation with Deepchecks
 
+#### [Amazon Nova Customization on SageMaker AI](./workshops/nova-customization-on-sagemaker-ai/)
+
+- Customize Amazon Nova models (Micro 1.0, Lite 2.0) using SageMaker Training jobs with the Amazon Nova Customization SDK
+- Fine-tune with Supervised Fine-Tuning (SFT) and Direct Preference Optimization (DPO) using LoRA
+- Deploy fine-tuned models on Amazon Bedrock with custom model on-demand inference
+- Evaluate models using LLM-as-a-Judge with Amazon Nova Pro
+
 #### [Serverless Model Customization with SageMaker AI](./workshops/serverless-model-customization-with-sagemaker-ai/)
 
 - Fine-tune LLMs using serverless customization APIs (no infrastructure management)
