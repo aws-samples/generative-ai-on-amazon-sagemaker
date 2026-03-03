@@ -1,0 +1,42 @@
+model_id: "Qwen/Qwen3-4B-Instruct-2507" # Hugging Face model id
+mlflow_uri: ""
+mlflow_experiment_name: "qwen3-4b-instruct-sft"
+# sagemaker specific parameters
+output_dir: "/data/shared/option-2-supervised-fine-tuning/model/" # path to where SageMaker will upload the model
+train_dataset_path: "/data/shared/option-2-supervised-fine-tuning/data/train/" # path to where FSx saves train dataset
+val_dataset_path: "/data/shared/option-2-supervised-fine-tuning/data/val/" # path to where FSx saves validation dataset
+# training parameters
+merge_weights: true # Merge adapter with base model
+attn_implementation: "flash_attention_2" # attention implementation type
+learning_rate: 1.2e-4 # learning rate scheduler
+num_train_epochs: 4 # number of training epochs
+per_device_train_batch_size: 2 # batch size per device during training
+per_device_eval_batch_size: 1 # batch size for evaluation
+gradient_accumulation_steps: 2 # number of steps before performing a backward/update pass
+gradient_checkpointing: true # use gradient checkpointing
+max_grad_norm: 1.00
+torch_dtype: "bfloat16" # float precision type
+bf16: true # use bfloat16 precision
+tf32: true # use tf32 precision
+ignore_data_skip: true # skip data loading errors
+logging_strategy: "steps" # logging strategy
+logging_steps: 1 # log every N steps
+log_on_each_node: false # disable logging on each node
+ddp_find_unused_parameters: false # DDP unused parameter detection
+save_total_limit: 1 # maximum number of checkpoints to keep
+save_steps: 100 # Save checkpoint every this many steps
+eval_steps: 100 # number of steps for the evaluation
+warmup_steps: 15 # number of warmup steps
+weight_decay: 1e-2 # weight decay coefficient
+fsdp: "full_shard auto_wrap offload" # FSDP sharding strategy
+fsdp_config: # FSDP configuration options
+  backward_prefetch: "backward_pre" # prefetch parameters during backward pass
+  cpu_ram_efficient_loading: true # enable CPU RAM efficient model loading
+  offload_params: true # offload parameters to CPU
+  forward_prefetch: false # disable forward prefetch
+  use_orig_params: false # use original parameter names
+# LoRA parameters
+load_in_4bit: true # enable 4-bit quantization
+lora_r: 16 # LoRA rank
+lora_alpha: 32 # LoRA alpha parameter
+lora_dropout: 0.1 # LoRA dropout rate

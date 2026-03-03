@@ -1,0 +1,90 @@
+apiVersion: "kubeflow.org/v1"
+kind: PyTorchJob
+metadata:
+  name: qwen3-4b-instruct-cpt
+spec:
+  elasticPolicy:
+    rdzvBackend: c10d
+    minReplicas: 1
+    maxReplicas: 1
+    maxRestarts: 3
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            app: qwen3-4b-instruct-cpt
+        spec:
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: app
+                        operator: In
+                        values:
+                          - qwen3-4b-instruct-cpt
+                  topologyKey: topology.kubernetes.io/zone
+          tolerations:
+            - key: nvidia.com/gpu
+              operator: Exists
+              effect: NoSchedule
+          volumes:
+            - name: shmem
+              emptyDir:
+                medium: Memory
+                sizeLimit: 32Gi
+            - name: fsx-volume
+              persistentVolumeClaim:
+                claimName: fsx-claim
+          containers:
+            - name: pytorch
+              image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.8.0-gpu-py312-cu129-ubuntu22.04-ec2
+              imagePullPolicy: Always
+              resources:
+                requests:
+                  nvidia.com/gpu: 4
+                limits:
+                  nvidia.com/gpu: 4
+              env:
+                - name: LOGLEVEL
+                  value: "INFO"
+                - name: TORCH_NCCL_ENABLE_MONITORING
+                  value: "1"
+                - name: TORCH_NCCL_TRACE_BUFFER_SIZE
+                  value: "20000"
+                - name: TORCH_NCCL_DUMP_ON_TIMEOUT
+                  value: "1"
+                - name: TORCH_NCCL_DEBUG_INFO_TEMP_FILE
+                  value: "/local/nccl_trace_rank_"
+                - name: PYTORCH_CUDA_ALLOC_CONF
+                  value: "expandable_segments:True"
+                - name: NCCL_DEBUG
+                  value: "INFO"
+                - name: NCCL_SOCKET_IFNAME
+                  value: "^lo"
+                - name: TORCH_NCCL_ASYNC_ERROR_HANDLING
+                  value: "1"
+                - name: FI_PROVIDER
+                  value: "efa"
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  pip install --no-cache-dir -r /data/shared/option-1-continued-pre-training/requirements.txt && \
+                  torchrun \
+                  --nnodes=1 \
+                  --nproc_per_node=4 \
+                  --rdzv_backend=c10d \
+                  --rdzv_endpoint=${PET_RDZV_ENDPOINT} \
+                  --rdzv_id=qwen3-4b-instruct-cpt \
+                  --max_restarts=3 \
+                  /data/shared/option-1-continued-pre-training/scripts/train.py \
+                  --config /data/shared/option-1-continued-pre-training/args.yaml
+              volumeMounts:
+                - name: shmem
+                  mountPath: /dev/shm
+                - name: fsx-volume
+                  mountPath: /data
