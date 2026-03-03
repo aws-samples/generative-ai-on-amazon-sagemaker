@@ -12,4 +12,3 @@ SageMaker:
         CustomFileFilter:
           IgnoreNamePatterns: # files or directories to ignore
           - "*.ipynb" # all notebook files
-
