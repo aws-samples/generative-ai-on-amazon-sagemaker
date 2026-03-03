@@ -3,17 +3,17 @@
 # This step handles data preparation. We are going to prepare data for training and evaluation. We will log this data in MLflow
 import boto3
 import shutil
-import sagemaker
+from sagemaker.core.helper.session_helper import Session
 import os
 import pandas as pd
-from sagemaker.config import load_sagemaker_config
+from sagemaker.core.config import load_sagemaker_config
 import mlflow
 import traceback
 from datasets import load_dataset
 from sklearn.model_selection import train_test_split
 from datasets import Dataset, DatasetDict
 from random import randint
-from sagemaker.workflow.function_step import step
+from sagemaker.mlops.workflow.function_step import step
 from .pipeline_utils import (
     PIPELINE_INSTANCE_TYPE,
     # template_dataset,
@@ -43,7 +43,7 @@ def preprocess(
             run_id = run.info.run_id
             with mlflow.start_run(run_name="Processing", nested=True):
                 # Initialize SageMaker and S3 clients
-                sagemaker_session = sagemaker.Session()
+                sagemaker_session = Session()
                 s3_client = boto3.client('s3')
 
                 bucket_name = sagemaker_session.default_bucket()
