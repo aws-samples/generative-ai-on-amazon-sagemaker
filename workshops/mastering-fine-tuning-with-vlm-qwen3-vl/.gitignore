@@ -1,0 +1,10 @@
+.ipynb_checkpoints
+assets/*
+!assets/README.md
+.DS_Store
+*/**/tmp
+*/**/eval-*.yaml
+*/**/eval*.png
+*/**/data
+tmp_cache_local_dataset/
+/*/**/__pycache__

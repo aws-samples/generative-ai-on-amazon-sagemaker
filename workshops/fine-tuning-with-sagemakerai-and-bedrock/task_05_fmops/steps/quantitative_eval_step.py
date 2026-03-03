@@ -340,7 +340,7 @@ def quantitative_evaluate(
             
             # Define the model to evaluate
             model_to_evaluate = {
-                "name": "Fine-tuned Qwen3-4B-Instruct-2507",
+                "name": "Fine-tuned Qwen-Qwen3-4B-Instruct-2507", 
                 "endpoint": FINETUNED_MODEL_ENDPOINT
             }
             # Limit the number of samples to evaluate (for faster execution)

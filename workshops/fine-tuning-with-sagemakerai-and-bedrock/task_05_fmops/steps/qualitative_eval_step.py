@@ -146,7 +146,7 @@ def qualitative_evaluate(
             examples=medical_accuracy_examples,
             version="v1",
             # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
-            model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
+            model="bedrock:/global.anthropic.claude-sonnet-4-20250514-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
                 "temperature": 0.0,
@@ -195,7 +195,7 @@ def qualitative_evaluate(
             examples=clinical_reasoning_examples,
             version="v1",
             # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
-            model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
+            model="bedrock:/global.anthropic.claude-sonnet-4-20250514-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
                 "temperature": 0.0,
@@ -242,7 +242,7 @@ def qualitative_evaluate(
             examples=patient_safety_examples,
             version="v1",
             # model="bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0",
-            model="bedrock:/anthropic.claude-3-haiku-20240307-v1:0",
+            model="bedrock:/global.anthropic.claude-sonnet-4-20250514-v1:0",
             parameters={
                 "anthropic_version": "bedrock-2023-05-31",
                 "temperature": 0.0,
@@ -328,14 +328,9 @@ def qualitative_evaluate(
                 if response is None:
                     prediction = "Error generating response."
                     failed_generations += 1
-                # elif isinstance(response, list):
-                #     prediction = response[0].get('generated_text', '').strip()
-                # elif isinstance(response, dict):
-                #     prediction = response.get('generated_text', '').strip()
                 else:
                     prediction = str(response).strip()
                 
-                # prediction = prediction.split("<|eot_id|>")[0] if "<|eot_id|>" in prediction else prediction
                 inference_times.append(inference_time)
                 
             except Exception as e:
@@ -470,7 +465,7 @@ def qualitative_evaluate(
             
             # Define the model to evaluate
             model_to_evaluate = {
-                "name": "Fine-tuned Qwen3-4B-Instruct-2507",
+                "name": "Fine-tuned Qwen-Qwen3-4B-Instruct-2507", 
                 "endpoint": endpoint_name
             }
             
@@ -481,8 +476,7 @@ def qualitative_evaluate(
             mlflow.log_param("qualitative_evaluation_endpoint", endpoint_name)
             mlflow.log_param("qualitative_evaluation_num_samples", num_samples)
             mlflow.log_param("qualitative_evaluation_timestamp", datetime.now().isoformat())
-            mlflow.log_param("llm_judge_model", "bedrock:/anthropic.claude-3-haiku-20240307-v1:0")
-            # mlflow.log_param("llm_judge_model", "bedrock:/us.anthropic.claude-3-haiku-20240307-v1:0")
+            mlflow.log_param("llm_judge_model", "bedrock:/global.anthropic.claude-sonnet-4-20250514-v1:0")
             
             # Load the test dataset
             try:
