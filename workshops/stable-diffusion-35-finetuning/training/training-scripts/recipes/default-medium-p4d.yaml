@@ -1,0 +1,55 @@
+# Model
+pretrained_model_name_or_path: /opt/ml/input/data/model
+
+# variant: medium
+
+# Dataset
+train_data_dir: /opt/ml/input/data/train
+dataloader_num_workers: 1
+
+
+# Text processing
+max_sequence_length: 512
+
+# Image processing
+resolution: 512
+center_crop: true
+random_flip: true
+
+#LoRA
+train_text_encoder: false
+rank: 4
+lora_layers: attn.add_k_proj, attn.add_q_proj, attn.add_v_proj, attn.to_add_out, attn.to_k, attn.to_out.0, attn.to_q, attn.to_v, torch.nn.Linear
+
+# Training
+train_batch_size: 8
+gradient_accumulation_steps: 4
+max_train_steps: 1000
+
+# Validation
+num_validation_images: 3
+validation_epochs: 32
+validation_inference_steps: 30
+
+learning_rate: 1.0e-4
+max_grad_norm: 1.0
+lr_scheduler: cosine
+lr_warmup_steps: 0
+
+# Output
+output_dir: /opt/ml/model
+
+# Validation
+use_discrete_gpu_for_validation: false
+validation_prompt: "a boy Malcom and his dog Ben"
+
+# Checkpointing
+checkpointing_steps: 500
+
+# Logging
+report_to: wandb
+seed: 111
+
+# Hub
+push_to_hub: false
+hub_model_id: ""

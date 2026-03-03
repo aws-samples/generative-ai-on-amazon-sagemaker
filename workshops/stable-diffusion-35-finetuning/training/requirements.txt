@@ -1,0 +1,16 @@
+torch==2.7.1
+torchvision==0.22.1
+torchaudio==2.7.1
+huggingface-hub==0.36.0
+transformers==4.57.6
+diffusers==0.36.0
+accelerate==1.12.0
+datasets==4.5.0
+deepspeed==0.18.5
+peft==0.18.1
+hf_transfer==0.1.9
+wandb==0.24.2
+trl==0.28.0
+mlflow==3.9.0
+sentencepiece==0.2.0
+yq==3.4.3
