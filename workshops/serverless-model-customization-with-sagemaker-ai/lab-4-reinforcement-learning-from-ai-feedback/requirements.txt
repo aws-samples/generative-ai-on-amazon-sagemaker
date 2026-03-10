@@ -1,6 +1,6 @@
 datasets>=4.5.0
 boto3
-sagemaker>=3.3.1
+sagemaker>=3.5.0
 pandas
 scikit-learn
 rich
