@@ -5,7 +5,7 @@ bitsandbytes==0.45.1
 datasets==3.2.0
 evaluate==0.4.3
 huggingface_hub[hf_transfer]==0.33.4
-mlflow==3.9.0
+mlflow==3.11.0rc1
 safetensors>=0.4.5
 sagemaker==3.4.0
 sagemaker-mlflow==0.2.0
