@@ -83,7 +83,7 @@ strands-agents-tools==0.2.12
 tblib==3.2.0
 tokenizers==0.22.1
 tqdm==4.67.1
-transformers==4.57.1
+transformers==5.0.0rc3
 types-awscrt==0.28.2
 types-s3transfer==0.14.0
 typing-extensions==4.15.0
