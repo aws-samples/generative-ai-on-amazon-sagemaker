@@ -39,7 +39,7 @@ def convert_to_messages(sample, system_prompt=""):
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": sample["Question"]},
-        {"role": "assistant", "content": f"{sample["Complex_CoT"]}\n\n{sample["Response"]}"}
+        {"role": "assistant", "content": f"{sample['Complex_CoT']}\n\n{sample['Response']}"}
     ]
 
     sample["messages"] = messages

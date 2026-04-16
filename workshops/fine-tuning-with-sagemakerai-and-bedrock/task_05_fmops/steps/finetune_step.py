@@ -130,7 +130,7 @@ def train(
                 
                 # Define the compute
                 compute_configs = Compute(
-                    instance_type="ml.g5.2xlarge",
+                    instance_type="ml.g6.2xlarge",
                     instance_count=1,
                     keep_alive_period_in_seconds=3600,
                     volume_size_in_gb=50
