@@ -2,5 +2,5 @@ boto3
 botocore
 amzn-nova-customization-sdk==1.0.83
 datasets==4.5.0
-sagemaker==2.254.1
+sagemaker==2.256.0
 scikit-learn==1.8.0
