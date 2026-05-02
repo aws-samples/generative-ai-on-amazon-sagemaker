@@ -22,4 +22,4 @@ boto3==1.39.8
 bedrock-agentcore==0.1.1
 bedrock-agentcore-starter-toolkit==0.1.5
 botocore==1.39.8
-litellm==1.72.2
+litellm==1.83.0
