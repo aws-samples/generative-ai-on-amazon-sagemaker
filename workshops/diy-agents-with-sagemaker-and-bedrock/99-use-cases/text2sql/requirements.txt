@@ -1,6 +1,6 @@
 boto3==1.38.39
 sqlalchemy==2.0.41
-langchain==0.3.25
+langchain==0.3.30
 langchain-community==0.3.27
 langchain-aws==0.2.26
 PyAthena==3.14.1
