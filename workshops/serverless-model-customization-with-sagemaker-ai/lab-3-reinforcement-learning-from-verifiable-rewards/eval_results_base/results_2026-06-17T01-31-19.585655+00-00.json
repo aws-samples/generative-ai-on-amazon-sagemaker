@@ -1,0 +1,509 @@
+{
+  "config_general": {
+    "lighteval_sha": "?",
+    "num_fewshot_seeds": 1,
+    "max_samples": null,
+    "job_id": 0,
+    "start_time": 7739.128600602,
+    "end_time": 11469.910893766,
+    "total_evaluation_time_secondes": "3730.7822931640003",
+    "model_name": "/opt/ml/input/data/base_model",
+    "model_sha": "",
+    "model_dtype": null,
+    "model_size": "",
+    "generation_parameters": {
+      "early_stopping": null,
+      "repetition_penalty": null,
+      "frequency_penalty": null,
+      "length_penalty": null,
+      "presence_penalty": null,
+      "max_new_tokens": null,
+      "min_new_tokens": null,
+      "seed": null,
+      "stop_tokens": null,
+      "temperature": null,
+      "top_k": null,
+      "min_p": null,
+      "top_p": null,
+      "truncate_prompt": null,
+      "response_format": null
+    }
+  },
+  "results": {
+    "custom|math_zs_cot:algebra|0": {
+      "math_exact_match": 0.6832350463352991,
+      "math_exact_match_stderr": 0.01350862936349786
+    },
+    "custom|math_zs_cot:counting_and_probability|0": {
+      "math_exact_match": 0.34177215189873417,
+      "math_exact_match_stderr": 0.021808504852491587
+    },
+    "custom|math_zs_cot:geometry|0": {
+      "math_exact_match": 0.34029227557411273,
+      "math_exact_match_stderr": 0.02167144558834295
+    },
+    "custom|math_zs_cot:intermediate_algebra|0": {
+      "math_exact_match": 0.1982281284606866,
+      "math_exact_match_stderr": 0.013274090660712124
+    },
+    "custom|math_zs_cot:number_theory|0": {
+      "math_exact_match": 0.3685185185185185,
+      "math_exact_match_stderr": 0.02077856663053857
+    },
+    "custom|math_zs_cot:prealgebra|0": {
+      "math_exact_match": 0.6475315729047072,
+      "math_exact_match_stderr": 0.01619686485188374
+    },
+    "custom|math_zs_cot:precalculus|0": {
+      "math_exact_match": 0.26556776556776557,
+      "math_exact_match_stderr": 0.018917567557968248
+    },
+    "custom|math_zs_cot:_average|0": {
+      "math_exact_match": 0.40644935132283194,
+      "math_exact_match_stderr": 0.01802223850077644
+    },
+    "all": {
+      "math_exact_match": 0.40644935132283194,
+      "math_exact_match_stderr": 0.01802223850077644
+    }
+  },
+  "versions": {
+    "custom|math_zs_cot:algebra|0": 0,
+    "custom|math_zs_cot:counting_and_probability|0": 0,
+    "custom|math_zs_cot:geometry|0": 0,
+    "custom|math_zs_cot:intermediate_algebra|0": 0,
+    "custom|math_zs_cot:number_theory|0": 0,
+    "custom|math_zs_cot:prealgebra|0": 0,
+    "custom|math_zs_cot:precalculus|0": 0
+  },
+  "config_tasks": {
+    "custom|math_zs_cot:algebra": {
+      "name": "math_zs_cot:algebra",
+      "prompt_function": "create_math_zs_cot_doc",
+      "hf_repo": "EleutherAI/hendrycks_math",
+      "hf_subset": "algebra",
+      "metric": [
+        {
+          "metric_name": [
+            "math_exact_match"
+          ],
+          "higher_is_better": {
+            "math_exact_match": true
+          },
+          "category": "3",
+          "use_case": "5",
+          "sample_level_fn": "compute_exact_match_metric",
+          "corpus_level_fn": {
+            "math_exact_match": "mean"
+          }
+        }
+      ],
+      "hf_revision": null,
+      "hf_filter": null,
+      "hf_avail_splits": [
+        "train",
+        "test"
+      ],
+      "trust_dataset": true,
+      "evaluation_splits": [
+        "test"
+      ],
+      "few_shots_split": null,
+      "few_shots_select": null,
+      "generation_size": null,
+      "generation_grammar": null,
+      "stop_sequence": [],
+      "num_samples": null,
+      "suite": [
+        "custom"
+      ],
+      "original_num_docs": 1187,
+      "effective_num_docs": 1187,
+      "must_remove_duplicate_docs": false,
+      "version": 0
+    },
+    "custom|math_zs_cot:counting_and_probability": {
+      "name": "math_zs_cot:counting_and_probability",
+      "prompt_function": "create_math_zs_cot_doc",
+      "hf_repo": "EleutherAI/hendrycks_math",
+      "hf_subset": "counting_and_probability",
+      "metric": [
+        {
+          "metric_name": [
+            "math_exact_match"
+          ],
+          "higher_is_better": {
+            "math_exact_match": true
+          },
+          "category": "3",
+          "use_case": "5",
+          "sample_level_fn": "compute_exact_match_metric",
+          "corpus_level_fn": {
+            "math_exact_match": "mean"
+          }
+        }
+      ],
+      "hf_revision": null,
+      "hf_filter": null,
+      "hf_avail_splits": [
+        "train",
+        "test"
+      ],
+      "trust_dataset": true,
+      "evaluation_splits": [
+        "test"
+      ],
+      "few_shots_split": null,
+      "few_shots_select": null,
+      "generation_size": null,
+      "generation_grammar": null,
+      "stop_sequence": [],
+      "num_samples": null,
+      "suite": [
+        "custom"
+      ],
+      "original_num_docs": 474,
+      "effective_num_docs": 474,
+      "must_remove_duplicate_docs": false,
+      "version": 0
+    },
+    "custom|math_zs_cot:geometry": {
+      "name": "math_zs_cot:geometry",
+      "prompt_function": "create_math_zs_cot_doc",
+      "hf_repo": "EleutherAI/hendrycks_math",
+      "hf_subset": "geometry",
+      "metric": [
+        {
+          "metric_name": [
+            "math_exact_match"
+          ],
+          "higher_is_better": {
+            "math_exact_match": true
+          },
+          "category": "3",
+          "use_case": "5",
+          "sample_level_fn": "compute_exact_match_metric",
+          "corpus_level_fn": {
+            "math_exact_match": "mean"
+          }
+        }
+      ],
+      "hf_revision": null,
+      "hf_filter": null,
+      "hf_avail_splits": [
+        "train",
+        "test"
+      ],
+      "trust_dataset": true,
+      "evaluation_splits": [
+        "test"
+      ],
+      "few_shots_split": null,
+      "few_shots_select": null,
+      "generation_size": null,
+      "generation_grammar": null,
+      "stop_sequence": [],
+      "num_samples": null,
+      "suite": [
+        "custom"
+      ],
+      "original_num_docs": 479,
+      "effective_num_docs": 479,
+      "must_remove_duplicate_docs": false,
+      "version": 0
+    },
+    "custom|math_zs_cot:intermediate_algebra": {
+      "name": "math_zs_cot:intermediate_algebra",
+      "prompt_function": "create_math_zs_cot_doc",
+      "hf_repo": "EleutherAI/hendrycks_math",
+      "hf_subset": "intermediate_algebra",
+      "metric": [
+        {
+          "metric_name": [
+            "math_exact_match"
+          ],
+          "higher_is_better": {
+            "math_exact_match": true
+          },
+          "category": "3",
+          "use_case": "5",
+          "sample_level_fn": "compute_exact_match_metric",
+          "corpus_level_fn": {
+            "math_exact_match": "mean"
+          }
+        }
+      ],
+      "hf_revision": null,
+      "hf_filter": null,
+      "hf_avail_splits": [
+        "train",
+        "test"
+      ],
+      "trust_dataset": true,
+      "evaluation_splits": [
+        "test"
+      ],
+      "few_shots_split": null,
+      "few_shots_select": null,
+      "generation_size": null,
+      "generation_grammar": null,
+      "stop_sequence": [],
+      "num_samples": null,
+      "suite": [
+        "custom"
+      ],
+      "original_num_docs": 903,
+      "effective_num_docs": 903,
+      "must_remove_duplicate_docs": false,
+      "version": 0
+    },
+    "custom|math_zs_cot:number_theory": {
+      "name": "math_zs_cot:number_theory",
+      "prompt_function": "create_math_zs_cot_doc",
+      "hf_repo": "EleutherAI/hendrycks_math",
+      "hf_subset": "number_theory",
+      "metric": [
+        {
+          "metric_name": [
+            "math_exact_match"
+          ],
+          "higher_is_better": {
+            "math_exact_match": true
+          },
+          "category": "3",
+          "use_case": "5",
+          "sample_level_fn": "compute_exact_match_metric",
+          "corpus_level_fn": {
+            "math_exact_match": "mean"
+          }
+        }
+      ],
+      "hf_revision": null,
+      "hf_filter": null,
+      "hf_avail_splits": [
+        "train",
+        "test"
+      ],
+      "trust_dataset": true,
+      "evaluation_splits": [
+        "test"
+      ],
+      "few_shots_split": null,
+      "few_shots_select": null,
+      "generation_size": null,
+      "generation_grammar": null,
+      "stop_sequence": [],
+      "num_samples": null,
+      "suite": [
+        "custom"
+      ],
+      "original_num_docs": 540,
+      "effective_num_docs": 540,
+      "must_remove_duplicate_docs": false,
+      "version": 0
+    },
+    "custom|math_zs_cot:prealgebra": {
+      "name": "math_zs_cot:prealgebra",
+      "prompt_function": "create_math_zs_cot_doc",
+      "hf_repo": "EleutherAI/hendrycks_math",
+      "hf_subset": "prealgebra",
+      "metric": [
+        {
+          "metric_name": [
+            "math_exact_match"
+          ],
+          "higher_is_better": {
+            "math_exact_match": true
+          },
+          "category": "3",
+          "use_case": "5",
+          "sample_level_fn": "compute_exact_match_metric",
+          "corpus_level_fn": {
+            "math_exact_match": "mean"
+          }
+        }
+      ],
+      "hf_revision": null,
+      "hf_filter": null,
+      "hf_avail_splits": [
+        "train",
+        "test"
+      ],
+      "trust_dataset": true,
+      "evaluation_splits": [
+        "test"
+      ],
+      "few_shots_split": null,
+      "few_shots_select": null,
+      "generation_size": null,
+      "generation_grammar": null,
+      "stop_sequence": [],
+      "num_samples": null,
+      "suite": [
+        "custom"
+      ],
+      "original_num_docs": 871,
+      "effective_num_docs": 871,
+      "must_remove_duplicate_docs": false,
+      "version": 0
+    },
+    "custom|math_zs_cot:precalculus": {
+      "name": "math_zs_cot:precalculus",
+      "prompt_function": "create_math_zs_cot_doc",
+      "hf_repo": "EleutherAI/hendrycks_math",
+      "hf_subset": "precalculus",
+      "metric": [
+        {
+          "metric_name": [
+            "math_exact_match"
+          ],
+          "higher_is_better": {
+            "math_exact_match": true
+          },
+          "category": "3",
+          "use_case": "5",
+          "sample_level_fn": "compute_exact_match_metric",
+          "corpus_level_fn": {
+            "math_exact_match": "mean"
+          }
+        }
+      ],
+      "hf_revision": null,
+      "hf_filter": null,
+      "hf_avail_splits": [
+        "train",
+        "test"
+      ],
+      "trust_dataset": true,
+      "evaluation_splits": [
+        "test"
+      ],
+      "few_shots_split": null,
+      "few_shots_select": null,
+      "generation_size": null,
+      "generation_grammar": null,
+      "stop_sequence": [],
+      "num_samples": null,
+      "suite": [
+        "custom"
+      ],
+      "original_num_docs": 546,
+      "effective_num_docs": 546,
+      "must_remove_duplicate_docs": false,
+      "version": 0
+    }
+  },
+  "summary_tasks": {
+    "custom|math_zs_cot:algebra|0": {
+      "hashes": {
+        "hash_examples": "9fd581a825b1074d",
+        "hash_full_prompts": "bca755c278982085",
+        "hash_input_tokens": "aff4eccbf1573d97",
+        "hash_cont_tokens": "aff4eccbf1573d97"
+      },
+      "truncated": 0,
+      "non_truncated": 1187,
+      "padded": 0,
+      "non_padded": 1187,
+      "effective_few_shots": 0.0,
+      "num_truncated_few_shots": 0
+    },
+    "custom|math_zs_cot:counting_and_probability|0": {
+      "hashes": {
+        "hash_examples": "f89fdfe3e3ce894b",
+        "hash_full_prompts": "6096b41a9741a624",
+        "hash_input_tokens": "24b7fbbceb186706",
+        "hash_cont_tokens": "24b7fbbceb186706"
+      },
+      "truncated": 0,
+      "non_truncated": 474,
+      "padded": 0,
+      "non_padded": 474,
+      "effective_few_shots": 0.0,
+      "num_truncated_few_shots": 0
+    },
+    "custom|math_zs_cot:geometry|0": {
+      "hashes": {
+        "hash_examples": "7aa475ee6e19941c",
+        "hash_full_prompts": "f9451a112d7ad833",
+        "hash_input_tokens": "3b92d51af4a04450",
+        "hash_cont_tokens": "3b92d51af4a04450"
+      },
+      "truncated": 0,
+      "non_truncated": 479,
+      "padded": 0,
+      "non_padded": 479,
+      "effective_few_shots": 0.0,
+      "num_truncated_few_shots": 0
+    },
+    "custom|math_zs_cot:intermediate_algebra|0": {
+      "hashes": {
+        "hash_examples": "a6ae718ce0984224",
+        "hash_full_prompts": "ba36758b216a8801",
+        "hash_input_tokens": "53fded401616c934",
+        "hash_cont_tokens": "53fded401616c934"
+      },
+      "truncated": 0,
+      "non_truncated": 903,
+      "padded": 0,
+      "non_padded": 903,
+      "effective_few_shots": 0.0,
+      "num_truncated_few_shots": 0
+    },
+    "custom|math_zs_cot:number_theory|0": {
+      "hashes": {
+        "hash_examples": "6bc99c47a91de6b7",
+        "hash_full_prompts": "b06bfc7120ba1c56",
+        "hash_input_tokens": "d96a4a4b0748d3c5",
+        "hash_cont_tokens": "d96a4a4b0748d3c5"
+      },
+      "truncated": 0,
+      "non_truncated": 540,
+      "padded": 0,
+      "non_padded": 540,
+      "effective_few_shots": 0.0,
+      "num_truncated_few_shots": 0
+    },
+    "custom|math_zs_cot:prealgebra|0": {
+      "hashes": {
+        "hash_examples": "68b36480dd6fb4b2",
+        "hash_full_prompts": "3580455973f27b68",
+        "hash_input_tokens": "8d1afd420781a26a",
+        "hash_cont_tokens": "8d1afd420781a26a"
+      },
+      "truncated": 0,
+      "non_truncated": 871,
+      "padded": 0,
+      "non_padded": 871,
+      "effective_few_shots": 0.0,
+      "num_truncated_few_shots": 0
+    },
+    "custom|math_zs_cot:precalculus|0": {
+      "hashes": {
+        "hash_examples": "222e69d05884a90a",
+        "hash_full_prompts": "23b3cab5289a5fee",
+        "hash_input_tokens": "7e0d04cf38b1b880",
+        "hash_cont_tokens": "7e0d04cf38b1b880"
+      },
+      "truncated": 0,
+      "non_truncated": 546,
+      "padded": 0,
+      "non_padded": 546,
+      "effective_few_shots": 0.0,
+      "num_truncated_few_shots": 0
+    }
+  },
+  "summary_general": {
+    "hashes": {
+      "hash_examples": "05132b8e5d4ccbaf",
+      "hash_full_prompts": "dee7e92c3eaad3ce",
+      "hash_input_tokens": "9c449a769f745407",
+      "hash_cont_tokens": "9c449a769f745407"
+    },
+    "truncated": 0,
+    "non_truncated": 5000,
+    "padded": 0,
+    "non_padded": 5000,
+    "num_truncated_few_shots": 0
+  }
+}
