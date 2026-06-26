@@ -1,0 +1,6 @@
+sagemaker>=3.5.0
+mlflow
+sagemaker-mlflow==0.2.0
+datasets==4.5.0
+fsspec
+rich
