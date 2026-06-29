@@ -11,6 +11,6 @@ peft==0.18.1
 hf_transfer==0.1.9
 wandb==0.24.2
 trl==0.28.0
-mlflow==3.9.0
+mlflow==3.11.1
 sentencepiece==0.2.0
 yq==3.4.3
