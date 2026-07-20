@@ -1,4 +1,4 @@
-sagemaker>=3.15.1
+datasets==5.0.0
 mlflow
-sagemaker-mlflow==0.2.0
-datasets
+sagemaker>=3.16.0
+sagemaker-mlflow==0.5.0
