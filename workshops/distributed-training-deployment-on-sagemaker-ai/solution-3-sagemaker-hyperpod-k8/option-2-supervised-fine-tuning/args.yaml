@@ -10,6 +10,7 @@ merge_weights: true # Merge adapter with base model
 attn_implementation: "flash_attention_2" # attention implementation type
 learning_rate: 1.2e-4 # learning rate scheduler
 num_train_epochs: 4 # number of training epochs
+max_length: 4096 # max sequence length (avoid truncating long chain-of-thought)
 per_device_train_batch_size: 2 # batch size per device during training
 per_device_eval_batch_size: 1 # batch size for evaluation
 gradient_accumulation_steps: 2 # number of steps before performing a backward/update pass
@@ -25,6 +26,7 @@ log_on_each_node: false # disable logging on each node
 ddp_find_unused_parameters: false # DDP unused parameter detection
 save_total_limit: 1 # maximum number of checkpoints to keep
 save_steps: 100 # Save checkpoint every this many steps
+eval_strategy: "steps" # run evaluation every eval_steps (val set is provided)
 eval_steps: 100 # number of steps for the evaluation
 warmup_steps: 15 # number of warmup steps
 weight_decay: 1e-2 # weight decay coefficient

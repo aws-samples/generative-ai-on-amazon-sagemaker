@@ -8,8 +8,11 @@ val_dataset_path: "/data/shared/option-3-dpo/data/val/" # path to where FSx save
 # training parameters
 merge_weights: true # Merge adapter with base model
 attn_implementation: "flash_attention_2" # attention implementation type
-learning_rate: 1.2e-4 # learning rate scheduler
-num_train_epochs: 4 # number of training epochs
+lr_scheduler_type: "cosine" # learning rate schedule for DPO
+loss_type: "sigmoid" # DPO loss type (sigmoid, hinge, ipo, etc.)
+beta: 0.1 # DPO beta coefficient (KL penalty strength)
+learning_rate: 3e-06 # learning rate
+num_train_epochs: 1 # number of training epochs
 per_device_train_batch_size: 2 # batch size per device during training
 per_device_eval_batch_size: 1 # batch size for evaluation
 gradient_accumulation_steps: 2 # number of steps before performing a backward/update pass
@@ -24,9 +27,10 @@ logging_steps: 1 # log every N steps
 log_on_each_node: false # disable logging on each node
 ddp_find_unused_parameters: false # DDP unused parameter detection
 save_total_limit: 1 # maximum number of checkpoints to keep
-save_steps: 100 # Save checkpoint every this many steps
-eval_steps: 100 # number of steps for the evaluation
-warmup_steps: 15 # number of warmup steps
+save_steps: 25 # Save checkpoint every this many steps
+eval_strategy: "steps" # run evaluation every eval_steps (val set is provided)
+eval_steps: 25 # number of steps for the evaluation
+warmup_steps: 12 # number of warmup steps
 weight_decay: 1e-2 # weight decay coefficient
 fsdp: "full_shard auto_wrap offload" # FSDP sharding strategy
 fsdp_config: # FSDP configuration options
