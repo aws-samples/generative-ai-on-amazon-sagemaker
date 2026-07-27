@@ -11,12 +11,12 @@ huggingface_hub[hf_transfer]
 kernels>=0.15.2,<0.16
 mlflow
 Pillow>=10.0.1
-safetensors>=0.7.0
+safetensors>=0.8.0
 sagemaker==3.16.0
 sagemaker-mlflow==0.2.0
 sentencepiece==0.2.1
 scikit-learn==1.9.0
-tokenizers>=0.22.0
+tokenizers>=0.22.0,<=0.23.0
 triton
 trl==1.5.1
 psutil
