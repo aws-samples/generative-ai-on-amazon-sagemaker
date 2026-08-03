@@ -8,7 +8,7 @@
 #
 # Known NOT to work end-to-end: huggingface-vlm-qwen3-5-4b (Qwen3.5). Training
 # succeeds, but no current LMI container recognises model type `qwen3_5`, so
-# notebooks 4 and 4a fail. See README, "Choosing a base model".
+# notebooks 4 and 4a fail.
 BASE_MODEL_ID = "huggingface-reasoning-qwen3-4b"
 
 # Fixed dataset / resource names used across the notebooks
