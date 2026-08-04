@@ -1,0 +1,4 @@
+data/
+sft_data/
+__pycache__/
+*.pyc
