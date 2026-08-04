@@ -48,13 +48,11 @@ def _batch(event: Any) -> List[Dict[str, Any]]:
 def _model_response(record: Dict[str, Any]) -> str:
     """The model's answer.
 
-    The record carries `model_response` (the model's output), `reference_answer` (the
-    gold) and `response` — which is ALSO the gold, passed through from the dataset's
-    `response` column. Reading `response` would compare the gold with itself and
-    return a perfect score on every record, so prefer `model_response` and fall back
-    to `response` only for the RLVR training payload, which has no `model_response`.
+    Only fields that hold model output are read. `response` is not one of them: it
+    carries the gold answer in the evaluation payload. A record with no model output
+    returns an empty string, which fails to parse and scores zero.
     """
-    for key in ("model_response", "generated_text", "completion", "response"):
+    for key in ("model_response", "generated_text", "completion"):
         value = record.get(key)
         if isinstance(value, str) and value.strip():
             return value
