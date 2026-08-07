@@ -1,4 +1,5 @@
 data/
 sft_data/
+eval_result/
 __pycache__/
 *.pyc
