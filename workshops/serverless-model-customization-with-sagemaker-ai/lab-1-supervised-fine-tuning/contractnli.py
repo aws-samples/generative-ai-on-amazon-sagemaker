@@ -4,8 +4,8 @@ ContractNLI data access and prompt construction.
 This module deliberately contains only the boring parts: downloading the dataset,
 loading the splits, turning a document into numbered spans, and rendering the prompt.
 
-Everything that constitutes the *lesson* — calling a model, parsing its answer and
-scoring it — lives in the notebooks, where you can read it.
+Everything that constitutes the *lesson*, calling a model, parsing its answer and
+scoring it, lives in the notebooks, where you can read it.
 
   1. the data       ensure_dataset, load, doc_spans, gold_for
   2. one string     INSTRUCTION, build_prompt
@@ -24,7 +24,7 @@ deliberately not interchangeable:
                   the user turn. For APIs that take roles rather than a single string:
                   the Bedrock Converse baseline in notebook 3, and serving in 4 and 4a.
 
-Same instruction, same checklist, same `/no_think` — but a different order, so the two
+Same instruction, same checklist, same `/no_think`, but a different order, so the two
 are not byte-identical and neither is a drop-in for the other. Change the wording in
 both or in neither.
 """
@@ -180,7 +180,7 @@ def build_messages(doc, labels, completion=None, no_think=True):
 
     Not the same string as `build_prompt`: the checklist goes in the system turn, ahead
     of the contract. Notebook 1 trains on `build_prompt`, so a model served through here
-    is being asked in a different order than it was trained in — which is fine for an
+    is being asked in a different order than it was trained in, which is fine for an
     instruction this explicit, and is what the serving checks in notebooks 4 and 4a
     verify rather than assume.
     """

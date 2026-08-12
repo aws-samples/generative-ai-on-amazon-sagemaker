@@ -5,7 +5,7 @@ This is the deterministic alternative to LLM-as-a-Judge: the same comparison the
 notebook does by hand, expressed per record so the pipeline can run it.
 
 It must be a single self-contained file. The pipeline uploads it and executes it in
-its own container, where neither the notebook nor `contractnli.py` exists — hence the
+its own container, where neither the notebook nor `contractnli.py` exists, hence the
 small amount of duplication.
 
 Emits the four metrics the notebook uses:
