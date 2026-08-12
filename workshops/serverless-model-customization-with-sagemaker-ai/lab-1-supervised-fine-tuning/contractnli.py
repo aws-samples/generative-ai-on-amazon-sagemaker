@@ -90,7 +90,10 @@ def gold_for(doc):
 
 
 # Reasoning models spend their whole generation budget inside <think> on a 17-item
-# checklist and can be cut off before the JSON. Both formats append this switch.
+# checklist and can be cut off before the JSON. The base model has no training to fall
+# back on, so evaluation prompts append this switch. Training prompts do not: the
+# fine-tuned model learns to answer directly, and appending it costs ~3 points of
+# accuracy and drops valid JSON from 100% to 96%.
 NO_THINK = "/no_think"
 
 
