@@ -89,11 +89,10 @@ def gold_for(doc):
     return doc["annotation_sets"][0]["annotations"]
 
 
-# Reasoning models spend their whole generation budget inside <think> on a 17-item
-# checklist and can be cut off before the JSON. The base model has no training to fall
-# back on, so evaluation prompts append this switch. Training prompts do not: the
-# fine-tuned model learns to answer directly, and appending it costs ~3 points of
-# accuracy and drops valid JSON from 100% to 96%.
+# Reasoning models can spend a long stretch inside <think> on a 17-item checklist, and on
+# the longest contracts that runs past the generation budget an evaluation allows, so the
+# JSON is never closed. Evaluation prompts append this switch to keep the answer short.
+# Training prompts do not: the completions already teach the model to answer directly.
 NO_THINK = "/no_think"
 
 
