@@ -1,4 +1,9 @@
 datasets==5.0.0
+matplotlib>=3.10.3
 mlflow
+numpy>=2.0
+pandas>=2.2
+pyarrow>=15.0
 sagemaker>=3.16.0
 sagemaker-mlflow==0.5.0
+tqdm==4.66.5
