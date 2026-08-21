@@ -8,10 +8,11 @@ You will explore the full model customization lifecycle — from dataset prepara
 
 By the end of this workshop, you'll be able to:
 
-- Prepare datasets for different model customization techniques (CPT, SFT, DPO)
+- Prepare datasets for different model customization techniques (CPT, SFT, DPO, GRPO)
 - Run distributed fine-tuning workloads using SageMaker JumpStart, SageMaker Training Jobs, and SageMaker HyperPod with EKS
+- Run reinforcement learning post-training with a rule-based reward, using veRL with vLLM rollouts and Ray
 - Deploy fine-tuned models using vLLM on SageMaker Real-time Endpoints and HyperPod Inference Operator
-- Evaluate model quality using statistical metrics (ROUGE, BERTScore) and LLM-as-a-Judge with Amazon Nova
+- Evaluate model quality using statistical metrics (ROUGE, BERTScore), LLM-as-a-Judge with Amazon Nova, and exact accuracy on verifiable tasks
 
 ## Workshop Structure
 
@@ -29,9 +30,9 @@ A managed, low-code approach to fine-tuning using pre-built model recipes.
 
 ### Solution 2: SageMaker Training Jobs
 
-Full control over training scripts, hyperparameters, and infrastructure using custom SageMaker Training Jobs with QLoRA and FSDP.
+Full control over training scripts, hyperparameters, and infrastructure using custom SageMaker Training Jobs. Options 1 to 3 use QLoRA and FSDP; Option 4 uses reinforcement learning with veRL.
 
-**Model:** Qwen3-4B-Instruct
+**Model:** Qwen3-4B-Instruct (Qwen3-4B base for Option 4)
 
 #### Option 1 — Continued Pre-Training (CPT)
 
@@ -70,6 +71,21 @@ Align model outputs to human preferences using chosen/rejected response pairs.
 | 4    | `4-evaluation.ipynb`                     | Evaluate tool-calling accuracy and response quality with LLM-as-a-Judge (Amazon Nova Pro) |
 
 **Use case:** Function calling / tool use
+
+#### Option 4 — Group Relative Policy Optimization (GRPO)
+
+Post-train the model with reinforcement learning, using a rule-based reward instead of a reference completion. Built on [veRL](https://github.com/volcengine/verl) with vLLM rollouts and Ray.
+
+| Step | Notebook                                       | Description                                                                          |
+| ---- | ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 1    | `1-prepare-data.ipynb`                         | Map the GSM8K dataset into veRL's reinforcement-learning schema and upload to S3      |
+| 2    | `2-group-relative-policy-optimization.ipynb`   | Run GRPO training with veRL, vLLM rollouts, and Ray on SageMaker                      |
+| 3    | `3-deployment.ipynb`                           | Deploy with vLLM, using an instance-pool capacity fallback                            |
+| 4    | `4-evaluation.ipynb`                           | Measure GSM8K accuracy before and after training, and confirm the endpoint agrees     |
+
+**Model:** Qwen3-4B | **Use case:** Verifiable mathematical reasoning
+
+This option differs from the first three in ways worth knowing before you start. It trains the base model rather than the Instruct variant, and uses full-parameter training rather than QLoRA. It requires a **custom training container**, because veRL, vLLM, Ray, and CUDA have to agree on versions — the workshop provides a prebuilt image, and `option-4-grpo/container/` holds the Dockerfile to build your own. It also needs `ml.g6e.12xlarge` for training rather than `ml.g5.12xlarge`. See [`option-4-grpo/README.md`](./solution-2-sagemaker-training/option-4-grpo/README.md) for details.
 
 ---
 
@@ -115,6 +131,7 @@ Each option includes a README with step-by-step instructions for deploying train
 - A SageMaker Studio domain with JupyterLab or Code Editor
 - IAM permissions for SageMaker Training, Endpoints, and S3
 - Service quota for `ml.g5.12xlarge` (or equivalent GPU instances) for training and inference
+- Solution 2 Option 4 (GRPO) additionally needs quota for `ml.g6e.12xlarge` for training and `ml.g6e.2xlarge` for serving, plus a prebuilt veRL training image
 
 ### Solution 3
 
@@ -128,7 +145,7 @@ Each option includes a README with step-by-step instructions for deploying train
 This workshop follows a hands-on, self-paced format. Each solution is independent — you can start with any solution that matches your use case.
 
 - **Solution 1** is the quickest path: a single notebook covers fine-tuning and deployment
-- **Solution 2** provides the most depth: data prep, training, deployment, and evaluation across three customization techniques
+- **Solution 2** provides the most depth: data prep, training, deployment, and evaluation across four customization techniques, from continued pre-training through reinforcement learning
 - **Solution 3** demonstrates the same techniques on Kubernetes-native infrastructure for teams operating at scale
 
 Each module contains:
@@ -153,11 +170,18 @@ Each module contains:
 │   │   ├── 2-supervised-fine-tuning.ipynb
 │   │   ├── 3-deployment.ipynb
 │   │   └── 4-evaluation.ipynb
-│   └── option-3-dpo/
+│   ├── option-3-dpo/
+│   │   ├── 1-prepare-data.ipynb
+│   │   ├── 2-direct-preference-optimization.ipynb
+│   │   ├── 3-deployment.ipynb
+│   │   └── 4-evaluation.ipynb
+│   └── option-4-grpo/
 │       ├── 1-prepare-data.ipynb
-│       ├── 2-direct-preference-optimization.ipynb
+│       ├── 2-group-relative-policy-optimization.ipynb
 │       ├── 3-deployment.ipynb
-│       └── 4-evaluation.ipynb
+│       ├── 4-evaluation.ipynb
+│       ├── container/        custom veRL training image
+│       └── scripts/          in-container training code
 └── solution-3-sagemaker-hyperpod-k8/
     ├── option-1-continued-pre-training/
     │   ├── 1-prepare-data.ipynb
