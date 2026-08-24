@@ -26,6 +26,7 @@ Train a model on instruction-response pairs to specialize it for medical reasoni
 | ---- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | 1    | `1-prepare-data.ipynb`  | Load the medical reasoning dataset, format as prompt/completion pairs, upload to S3, and register in AI Registry                  |
 | 2    | `2-fine-tune-llm.ipynb` | Run serverless SFT with LoRA using `SFTTrainer`, track metrics with MLflow                                                        |
+| 2b   | `2b-import-model-from-s3.ipynb` | _(Alternative to step 2)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
 | 3    | `3-evaluation.ipynb`    | Evaluate with LLM-as-a-Judge (Amazon Nova Pro) using custom metrics: MedicalReasoningQuality, ClinicalAccuracy, ThinkTagStructure |
 | 4    | `4-deployment.ipynb`    | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                                                   |
 
@@ -41,6 +42,7 @@ Align model outputs to human preferences using chosen/rejected response pairs �
 | ---- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | 1    | `1-dpo-prepare-data.ipynb` | Load the preference dataset, format as prompt/chosen/rejected triplets, upload to S3, and register in AI Registry                  |
 | 2    | `2-dpo-trainer.ipynb`      | Run serverless DPO training with LoRA using `DPOTrainer`, track metrics with MLflow                                                |
+| 2b   | `2b-dpo-import-model-from-s3.ipynb` | _(Alternative to step 2)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
 | 3    | `3-dpo-evaluation.ipynb`   | Evaluate with LLM-as-a-Judge (Amazon Nova Pro) using custom metrics: HumanLikeTone, ConversationalEngagement, AvoidRoboticPatterns |
 | 4    | `4-dpo-deployment.ipynb`   | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                                                    |
 
@@ -56,6 +58,7 @@ Fine-tune a model using rule-based reward signals from tasks with objectively ve
 | ---- | ---------------------- | ------------------------------------------------------------------------------------------------ |
 | 1    | `1-prepare-data.ipynb` | Transform GSM8K math problems into RLVR format with rule-based reward verification, upload to S3 |
 | 2    | `2-trainer.ipynb`      | Run serverless RLVR training using `RLVRTrainer`, track metrics with MLflow                      |
+| 2b   | `2b-import-model-from-s3.ipynb` | _(Alternative to step 2)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
 | 3    | `3-evaluation.ipynb`   | Evaluate with the MATH benchmark using `BenchMarkEvaluator`, compare fine-tuned vs. base model   |
 | 4    | `4-deployment.ipynb`   | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                  |
 
@@ -72,6 +75,7 @@ This optional extension builds on Lab 3. It reuses the same GSM8K dataset and RL
 | 1    | `1-prepare-data.ipynb`                      | Prepare GSM8K records with stable IDs and reference answers for custom reward scoring                   |
 | 2    | `2-create-reward-function.ipynb`            | Test and register a Lambda-style Python reward function as a `REWARD_FUNCTION` Evaluator in AI Registry |
 | 3    | `3-train-with-custom-reward-function.ipynb` | Run serverless RLVR training using `RLVRTrainer` with `custom_reward_function`                          |
+| 3b   | `3b-import-model-from-s3.ipynb` | _(Alternative to step 3)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
 | 4    | `4-evaluation.ipynb`                        | Evaluate the custom-reward fine-tuned model with benchmark evaluation                                   |
 | 5    | `5-deployment.ipynb`                        | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                         |
 
@@ -88,6 +92,7 @@ Use an AI judge model to provide reward signals during training, enabling prefer
 | 1    | `1-prepare-data.ipynb`         | Format the dataset in VERL post-training format with LLM-judge reward style, upload to S3          |
 | 2    | `2-prepare-reward-model.ipynb` | Create a reward prompt for human-likeness scoring and register it as an Evaluator in AI Registry   |
 | 3    | `3-fine-tune-model.ipynb`      | Run serverless RLAIF training using `RLAIFTrainer` with a GPT-based reward model                   |
+| 3b   | `3b-import-model-from-s3.ipynb` | _(Alternative to step 3)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
 | 4    | `4-evaluation.ipynb`           | Run dual LLM-as-a-Judge evaluation (base vs. fine-tuned) with a custom human-like-alignment metric |
 | 5    | `5-deployment.ipynb`           | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                    |
 
@@ -124,18 +129,21 @@ Each notebook contains:
 ├── lab-1-supervised-fine-tuning/
 │   ├── 1-prepare-data.ipynb
 │   ├── 2-fine-tune-llm.ipynb
+│   ├── 2b-import-model-from-s3.ipynb
 │   ├── 3-evaluation.ipynb
 │   ├── 4-deployment.ipynb
 │   └── requirements.txt
 ├── lab-2-direct-preference-optimization-DPO/
 │   ├── 1-dpo-prepare-data.ipynb
 │   ├── 2-dpo-trainer.ipynb
+│   ├── 2b-dpo-import-model-from-s3.ipynb
 │   ├── 3-dpo-evaluation.ipynb
 │   ├── 4-dpo-deployment.ipynb
 │   └── requirements.txt
 ├── lab-3-reinforcement-learning-from-verifiable-rewards/
 │   ├── 1-prepare-data.ipynb
 │   ├── 2-trainer.ipynb
+│   ├── 2b-import-model-from-s3.ipynb
 │   ├── 3-evaluation.ipynb
 │   ├── 4-deployment.ipynb
 │   └── requirements.txt
@@ -143,6 +151,7 @@ Each notebook contains:
 │   ├── 1-prepare-data.ipynb
 │   ├── 2-create-reward-function.ipynb
 │   ├── 3-train-with-custom-reward-function.ipynb
+│   ├── 3b-import-model-from-s3.ipynb
 │   ├── 4-evaluation.ipynb
 │   ├── 5-deployment.ipynb
 │   ├── reward_function.py
@@ -151,6 +160,7 @@ Each notebook contains:
     ├── 1-prepare-data.ipynb
     ├── 2-prepare-reward-model.ipynb
     ├── 3-fine-tune-model.ipynb
+    ├── 3b-import-model-from-s3.ipynb
     ├── 4-evaluation.ipynb
     ├── 5-deployment.ipynb
     └── requirements.txt
