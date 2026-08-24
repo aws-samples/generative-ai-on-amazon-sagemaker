@@ -1,7 +1,7 @@
 # Training container: veRL's official image plus the SageMaker /opt/ml contract.
 #
 # Build context is the project root, not this directory, because the image needs
-# both container/ and training/:
+# both container/ and scripts/:
 #
 #     docker build -f container/Dockerfile --build-arg BASE_DIGEST=<sha256 hex> .
 #
@@ -51,7 +51,7 @@ RUN mkdir -p /opt/ml/code \
              /opt/ml/model \
              /opt/ml/output/data
 
-# Copied and installed before the source, so editing training/ does not
+# Copied and installed before the source, so editing scripts/ does not
 # invalidate this layer.
 #
 # This step installs two things: veRL itself, and the sagemaker-training toolkit
@@ -79,9 +79,11 @@ RUN echo "=== base image packages, before this layer ===" \
     && pip install --no-cache-dir --no-deps -r /tmp/requirements-container.txt \
     && rm /tmp/requirements-container.txt
 
-# The in-container training scripts. `training/` is self-contained by design and
-# imports nothing from src/grpo_sagemaker/ (Requirement 1.7).
-COPY training/ /opt/ml/code/
+# The in-container training scripts. `scripts/` is self-contained by design: it
+# imports nothing from the notebooks and reads its configuration only from the
+# hyperparameters.json SageMaker writes, which is what lets the same files run
+# either baked into this image or uploaded per job as SourceCode.
+COPY scripts/ /opt/ml/code/
 COPY container/verify_stack.py /opt/ml/code/verify_stack.py
 
 # Overrides the base image's WorkingDir (/home/dpsk_a2a).
