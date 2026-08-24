@@ -9,7 +9,7 @@
 sagemaker==3.16.0
 boto3==1.43.67
 datasets==4.8.5
-pandas==2.3.4
+pandas==2.3.3
 pyarrow==22.0.0
 matplotlib==3.11.0
 plotly==6.5.1
