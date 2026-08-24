@@ -18,16 +18,16 @@ By the end of this workshop, you'll be able to:
 
 ### Lab 1: Supervised Fine-Tuning (SFT)
 
-Train a model on instruction-response pairs to specialize it for medical reasoning with chain-of-thought outputs.
+Train a model to answer a fixed 17-point legal checklist about a non-disclosure agreement and cite the clauses that justify each answer.
 
-**Model:** Qwen 2.5 - 7B Instruct | **Dataset:** [Medical O1 Reasoning SFT](https://huggingface.co/datasets/FreedomIntelligence/medical-o1-reasoning-SFT) | **Use case:** Medical expert reasoning
+**Model:** Qwen 3 - 4B | **Dataset:** [ContractNLI](https://stanfordnlp.github.io/contract-nli/) | **Use case:** Contract review with evidence citations
 
 | Step | Notebook                | Description                                                                                                                       |
 | ---- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | `1-prepare-data.ipynb`  | Load the medical reasoning dataset, format as prompt/completion pairs, upload to S3, and register in AI Registry                  |
+| 1    | `1-prepare-data.ipynb`  | Load the ContractNLI NDA corpus, render the 17-point checklist prompt, upload to S3, and register in AI Registry                  |
 | 2    | `2-fine-tune-llm.ipynb` | Run serverless SFT with LoRA using `SFTTrainer`, track metrics with MLflow                                                        |
 | 2b   | `2b-import-model-from-s3.ipynb` | _(Alternative to step 2)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
-| 3    | `3-evaluation.ipynb`    | Evaluate with LLM-as-a-Judge (Amazon Nova Pro) using custom metrics: MedicalReasoningQuality, ClinicalAccuracy, ThinkTagStructure |
+| 3    | `3-evaluation.ipynb`    | Score with a custom reward function (label_correct, evidence_f1, contradiction_correct, json_valid), then judge with Claude Sonnet 4.5 (EvidenceSupportsVerdict, CarveOutHandling, ChecklistCompleteness) |
 | 4    | `4-deployment.ipynb`    | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                                                   |
 
 ---
@@ -43,7 +43,7 @@ Align model outputs to human preferences using chosen/rejected response pairs �
 | 1    | `1-dpo-prepare-data.ipynb` | Load the preference dataset, format as prompt/chosen/rejected triplets, upload to S3, and register in AI Registry                  |
 | 2    | `2-dpo-trainer.ipynb`      | Run serverless DPO training with LoRA using `DPOTrainer`, track metrics with MLflow                                                |
 | 2b   | `2b-dpo-import-model-from-s3.ipynb` | _(Alternative to step 2)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
-| 3    | `3-dpo-evaluation.ipynb`   | Evaluate with LLM-as-a-Judge (Amazon Nova Pro) using custom metrics: HumanLikeTone, ConversationalEngagement, AvoidRoboticPatterns |
+| 3    | `3-dpo-evaluation.ipynb`   | Evaluate with LLM-as-a-Judge (Claude Sonnet 4.5) using custom metrics: HumanLikeTone, ConversationalEngagement, AvoidRoboticPatterns |
 | 4    | `4-dpo-deployment.ipynb`   | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                                                    |
 
 ---
@@ -52,7 +52,7 @@ Align model outputs to human preferences using chosen/rejected response pairs �
 
 Fine-tune a model using rule-based reward signals from tasks with objectively verifiable answers — no human annotators or reward model needed.
 
-**Model:** Qwen 2.5 - 7B Instruct | **Dataset:** [GSM8K](https://huggingface.co/datasets/openai/gsm8k) | **Use case:** Mathematical reasoning
+**Model:** Qwen 3 - 0.6B | **Dataset:** [GSM8K](https://huggingface.co/datasets/openai/gsm8k) | **Use case:** Mathematical reasoning
 
 | Step | Notebook               | Description                                                                                      |
 | ---- | ---------------------- | ------------------------------------------------------------------------------------------------ |
@@ -101,8 +101,8 @@ Use an AI judge model to provide reward signals during training, enabling prefer
 - An AWS account with access to Amazon SageMaker AI
 - A SageMaker Studio domain with JupyterLab or Code Editor
 - IAM permissions for SageMaker Training, Endpoints, Model Registry, and S3
-- Service quota for `ml.g5.2xlarge` (Labs 1, 3, 4) and `ml.g5.12xlarge` (Lab 2) for inference
-- Access to Amazon Nova Pro (used as the LLM-as-a-Judge evaluator model)
+- Service quota for `ml.g5.xlarge` (all labs) for inference
+- Access to Claude Sonnet 4.5 in Amazon Bedrock, the LLM-as-a-Judge evaluator model in labs 1, 2 and 4. Lab 1 also calls Claude Sonnet 4.6 for its frontier baseline
 
 ## How to Run
 
@@ -132,6 +132,10 @@ Each notebook contains:
 │   ├── 2b-import-model-from-s3.ipynb
 │   ├── 3-evaluation.ipynb
 │   ├── 4-deployment.ipynb
+│   ├── 4a-deployment-bedrock.ipynb
+│   ├── config.py
+│   ├── contractnli.py
+│   ├── contractnli_scorer.py
 │   └── requirements.txt
 ├── lab-2-direct-preference-optimization-DPO/
 │   ├── 1-dpo-prepare-data.ipynb
