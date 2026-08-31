@@ -79,8 +79,10 @@ invoked. **Both Lab 3 and Lab 4 end with teardown cells. Run them.**
 ## What to expect
 
 Ten GRPO steps over 1280 prompts is 10,240 sampled completions, and it moves GSM8K
-accuracy substantially — runs of this configuration have gone from roughly 39% to around
-80% on held-out data.
+accuracy substantially — runs of this configuration have gone from roughly 40% to around
+76% on held-out data, a gain of more than thirty points. Two validated runs measured
+39.45% → 76.56% and 44.14% → 76.17%. The baseline is itself measured by sampling, so it
+moves a few points between runs; the trained figure is consistently near 76%.
 
 That is a real measurement, and it is not a converged model. Ten steps over a sixth of
 the training set was chosen so the lab finishes, not so the model stops improving. The
