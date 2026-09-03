@@ -1,0 +1,18 @@
+# Notebook-side dependencies for the GRPO labs.
+#
+# Deliberately separate from container/requirements-container.txt. That file is the
+# GPU image's extension layer -- it pins veRL, torch's companions, and the
+# SageMaker training toolkit, and it is installed with `--no-deps` against a
+# prebuilt veRL base image. Installing it in a notebook kernel would try to pull
+# veRL and its CUDA stack onto the Studio instance, which is neither needed nor
+# possible there: the notebooks only prepare data, submit jobs, and call endpoints.
+sagemaker==3.16.0
+boto3==1.43.67
+datasets==4.8.5
+pandas==2.3.3
+pyarrow==22.0.0
+matplotlib==3.11.0
+plotly==6.5.1
+# Used for readable dict output when inspecting a prepared row. Present in
+# SageMaker Studio images already, declared here so a local kernel also works.
+rich==14.3.0

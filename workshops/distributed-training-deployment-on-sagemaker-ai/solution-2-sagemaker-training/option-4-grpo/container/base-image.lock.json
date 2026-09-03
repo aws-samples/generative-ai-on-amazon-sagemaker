@@ -1,0 +1,57 @@
+{
+  "_comment": [
+    "Resolved base image pin for the training container. Every value here was read",
+    "from the registry and from the image's own config blob and layer history -- not",
+    "from a tag label and not from documentation. src/grpo_sagemaker/build_image.py",
+    "re-resolves this at build time and must agree; docs/container.md renders it as",
+    "the pinning matrix (Requirement 6.4).",
+    "",
+    "Why this tag: it is the newest verlai/verl image whose vLLM, Python, and CUDA",
+    "versions all clear Requirement 6.2's floors. The newer vllm020/023/024 tags also",
+    "clear them but ship CUDA 13.0.2, which needs a much newer host NVIDIA driver than",
+    "SageMaker training AMIs are guaranteed to carry; CUDA 12.9.1 benefits from CUDA",
+    "minor-version compatibility instead. Revisit if a CUDA 12.x image with a higher",
+    "vLLM appears.",
+    "",
+    "Note the tag is a .dev build. That is not a stability compromise here: the image",
+    "is consumed by immutable digest, and no non-dev verlai/verl tag reaches vLLM",
+    "0.18.0 -- the newest '.latest' tag is vllm017.latest at vLLM 0.17.0."
+  ],
+  "repository": "verlai/verl",
+  "tag": "vllm018.dev1",
+  "digest": "sha256:9f4b5f602f979ea90ed262afa1a3cc297fe80fa5d48b175efc740da6f1fcb085",
+  "reference": "verlai/verl@sha256:9f4b5f602f979ea90ed262afa1a3cc297fe80fa5d48b175efc740da6f1fcb085",
+  "platform": "linux/amd64",
+  "versions": {
+    "vllm": "0.18.0",
+    "python": "3.12",
+    "cuda": "12.9.1",
+    "torch": "2.10.0",
+    "transformers": "5.3.0",
+    "flash_attn": "2.8.3",
+    "megatron_lm": "core_v0.16.0"
+  },
+  "verl": {
+    "installed_in_base_image": false,
+    "base_image_dependency_target": "v0.7.1",
+    "project_installs": "verl==0.7.1",
+    "note": "Base image runs `pip install git+...verl.git@v0.7.1 && pip uninstall -y verl`, so it carries veRL's dependency closure but not veRL. container/requirements-container.txt adds it back with --no-deps."
+  },
+  "evidence": {
+    "vllm": "layer history: RUN pip install vllm==0.18.0",
+    "torch": "layer history: RUN pip install torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cu129",
+    "transformers": "layer history: RUN pip install transformers==5.3.0",
+    "flash_attn": "layer history: RUN ... pip install --no-build-isolation flash_attn==2.8.3",
+    "megatron_lm": "layer history: RUN pip install --no-deps git+https://github.com/NVIDIA/Megatron-LM.git@core_v0.16.0",
+    "cuda": "image config Env: CUDA_VERSION=12.9.1",
+    "python": "layer history references python3.12",
+    "verl": "layer history: RUN pip install git+https://github.com/volcengine/verl.git@v0.7.1 && pip uninstall -y verl",
+    "naming_convention": "vllm017.latest ships vllm==0.17.0 and vllm018.dev1 ships vllm==0.18.0, confirming that a zero-padded packed tag component 0MM denotes version 0.MM"
+  },
+  "constraints_satisfied": {
+    "vllm_min": "0.18.0",
+    "python_min": "3.10",
+    "cuda_min": "12.8",
+    "verdict": "all three floors met as originally specified; no floor was relaxed"
+  }
+}
