@@ -7,3 +7,4 @@ sagemaker>=3.16.0
 sagemaker-mlflow==0.5.0
 scikit-learn
 tqdm
+s3fs==2026.4.0
