@@ -1,0 +1,114 @@
+# Container extension layer: the SageMaker /opt/ml contract, and nothing else.
+#
+# Installed with `pip install --no-deps` (see container/Dockerfile). That flag is
+# load-bearing, not a style choice: the veRL base image ships a carefully built
+# CUDA / torch / vLLM / transformers / flash-attn stack, and letting pip resolve
+# dependencies here would let it silently upgrade torch and break the image.
+# Requirement 6.6.
+#
+# `--no-deps` shifts the burden of the transitive closure onto this file, so
+# every runtime dependency `sagemaker-training` actually imports is listed
+# explicitly below, each with an exact `==` version (Requirement 6.5). The
+# closure was derived from the toolkit's own `install_requires` at v5.1.1 and
+# from its import graph: `sagemaker_training.cli.train` -> `trainer` -> `runner`
+# -> `mpi`, which imports paramiko and psutil at module scope. A missing entry
+# is therefore an ImportError at container start, which is why
+# container/verify_stack.py imports the toolkit and resolves its console script
+# during the build -- a gap fails the build, not a paid training job.
+#
+# Deliberately absent, because pinning them here is exactly what Requirement 6.6
+# forbids -- each is already present in the base image and is coupled to the
+# compiled stack:
+#   numpy             torch and vLLM are compiled against a specific numpy ABI
+#   scipy             built against numpy's ABI
+#   protobuf          Ray constrains this to a narrow range
+#   psutil            a Ray dependency
+#   typing-extensions torch hard-requires it
+#   urllib3           botocore accepts >=1.25.4,<3; whatever requests already
+#                     pulled in satisfies that, and replacing it could break
+#                     other base-image HTTP clients
+#   pip               present in every base image
+#
+# Ordering below groups each direct dependency of the toolkit with the packages
+# it drags in, so the reason any given line exists stays legible.
+
+# veRL itself. The base image deliberately does NOT contain it: its final build
+# step is
+#
+#     pip install git+https://github.com/volcengine/verl.git@v0.7.1 && pip uninstall -y verl
+#
+# (confirmed by reading the image's layer history), which installs veRL's whole
+# dependency closure and then removes only veRL. That is the pattern veRL's own
+# install guide describes -- use their image, then add veRL with no deps -- and it
+# means `import verl` fails in the unmodified base image, so container/verify_stack.py
+# would fail the build without this line.
+#
+# Pinned to v0.7.1 because that is the exact release the pinned base image's
+# dependency closure was built for, so `--no-deps` leaves a coherent environment.
+# Do not bump this without repinning the base image: v0.8.0 deprecates
+# verl.trainer.main_ppo, which Requirement 13.6 names and training/run_grpo.py
+# invokes.
+verl==0.7.1
+
+# The toolkit itself: implements the /opt/ml contract and provides the `train`
+# console script that SageMaker invokes, which dispatches to SAGEMAKER_PROGRAM.
+sagemaker-training==5.1.1
+
+# boto3 -- imported at module scope by sagemaker_training.environment, .files,
+# .modules, and .intermediate_output (checkpoint and output sync).
+boto3==1.43.67
+botocore==1.43.67
+jmespath==1.1.0
+s3transfer==0.19.2
+python-dateutil==2.9.0.post0
+
+# six -- imported at module scope by sagemaker_training.files, .modules,
+# .process, and .intermediate_output. Also required by python-dateutil.
+six==1.17.0
+
+# retrying -- imported at module scope by sagemaker_training.entry_point.
+retrying==1.4.2
+
+# inotify_simple -- imported at module scope by
+# sagemaker_training.intermediate_output. Held at the exact version the toolkit
+# declares; 2.x changed the API the toolkit was written against.
+inotify_simple==1.2.1
+
+# paramiko -- imported at module scope by sagemaker_training.mpi, which
+# sagemaker_training.runner imports unconditionally. This project distributes
+# work with Ray rather than MPI, so paramiko is never exercised, but it must be
+# importable for the `train` entry point to load at all.
+paramiko==5.0.0
+bcrypt==5.0.0
+PyNaCl==1.6.2
+invoke==3.0.3
+# cryptography, cffi, and pycparser are deliberately NOT pinned here.
+#
+# The base image already carries them -- veRL's dependency closure includes
+# ray[default], which brings cryptography, which brings cffi and pycparser. Naming
+# a different version makes pip try to replace the existing copy, and the base
+# image's cryptography was installed without a RECORD file, so pip cannot
+# uninstall it:
+#
+#     error: uninstall-no-record-file
+#     × Cannot uninstall cryptography 41.0.7
+#
+# That failed the build outright. Nothing here needs a newer one: paramiko 5.0.0
+# requires only cryptography>=3.3, which 41.0.7 satisfies comfortably.
+#
+# Omitting them does not weaken Requirement 6.5's exact-pinning rule. Their
+# versions are fixed by the base image, and the base image is pinned by immutable
+# digest, so they are every bit as reproducible as an `==` line here would be --
+# and unlike an `==` line, they cannot drift out of agreement with the image.
+# container/verify_stack.py imports the toolkit during the build, so a genuine gap
+# fails the build rather than a paid training job.
+
+# gevent -- declared by the toolkit for its output-sync workers.
+gevent==26.7.0
+greenlet==3.5.4
+zope.event==6.2
+zope.interface==8.5
+
+# werkzeug -- declared by the toolkit.
+werkzeug==3.1.8
+MarkupSafe==3.0.3
