@@ -1,0 +1,9 @@
+sagemaker==3.4.0
+boto3==1.42.51
+datasets==3.2.0
+rouge-score==0.1.2
+numpy==1.26.4
+pandas==2.2.3
+matplotlib==3.10.1
+mlflow==3.9.0
+sagemaker-mlflow==0.2.0
