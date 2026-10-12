@@ -64,7 +64,7 @@ The judge reaches Bedrock directly rather than through `LLMAsJudgeEvaluator`, be
 registers no Model Package. The endpoint's answers are supplied to the evaluation job as
 precomputed inference responses, using the same three custom metrics as Option 1.
 
-**Current notebook settings:** One `ml.g5.2xlarge` training instance, PyTorch `2.8.0`, 1 training epoch, maximum sequence length 8,192, LoRA rank 32, and learning rate `1e-4`. Direct hosting uses one `ml.g5.xlarge` and the vLLM `0.28.0` container, without an Inference Component. Notebook 4 selects the newest completed job matching `TRAIN_JOB_PREFIX` unless `TRAINING_JOB_NAME` is set explicitly.
+**Current notebook settings:** One `ml.g5.2xlarge` training instance, PyTorch `2.8.0`, 1 training epoch, maximum sequence length 8,192, LoRA rank 32, and learning rate `1e-4`. Direct hosting uses one `ml.g5.xlarge` and the vLLM `0.28.0` container, without an Inference Component. Notebook 3 selects the newest completed job matching `TRAIN_JOB_PREFIX` unless `TRAINING_JOB_NAME` is set explicitly. Training logs to the account's default SageMaker MLflow App when one exists; without one the job trains untracked.
 
 ## Prerequisites
 
@@ -75,7 +75,7 @@ precomputed inference responses, using the same three custom metrics as Option 1
 - **Separate quotas:** Option 1 needs serverless customization/evaluation capacity and `ml.g5.12xlarge` endpoint capacity; Option 2 needs `ml.g5.2xlarge` Training job capacity and `ml.g5.xlarge` endpoint capacity. Training and hosting quotas are not interchangeable; check warm-pool capacity if retaining that setting.
 - For baseline/judge evaluation, Bedrock invocation access to the frontier model and evaluation access to the judge model, including the applicable model/inference-profile permissions and quotas. Option 1 judges with `amazon.nova-pro-v1:0`; Option 2 judges with the `us.anthropic.claude-sonnet-4-5-20250929-v1:0` inference profile, and its execution role additionally needs a trust relationship for `bedrock.amazonaws.com` plus `bedrock:CreateEvaluationJob`, `GetEvaluationJob`, `ListEvaluationJobs`, `StopEvaluationJob` and `bedrock:InvokeModel`. Neither is required to run Option 2 with both evaluation switches left `False`.
 - Network access to download ContractNLI, Python dependencies, and Hugging Face tokenizers/weights; review applicable model terms before training, especially the serverless notebook's `accept_eula=True` setting
-- Install the selected directory's `requirements.txt` using notebook 1. Both tracks require SageMaker SDK v3 (`sagemaker>=3.16.0`); Option 2 installs its training dependencies separately from `scripts/requirements.txt` inside the job.
+- Install the selected directory's `requirements.txt` using notebook 1. Both tracks require SageMaker SDK v3. Option 1 installs `sagemaker>=3.16.0`; Option 2 uses the SDK that ships with the SageMaker Distribution 4.5.0 JupyterLab image and installs only `transformers`, with its training dependencies installed separately from `scripts/requirements.txt` inside the job.
 
 ## How to Run
 
@@ -88,7 +88,7 @@ precomputed inference responses, using the same three custom metrics as Option 1
 
 **S3 isolation warning:** Both configurations default to `DATASET_PREFIX = "contractnli-nda-review"` and write train/validation objects under the same `datasets/contractnli-nda-review` prefix when using the same bucket and session prefix. Option 1 stores strings, while Option 2 stores chat-message lists plus chat-template arguments, so running both can overwrite data with an incompatible schema. Choose one track, or set distinct dataset prefixes in both configurations before preparing data; Option 2 derives `DATA_PREFIX` from `DATASET_PREFIX`.
 
-**Costs and cleanup:** Option 2 currently sets `KEEP_ALIVE_SECONDS = 1800`, retaining a billable training warm pool for 30 minutes; set it to `0` before launching a one-shot run if you do not need reuse. Real-time endpoints remain billable until deleted, even after closing a notebook or stopping a polling cell. Remove endpoints, endpoint configurations, models, and Option 1 Inference Components using the cleanup cells, and review retained S3 artifacts, logs, registry resources, and any other resources you created. Training, evaluation, Bedrock calls, hosting, and storage can incur charges; this workshop makes no cost or quality guarantees.
+**Costs and cleanup:** Option 2 sets `KEEP_ALIVE_SECONDS = 0`, so no training warm pool is retained; a non-zero value keeps the instance warm, and billable, for that many seconds after the job. Real-time endpoints remain billable until deleted, even after closing a notebook or stopping a polling cell. Remove endpoints, endpoint configurations, models, and Option 1 Inference Components using the cleanup cells, and review retained S3 artifacts, logs, registry resources, and any other resources you created. Training, evaluation, Bedrock calls, hosting, and storage can incur charges; this workshop makes no cost or quality guarantees.
 
 ## Repository Structure
 

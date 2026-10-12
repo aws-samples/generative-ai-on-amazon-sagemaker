@@ -198,6 +198,14 @@ class ScriptArguments:
     mlflow_experiment_name: Optional[str] = field(
         default=None, metadata={"help": "MLflow experiment name"}
     )
+    mlflow_log_model: bool = field(
+        default=False,
+        metadata={
+            "help": "Also log the merged model to MLflow and register it. Off by default: "
+            "it uploads the full checkpoint a second time, and a failure there fails a job "
+            "whose training already succeeded."
+        },
+    )
     modality_type: str = field(
         default="text",
         metadata={
@@ -1936,7 +1944,7 @@ def save_model(
                 )
                 if vlm_source_model_id:
                     _validate_vlm_export(final_output_dir)
-                if mlflow_enabled:
+                if mlflow_enabled and script_args.mlflow_log_model:
                     register_model_in_mlflow(merged_model, tokenizer, script_args)
 
         accelerator.wait_for_everyone()
@@ -1958,7 +1966,7 @@ def save_model(
             )
             if not script_args.use_peft and vlm_source_model_id:
                 _validate_vlm_export(final_output_dir)
-            if mlflow_enabled:
+            if mlflow_enabled and script_args.mlflow_log_model:
                 register_model_in_mlflow(trainer.model, tokenizer, script_args)
 
         accelerator.wait_for_everyone()
