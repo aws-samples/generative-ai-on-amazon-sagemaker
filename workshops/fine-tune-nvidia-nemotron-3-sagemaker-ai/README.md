@@ -98,6 +98,7 @@ The tree below shows the workshop source files, excluding downloaded data, tempo
 .
 ├── README.md
 ├── 01-serverless-workshop/
+│   ├── README.md
 │   ├── 1-prepare-data.ipynb
 │   ├── 2-fine-tune-llm.ipynb
 │   ├── 3-evaluation.ipynb
@@ -107,10 +108,12 @@ The tree below shows the workshop source files, excluding downloaded data, tempo
 │   ├── contractnli_scorer.py
 │   └── requirements.txt
 └── 02-smtj-workshop/
+    ├── README.md
     ├── 1-prepare-data.ipynb
     ├── 2-fine-tune-llm.ipynb
-    ├── 3-evaluation.ipynb
-    ├── 4-deployment.ipynb
+    ├── 3-deployment.ipynb
+    ├── 4-evaluation.ipynb
+    ├── baselines/
     ├── config.py
     ├── contractnli.py
     ├── contractnli_scorer.py
