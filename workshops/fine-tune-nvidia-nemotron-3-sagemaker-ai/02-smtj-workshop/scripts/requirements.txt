@@ -9,7 +9,7 @@ deepspeed==0.19.5
 evaluate==0.4.6
 huggingface_hub[hf_transfer]
 kernels>=0.16.0,<0.17  # mirrors transformers 5.15.1's own range; bump with transformers
-mlflow
+mlflow==3.16.1
 Pillow>=10.0.1
 safetensors>=0.8.0
 sagemaker==3.21.0
