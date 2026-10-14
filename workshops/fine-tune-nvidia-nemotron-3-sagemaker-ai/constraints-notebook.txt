@@ -1,0 +1,19 @@
+# Notebook resolver guardrails for Linux x86_64 / CPython 3.12, not the training DLC.
+# Pin SDK modules too: the sagemaker metapackage specifies lower bounds, not exact versions.
+sagemaker==3.21.0
+sagemaker-core==2.21.0
+sagemaker-train==1.21.0
+sagemaker-serve==1.21.0
+sagemaker-mlops==1.21.0
+sagemaker-mlflow==0.5.0
+# Keep boto3/botocore in aiobotocore's supported range to avoid s3fs backtracking.
+boto3==1.43.56
+botocore==1.43.56
+aiobotocore==3.9.0
+s3fs==2026.4.0
+fsspec==2026.4.0
+mlflow==3.15.2
+numpy==2.2.6
+pandas==2.3.3
+pyarrow==21.0.0
+matplotlib==3.10.9

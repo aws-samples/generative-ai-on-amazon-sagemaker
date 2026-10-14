@@ -4,8 +4,9 @@ ContractNLI data access and prompt construction.
 This module deliberately contains only the boring parts: downloading the dataset,
 loading the splits, turning a document into numbered spans, and rendering the prompt.
 
-Everything that constitutes the *lesson*, calling a model, parsing its answer and
-scoring it, lives in the notebooks, where you can read it.
+The notebooks show the workflow. Local evaluation parsing, scoring, plots, and
+result readers are in evaluation_utils.py; the managed scorer is self-contained
+in contractnli_scorer.py.
 
   1. the data       ensure_dataset, load, doc_spans, gold_for
   2. one string     INSTRUCTION, build_prompt

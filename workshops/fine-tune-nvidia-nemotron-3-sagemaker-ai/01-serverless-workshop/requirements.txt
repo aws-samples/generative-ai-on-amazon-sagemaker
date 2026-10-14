@@ -1,3 +1,5 @@
+# Notebook only. Keep the training-container dependencies separate.
+-c ../constraints-notebook.txt
 datasets==5.0.0
 matplotlib>=3.10.3
 mlflow

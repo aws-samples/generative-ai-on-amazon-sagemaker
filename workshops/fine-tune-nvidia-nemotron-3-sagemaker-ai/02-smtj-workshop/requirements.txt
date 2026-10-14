@@ -1,7 +1,8 @@
-# Notebook-side dependencies only. The SageMaker Python SDK, boto3, pandas, pyarrow and
-# matplotlib come with SageMaker Distribution 4.5.0, the JupyterLab image this workshop uses.
-# Training installs its own set from scripts/requirements.txt inside the container.
-#
-# Notebook 1 measures real token lengths with the base model's tokenizer, which is what
-# decides `max_length` in notebook 2. Tokenizer only - no model weights are downloaded.
+# Notebook-side dependencies for SageMaker Distribution 4.5.0 / Python 3.12.
+# Pin SDK modules via constraints instead of relying on the image's mixed SDK versions.
+# Training installs its own dependencies from scripts/requirements.txt inside the DLC.
+-c ../constraints-notebook.txt
+sagemaker==3.21.0
+sagemaker-mlflow==0.5.0
+# Notebook 1 uses the tokenizer only; it does not download model weights.
 transformers==5.15.1
