@@ -534,10 +534,10 @@ def setup_mlflow(script_args: ScriptArguments) -> None:
         return
 
     logger.info("Initializing MLflow")
-    mlflow.enable_system_metrics_logging()
-    mlflow.autolog()
     mlflow.set_tracking_uri(script_args.mlflow_uri)
     mlflow.set_experiment(script_args.mlflow_experiment_name)
+    mlflow.enable_system_metrics_logging()
+    mlflow.autolog(log_models=script_args.mlflow_log_model)
 
     current_datetime = datetime.datetime.now()
     formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M")
