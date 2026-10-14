@@ -55,7 +55,7 @@ prompt-toolkit==3.0.52
 propcache==0.4.1
 protobuf==6.33.5
 psutil==7.1.1
-pyarrow==21.0.0
+pyarrow==23.0.1
 pydantic==2.12.3
 pydantic-core==2.41.4
 pydantic-settings==2.11.0
