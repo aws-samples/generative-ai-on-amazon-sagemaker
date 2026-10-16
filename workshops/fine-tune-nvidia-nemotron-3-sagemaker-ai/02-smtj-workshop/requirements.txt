@@ -2,7 +2,7 @@
 # Pin SDK modules via constraints instead of relying on the image's mixed SDK versions.
 # Training installs its own dependencies from scripts/requirements.txt inside the DLC.
 -c ../constraints-notebook.txt
-sagemaker==3.22.0
+sagemaker==3.25.0
 sagemaker-mlflow==0.5.0
 # Notebook 1 uses the tokenizer only; it does not download model weights.
 transformers==5.15.1
