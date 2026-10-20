@@ -30,7 +30,7 @@ Local exports overwrite `./eval_result/frontier_metrics.json`, `frontier_rows.js
 
 ## Prerequisites
 
-- A SageMaker Studio JupyterLab space with Python 3.12. Notebook 1 installs `requirements.txt`, using `../constraints-notebook.txt` to pin SageMaker SDK 3.21.0 and its modules. Restart the kernel and follow the [dependency validation notes](../README.md#notebook-dependencies).
+- A SageMaker Studio JupyterLab space with Python 3.12. Notebook 1 installs `requirements.txt`, using `../constraints-notebook.txt` to pin the SageMaker SDK and its modules. Restart the kernel and follow the [dependency validation notes](../README.md#notebook-dependencies).
 - MLflow App permissions as described in [MLflow setup](../README.md#monitor-training-and-mlflow). `MLFLOW_APP_ARN` is optional and always wins. If empty, setup first reuses the uniquely matching tagged stack app, then the named workshop app, before falling back to native SDK discovery/create. Ambiguity stops setup; pending apps are waited for before training. It does not require a domain/tracking server or change defaults. Set both `MLFLOW_ROLE_ARN` and `MLFLOW_ARTIFACT_STORE_URI` to use the named workshop reuse/create path instead of SDK creation defaults. Notebook 2 prints the app ARN and links; save that ARN in `config.py` so notebook 3 uses the same app. Select experiment `contractnli-serverless-sft` after training starts.
 - Access to serverless model customization and evaluation in your Region, and quota for one
   `ml.g5.12xlarge` endpoint.

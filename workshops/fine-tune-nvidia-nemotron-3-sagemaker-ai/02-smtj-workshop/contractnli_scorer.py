@@ -19,10 +19,9 @@ plus `aggregate_reward_score` = 0.6 x label_correct + 0.4 x evidence_f1, a singl
 number the pipeline can rank models by. Evidence is weighted heavily because a
 verdict without the right clause is not usable by a reviewer.
 
-NOTE ON AVERAGING: the pipeline calls this once per contract and averages the
-results, so `evidence_f1` here is a mean of per-contract F1. The notebook's local
-pass pools every span before dividing (micro). The two agree closely on this dataset
-but they are different statistics.
+NOTE ON AVERAGING: this scores one contract. Callers average the per-contract results
+(`evaluation_utils.summarise` takes the plain mean), so `evidence_f1` is a mean of
+per-contract F1.
 """
 
 from __future__ import annotations
