@@ -711,17 +711,6 @@ class EvaluationResults:
                 print("  test records, since a reasoning trace that never closes cannot reach "
                       "the JSON.")
 
-        print("\nreference run, full 123-contract test set:")
-        print("  base 64.8 / 48.9   Sonnet 5 83.6 / 67.1   fine-tuned 83.8 / 68.9")
-        print("  the fine-tuned 4B model edges past the frontier model on both metrics — but by")
-        print("  0.2 and 1.8 points, and the two rows are not averaged the same way (see above),")
-        print("  so read it as parity reached rather than a model that is now better")
-        print("  the base row is a real score, not a formatting artefact: base json_valid was")
-        print("  99.2%, so 64.8 / 48.9 is what the base model actually knows about this")
-        print("  checklist. Fine-tuning moved accuracy +19 and evidence-F1 +20 points from a")
-        print("  working starting point — and this training set is small, so expect several")
-        print("  points of movement on your own run rather than these decimals")
-
         self.save_json("summary", {
             "eval_contracts": len(self.documents),
             "checklist_items": len(self.checklist),
