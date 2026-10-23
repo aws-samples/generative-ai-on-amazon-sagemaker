@@ -1,0 +1,23 @@
+# OpenVLA-7B LoRA recipe. Values follow openvla/vla-scripts/finetune.py (r=32, alpha=min(r,16), all-linear,
+# lr 5e-4, no dropout). Global batch 32 = per_device_batch_size x GPUs x gradient accumulation; the
+# accumulation is derived from global_batch_size at startup (ml.g6e.12xlarge: 4 x 4 x 2, ml.g6e.48xlarge: 4 x 8 x 1).
+base_model: openvla/openvla-7b
+num_train_epochs: 10
+per_device_batch_size: 4
+global_batch_size: 32
+learning_rate: 5.0e-4
+lr_scheduler: cosine
+warmup_ratio: 0.05
+weight_decay: 0.0
+max_grad_norm: 1.0
+lora_rank: 32
+lora_alpha: 16
+lora_dropout: 0.0
+lora_target_modules: all-linear
+gradient_checkpointing: false
+eval_steps: 50
+checkpoint_steps: 100
+keep_checkpoints: 2
+logging_steps: 10
+num_workers: 4
+seed: 42
