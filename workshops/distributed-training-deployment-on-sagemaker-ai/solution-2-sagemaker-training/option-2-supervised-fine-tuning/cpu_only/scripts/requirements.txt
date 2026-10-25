@@ -1,0 +1,11 @@
+transformers==4.57.6
+peft==0.18.1
+accelerate==1.12.0
+datasets==4.5.0
+huggingface_hub[hf_transfer]
+safetensors>=0.7.0
+sagemaker==3.4.1
+sentencepiece==0.2.1
+tokenizers>=0.22.2
+trl==0.27.2
+psutil
