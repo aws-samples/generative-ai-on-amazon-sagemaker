@@ -29,7 +29,8 @@ Serverless customization (`SFTTrainer`) only covers JumpStart text models, so th
 | `bridge_data.py` | dataset build, optical-flow pseudo-labels, OpenVLA-style action normalization |
 | `scripts/` | training job source: `run_finetuning.sh` → `train_openvla_lora.py`, recipes, eval job |
 | `serving/` | endpoint handler (`inference.py`) and its requirements |
-| `sample_data/bridge-60/` | 60-episode Parquet sample (7 MB, CC BY 4.0) so notebook 1 runs without Hugging Face access |
+| `sample_data/bridge-300/` | 300-episode Parquet sample (19 MB, CC BY 4.0) so notebook 1 runs without Hugging Face access |
+| `job_utils.py` | find, follow and time training jobs; reconnect after a dropped connection or kernel restart |
 | `workshop_mlflow.py` | copied unchanged from the serverless workshop |
 
 ## Prerequisites
