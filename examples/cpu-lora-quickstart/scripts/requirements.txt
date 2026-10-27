@@ -1,0 +1,4 @@
+# Installed on top of the PyTorch 2.8 CPU training DLC
+transformers==4.57.6
+peft==0.18.1
+accelerate==1.12.0
