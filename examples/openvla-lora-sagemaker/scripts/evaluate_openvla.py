@@ -54,8 +54,9 @@ def main():
     args, _ = p.parse_known_args()
 
     rows = load_from_disk(args.data_dir)["validation"]
-    if args.max_samples:
-        rows = rows.select(range(min(args.max_samples, len(rows))))
+    if args.max_samples and args.max_samples < len(rows):
+        # evenly spaced, so every held-out episode/task is represented
+        rows = rows.select(np.linspace(0, len(rows) - 1, args.max_samples).round().astype(int).tolist())
     gts = np.array(rows["action"], dtype=np.float64)
     processor = AutoProcessor.from_pretrained(args.base_model, trust_remote_code=True)
     action_tokenizer = ActionTokenizer(processor.tokenizer)

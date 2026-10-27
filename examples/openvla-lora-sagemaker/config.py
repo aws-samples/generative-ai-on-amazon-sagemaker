@@ -6,15 +6,20 @@ RUN_MODE = "smoke"
 
 BASE_MODEL_ID = "openvla/openvla-7b"
 PROJECT = "openvla-lora"
-DATASET_PREFIX = "openvla-bridge"
-MAX_EPISODES = 600            # of 8,802 in VyoJ/BridgeData-V2-Scripted-Images (capped by what the source holds)
-# Where notebook 1 reads the source episodes from:
-#   "sample_data/bridge-300" -> 300-episode Parquet sample shipped with the lab, 19 MB (540 train / 60 val;
-#                               CC BY 4.0, see sample_data/README.md)
-#   "<folder>"               -> Parquet shards you downloaded yourself (0000.parquet = 4,200 episodes)
-#   None           -> download the shards from the Hugging Face Hub (log in with a token if you get HTTP 429)
-SOURCE_PARQUET_DIR = "sample_data/bridge-300"
-VAL_FRACTION = 0.1
+# Training data (notebook 1):
+#   "libero" (default): LIBERO simulated tabletop demos, real 7-DoF actions, 40 tasks/instructions. OpenVLA was
+#                       not pretrained on LIBERO, so fine-tuning shows a clear gain (libero_data.py).
+#   "bridge":           BridgeData V2 images with optical-flow pseudo-actions and one instruction, as in the AWS
+#                       blog (bridge_data.py); the model mostly learns the label prior.
+DATASET = "libero"
+DATASET_PREFIX = f"openvla-{DATASET}"
+# Where notebook 1 reads the source data from:
+#   the shipped sample (default; no Hugging Face access needed), None to download from the Hub instead (log in
+#   with a token if you get HTTP 429), or a folder of Parquet files you prepared yourself.
+SOURCE_PARQUET_DIR = {"libero": "sample_data/libero-120", "bridge": "sample_data/bridge-300"}[DATASET]
+MAX_EPISODES = 600            # bridge only: episodes to use (capped by what the source holds)
+VAL_FRACTION = 0.1            # bridge only; libero holds out one demonstration per task
+EVAL_MAX_SAMPLES = 400        # validation frames scored by notebook 3 (evenly spaced over the split)
 
 # Training instance types, tried in order when CAPACITY = "fallback" (SageMaker accepts at most 5). All are L40S
 # 48 GB, so the recipe holds whichever type SageMaker picks: gradient accumulation adapts to the GPU count, so
@@ -51,8 +56,8 @@ ENDPOINT_INSTANCE_TYPES = ["ml.g6.2xlarge", "ml.g5.2xlarge", "ml.g6e.xlarge", "m
 TRAINING_IMAGE = "763104351884.dkr.ecr.{region}.amazonaws.com/pytorch-training:2.7-gpu-py312"
 INFERENCE_IMAGE = "763104351884.dkr.ecr.{region}.amazonaws.com/pytorch-inference:2.6-gpu-py312"
 
-MODEL_PACKAGE_GROUP = f"{PROJECT}-bridge-mpg"
-MLFLOW_EXPERIMENT = f"{PROJECT}-bridge"
+MODEL_PACKAGE_GROUP = f"{PROJECT}-{DATASET}-mpg"
+MLFLOW_EXPERIMENT = f"{PROJECT}-{DATASET}"
 
 # MLflow: notebooks 2-3 can override both. With MLFLOW_APP_ARN empty they reuse the App created by the
 # serverless-customization workshop stack (same resolver as that lab), or create one if none exists.

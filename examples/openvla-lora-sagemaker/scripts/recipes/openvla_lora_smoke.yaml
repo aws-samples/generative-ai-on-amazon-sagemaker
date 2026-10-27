@@ -5,9 +5,9 @@ per_device_batch_size: 4
 learning_rate: 5.0e-4
 lr_scheduler: cosine
 warmup_ratio: 0.1
-lora_rank: 32
-lora_alpha: 16
-lora_target_modules: all-linear
+lora_rank: 8
+lora_alpha: 8
+lora_target_modules: q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj
 eval_steps: 20
 checkpoint_steps: 10
 keep_checkpoints: 1
