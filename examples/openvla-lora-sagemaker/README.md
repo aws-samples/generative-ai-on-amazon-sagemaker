@@ -45,7 +45,8 @@ Serverless customization (`SFTTrainer`) only covers JumpStart text models, so th
    `CAPACITY = "fallback"` by default: on-demand, on the first instance type in the list that has capacity.
    * `ml.g6e.xlarge for training job usage` (and ideally `2xlarge`, `4xlarge`, `8xlarge`, each its own
      capacity pool): smoke run and eval job
-   * `ml.g6e.12xlarge` / `24xlarge` / `48xlarge for training job usage`: full run
+   * `ml.g6e.12xlarge` / `24xlarge for training job usage`: full run (falls back to the single-GPU sizes,
+     slower but same recipe)
    * endpoint: an `... for endpoint usage` quota for at least one type in `config.ENDPOINT_INSTANCE_TYPES`
    * `CAPACITY = "spot"` uses the `... for spot training job usage` quota instead. Spot is cheaper but can
      queue for hours (5.5 h for `ml.g6e.xlarge` in us-west-2 in our tests), so keep it for self-paced runs.

@@ -84,6 +84,8 @@ def capacity_config(instance_types, capacity, *, volume_size_in_gb, max_runtime_
     from sagemaker.core.training.configs import Compute, StoppingCondition
 
     if capacity == "fallback":
+        if not 1 <= len(instance_types) <= 5:
+            raise ValueError(f"instance_preferences takes 1-5 instance types, got {len(instance_types)}")
         # Mutually exclusive with instance_type and Spot
         compute = Compute(instance_preferences=[InstancePreference(instance_type=t) for t in instance_types],
                           instance_count=1, volume_size_in_gb=volume_size_in_gb)

@@ -1,7 +1,7 @@
 # Shared settings for notebooks 1-5.
 #
 # RUN_MODE "smoke" trains 20 steps on one L40S GPU to prove the pipeline end to end; "full" trains 10 epochs on
-# 4-8 L40S GPUs (global batch 32: ~170 optimizer steps for the 300-episode sample).
+# 1-4 L40S GPUs (global batch 32: ~170 optimizer steps for the 300-episode sample).
 RUN_MODE = "smoke"
 
 BASE_MODEL_ID = "openvla/openvla-7b"
@@ -16,12 +16,14 @@ MAX_EPISODES = 600            # of 8,802 in VyoJ/BridgeData-V2-Scripted-Images (
 SOURCE_PARQUET_DIR = "sample_data/bridge-300"
 VAL_FRACTION = 0.1
 
-# Training instance types, tried in order when CAPACITY = "fallback". Each list keeps one GPU shape (L40S 48 GB),
-# so the recipe holds whichever type SageMaker picks; gradient accumulation adapts to the GPU count.
+# Training instance types, tried in order when CAPACITY = "fallback" (SageMaker accepts at most 5). All are L40S
+# 48 GB, so the recipe holds whichever type SageMaker picks: gradient accumulation adapts to the GPU count, so
+# the full run also works on a single GPU (8 accumulation steps instead of 2), just more slowly.
 TRAIN = {
     "smoke": {"instance_types": ["ml.g6e.xlarge", "ml.g6e.2xlarge", "ml.g6e.4xlarge", "ml.g6e.8xlarge"],
               "recipe": "recipes/openvla_lora_smoke.yaml", "max_runtime_h": 2},
-    "full": {"instance_types": ["ml.g6e.12xlarge", "ml.g6e.24xlarge", "ml.g6e.48xlarge"],
+    "full": {"instance_types": ["ml.g6e.12xlarge", "ml.g6e.24xlarge", "ml.g6e.xlarge", "ml.g6e.2xlarge",
+                                "ml.g6e.4xlarge"],
              "recipe": "recipes/openvla_lora.yaml", "max_runtime_h": 10},
 }
 EVAL_INSTANCE_TYPES = ["ml.g6e.xlarge", "ml.g6e.2xlarge", "ml.g6e.4xlarge", "ml.g6e.8xlarge"]
