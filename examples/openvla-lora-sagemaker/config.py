@@ -25,7 +25,7 @@ TRAIN = {
     "full": {"instance_types": ["ml.g6e.12xlarge", "ml.g6e.24xlarge", "ml.g6e.xlarge", "ml.g6e.2xlarge",
                                 "ml.g6e.4xlarge"],
              "recipe": "recipes/openvla_lora.yaml", "max_runtime_h": 10},
-}
+}[RUN_MODE]
 EVAL_INSTANCE_TYPES = ["ml.g6e.xlarge", "ml.g6e.2xlarge", "ml.g6e.4xlarge", "ml.g6e.8xlarge"]
 
 # How training and eval jobs get a GPU:
