@@ -1,6 +1,7 @@
 """SageMaker PyTorch inference handler for a merged OpenVLA checkpoint.
 
-Deployed by 4-deployment.ipynb next to the weights as <model prefix>/code/ together with openvla_utils.py.
+Deployed by 4-deployment.ipynb next to the model as <model prefix>/code/ together with openvla_utils.py. The model prefix
+holds either a merged checkpoint or just a LoRA adapter (the base model then comes from the Hugging Face Hub).
 
 Request  (application/json): {"image": "<base64 JPEG/PNG>", "instruction": "move object to target"}
 Response (application/json): {"action": [7 floats in [-1, 1]], "action_unnormalized": [...]}
@@ -14,17 +15,15 @@ import os
 import numpy as np
 import torch
 from PIL import Image
-from transformers import AutoModelForVision2Seq, AutoProcessor
 
-from openvla_utils import ActionTokenizer, predict_action
+from openvla_utils import ActionTokenizer, load_openvla, predict_action
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def model_fn(model_dir, context=None):
-    processor = AutoProcessor.from_pretrained(model_dir, trust_remote_code=True)
-    model = AutoModelForVision2Seq.from_pretrained(model_dir, torch_dtype=torch.bfloat16, attn_implementation="eager",
-                                                   low_cpu_mem_usage=True, trust_remote_code=True).to(DEVICE).eval()
+    # merged checkpoint, or LoRA adapter + base model from the Hub (merged on the GPU at startup)
+    model, processor = load_openvla(model_dir, DEVICE)
     stats_path = os.path.join(model_dir, "action_stats.json")
     stats = json.load(open(stats_path)) if os.path.exists(stats_path) else None
     return {"model": model, "processor": processor, "action_tokenizer": ActionTokenizer(processor.tokenizer),

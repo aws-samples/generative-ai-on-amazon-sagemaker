@@ -3,8 +3,9 @@
 A training run's output prefix holds:
     adapter/            the LoRA adapter
     hf_merged/          adapter merged into the base model (what the endpoint and the eval job load)
-`register_model` stores the serving code next to the merged weights and registers a model package, which is
-what notebooks 3 and 4 start from. `copy_prefix` copies a run's artifacts between S3 locations, both to
+`register_model` stores the serving code next to the model (a merged checkpoint, or just a LoRA adapter whose base
+model is then downloaded from the Hugging Face Hub) and registers a model package, which is what notebooks 3 and 4
+start from. `copy_prefix` copies a run's artifacts between S3 locations, both to
 publish a run for others (see README) and to import one (notebook 2b).
 """
 import boto3
@@ -33,15 +34,15 @@ def copy_prefix(src_uri, dst_uri, region=None, progress=None):
     return len(keys)
 
 
-def register_model(merged_s3_uri, *, source, run_mode, region):
-    """Uploads the serving handler to <merged>/code/ and registers a PendingManualApproval model package."""
+def register_model(model_s3_uri, *, source, run_mode, region):
+    """Uploads the serving handler to <model>/code/ and registers a PendingManualApproval model package.
+    model_s3_uri: a merged checkpoint (hf_merged/) or a LoRA adapter folder (adapter_config.json + weights)."""
     s3 = boto3.client("s3", region_name=region)
     sm = boto3.client("sagemaker", region_name=region)
-    bucket, key = split_s3(merged_s3_uri)
+    bucket, key = split_s3(model_s3_uri)
     names = {o["Key"].rsplit("/", 1)[-1] for o in s3.list_objects_v2(Bucket=bucket, Prefix=key).get("Contents", [])}
-    missing = {"config.json", "modeling_prismatic.py"} - names
-    if missing:
-        raise RuntimeError(f"{merged_s3_uri} is not a merged OpenVLA checkpoint (missing {sorted(missing)})")
+    if "adapter_config.json" not in names and not {"config.json", "modeling_prismatic.py"} <= names:
+        raise RuntimeError(f"{model_s3_uri} holds neither a merged OpenVLA checkpoint nor a LoRA adapter")
 
     for local, name in SERVING_FILES:
         s3.upload_file(local, bucket, f"{key}code/{name}")
@@ -56,11 +57,11 @@ def register_model(merged_s3_uri, *, source, run_mode, region):
         ModelPackageGroupName=config.MODEL_PACKAGE_GROUP,
         ModelPackageDescription=f"{config.BASE_MODEL_ID} + LoRA ({run_mode}) from {source}"[:1000],
         ModelApprovalStatus="PendingManualApproval",
-        CustomerMetadataProperties={"source": source[:256], "run_mode": run_mode, "merged_s3_uri": merged_s3_uri},
+        CustomerMetadataProperties={"source": source[:256], "run_mode": run_mode, "model_s3_uri": model_s3_uri},
         InferenceSpecification={
             "Containers": [{
                 "Image": config.INFERENCE_IMAGE.format(region=region),
-                "ModelDataSource": {"S3DataSource": {"S3Uri": merged_s3_uri, "S3DataType": "S3Prefix",
+                "ModelDataSource": {"S3DataSource": {"S3Uri": model_s3_uri, "S3DataType": "S3Prefix",
                                                      "CompressionType": "None"}},
                 "Environment": {
                     "SAGEMAKER_PROGRAM": "inference.py",

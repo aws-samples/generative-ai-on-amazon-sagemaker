@@ -3,7 +3,7 @@
 
 Channels:
     data   -> HF DatasetDict from notebook 1 (uses the `validation` split)
-    model  -> hf_merged/ prefix written by the training job
+    model  -> hf_merged/ prefix written by the training job, or a LoRA adapter folder (base model from the Hub)
 Writes /opt/ml/model/eval_results.json and logs to MLflow when MLFLOW_TRACKING_URI is set.
 """
 import argparse
@@ -15,10 +15,10 @@ from pathlib import Path
 import numpy as np
 import torch
 from datasets import load_from_disk
-from transformers import AutoModelForVision2Seq, AutoProcessor
+from transformers import AutoProcessor
 
 sys.path.insert(0, str(Path(__file__).parent))
-from openvla_utils import ActionTokenizer, predict_action  # noqa: E402
+from openvla_utils import ActionTokenizer, load_openvla, predict_action  # noqa: E402
 
 AXES = ["x", "y", "z", "roll", "pitch", "yaw", "gripper"]
 DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
@@ -34,9 +34,7 @@ def score(preds, gts, action_tokenizer):
 
 
 def run_model(path, processor, action_tokenizer, rows):
-    model = AutoModelForVision2Seq.from_pretrained(path, torch_dtype=torch.bfloat16, attn_implementation="eager",
-                                                   low_cpu_mem_usage=True, trust_remote_code=True).to(DEVICE)
-    model.eval()
+    model, _ = load_openvla(path, DEVICE)   # merged checkpoint, adapter folder, or a Hub id (the base model)
     preds = np.stack([predict_action(model, processor, action_tokenizer, r["image"], r["instruction"]) for r in rows])
     del model
     if DEVICE == "cuda":

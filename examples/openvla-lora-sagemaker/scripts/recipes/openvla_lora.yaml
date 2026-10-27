@@ -3,7 +3,7 @@
 # instead of ~220 MB, small enough to ship in git. Global batch 32 = per_device_batch_size x GPUs x gradient accumulation; the
 # accumulation is derived from global_batch_size at startup (ml.g6e.12xlarge: 4 x 4 x 2, ml.g6e.48xlarge: 4 x 8 x 1).
 base_model: openvla/openvla-7b
-num_train_epochs: 10
+num_train_epochs: 3
 per_device_batch_size: 4
 global_batch_size: 32
 learning_rate: 5.0e-4

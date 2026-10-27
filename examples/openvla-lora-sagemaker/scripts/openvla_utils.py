@@ -62,3 +62,26 @@ def predict_action(model, processor, action_tokenizer, image, instruction: str) 
         out = model.generate(input_ids=input_ids, attention_mask=torch.ones_like(input_ids),
                              pixel_values=pixel_values, max_new_tokens=ACTION_DIM, do_sample=False)
     return action_tokenizer.decode(out[0, -ACTION_DIM:].cpu().numpy())
+
+
+def load_openvla(path, device):
+    """Loads a fine-tuned OpenVLA from `path`: either a merged checkpoint (config.json + weights) or a LoRA adapter
+    folder (adapter_config.json), in which case the base model named in the adapter config is downloaded from the
+    Hugging Face Hub and the adapter is merged into it on `device`. Returns (model, processor)."""
+    import json
+    import os
+
+    import torch
+    from transformers import AutoModelForVision2Seq, AutoProcessor
+
+    kw = dict(torch_dtype=torch.bfloat16, attn_implementation="eager", low_cpu_mem_usage=True, trust_remote_code=True)
+    adapter_cfg = os.path.join(path, "adapter_config.json")
+    if not os.path.exists(adapter_cfg):
+        return AutoModelForVision2Seq.from_pretrained(path, **kw).to(device).eval(), \
+            AutoProcessor.from_pretrained(path, trust_remote_code=True)
+    from peft import PeftModel
+
+    base = json.load(open(adapter_cfg))["base_model_name_or_path"]
+    model = AutoModelForVision2Seq.from_pretrained(base, **kw).to(device)
+    model = PeftModel.from_pretrained(model, path).merge_and_unload().eval()
+    return model, AutoProcessor.from_pretrained(base, trust_remote_code=True)
