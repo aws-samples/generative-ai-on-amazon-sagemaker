@@ -1,7 +1,7 @@
 # Shared settings for notebooks 1-5.
 #
-# RUN_MODE "smoke" trains 20 steps on one L40S GPU to prove the pipeline end to end; "full" trains 10 epochs on
-# 1-4 L40S GPUs (global batch 32: ~170 optimizer steps for the 300-episode sample).
+# RUN_MODE "smoke" trains 20 steps on one L40S GPU to prove the pipeline end to end; "full" trains 3 epochs on
+# 1-4 L40S GPUs (global batch 32: ~255 optimizer steps on the LIBERO sample; validation stops improving after ~3).
 RUN_MODE = "smoke"
 
 BASE_MODEL_ID = "openvla/openvla-7b"

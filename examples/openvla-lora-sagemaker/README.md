@@ -1,7 +1,12 @@
 # LoRA fine-tuning of a VLA (OpenVLA-7B) on SageMaker Training Jobs
 
-End-to-end lab: robot images → LoRA fine-tune on a SageMaker Training Job → closed-form evaluation →
-model registry → real-time endpoint.
+End-to-end lab: robot demonstrations → LoRA fine-tune on a SageMaker Training Job → closed-form evaluation →
+model registry → real-time endpoint. A pre-trained LoRA adapter ships in the repo (`pretrained/libero-r8/`), so the
+evaluation and deployment labs also run without any training GPU (notebook 2b).
+
+The default data is **LIBERO** (simulated tabletop manipulation, 40 tasks, real 7-DoF actions), which OpenVLA was
+not pretrained on, so fine-tuning has something to learn. The blog's BridgeData V2 pseudo-label setup is kept as an
+option (`config.DATASET = "bridge"`).
 
 It combines two sources:
 
@@ -20,19 +25,21 @@ Serverless customization (`SFTTrainer`) only covers JumpStart text models, so th
 
 | Path | What |
 |---|---|
-| `1-prepare-data.ipynb` | BridgeData V2 → pseudo-labelled 7-DoF actions → HF `DatasetDict` on S3 |
+| `1-prepare-data.ipynb` | LIBERO demos (or BridgeData V2 pseudo-labels) → normalized 7-DoF actions → HF `DatasetDict` on S3 |
 | `2-fine-tune-vla.ipynb` | `ModelTrainer` job (smoke or full), then register a model package |
 | `3-evaluation.ipynb` | single-GPU eval job: base vs fine-tuned vs mean-action baseline; approve/reject the package |
 | `4-deployment.ipynb` | endpoint from the approved package (PyTorch inference DLC + custom handler), invoke |
 | `5-cleanup.ipynb` | delete endpoints/configs/models; optional packages and S3 |
 | `config.py` | run mode, instance types, images, names, MLflow App resolver |
-| `bridge_data.py` | dataset build, optical-flow pseudo-labels, OpenVLA-style action normalization |
+| `libero_data.py` | LIBERO dataset build (default): episode split per task, OpenVLA-style action normalization |
+| `bridge_data.py` | BridgeData V2 build: optical-flow pseudo-labels (the AWS blog's setup) |
 | `scripts/` | training job source: `run_finetuning.sh` → `train_openvla_lora.py`, recipes, eval job |
 | `serving/` | endpoint handler (`inference.py`) and its requirements |
-| `sample_data/bridge-300/` | 300-episode Parquet sample (19 MB, CC BY 4.0) so notebook 1 runs without Hugging Face access |
+| `sample_data/libero-120/`, `sample_data/bridge-300/` | Parquet samples (18 / 19 MB, CC BY 4.0) so notebook 1 needs no Hugging Face access |
+| `pretrained/libero-r8/` | pre-trained LoRA adapter (~40 MB) + action stats + eval results, used by notebook 2b |
 | `job_utils.py` | capacity modes; find, follow and time training jobs; reconnect after a dropped connection |
-| `artifacts.py` | register a merged checkpoint as a model package; copy a run's artifacts between S3 locations |
-| `2b-import-pretrained.ipynb` | alternative to notebook 2: import a previous run's artifacts instead of training |
+| `artifacts.py` | register a merged checkpoint or a LoRA adapter as a model package; copy artifacts between S3 locations |
+| `2b-import-pretrained.ipynb` | alternative to notebook 2 (no training GPU): register the shipped adapter, or a previous run's output |
 | `workshop_mlflow.py` | copied unchanged from the serverless workshop |
 
 ## Prerequisites
@@ -76,20 +83,28 @@ Each run produces:
 * **Checkpoints:** `checkpoints/<run>/step-*` (adapter + optimizer state). A restarted or Spot-interrupted
   job resumes from the latest one. Spot jobs can wait in `Starting` for capacity for up to `SPOT_MAX_WAIT_H`.
 
-## Skip training: import a pre-trained run
+## Skip training: use the shipped adapter
 
-`2b-import-pretrained.ipynb` replaces notebook 2 when no GPU is available or there is no time to train. Set
-`PRETRAINED_S3_URI` to the model output of an earlier run (the prefix holding `hf_merged/`); the notebook
-copies it into the account's default bucket if needed and registers it, so notebooks 3 and 4 run unchanged.
-Notebook 1 still has to run first (CPU only), because notebook 3 evaluates on its validation split.
+`2b-import-pretrained.ipynb` replaces notebook 2 when no GPU is available for training or there is no time. By
+default it uploads the adapter in `pretrained/libero-r8/` (40 MB) and registers it; the evaluation job (notebook 3)
+and the endpoint (notebook 4) download the public base model `openvla/openvla-7b` from the Hugging Face Hub and
+merge the adapter into it when they start. Notebook 1 still runs first (CPU only), because notebook 3 evaluates on
+its validation split. `PRETRAINED_S3_URI` can point at a previous run's output instead (`hf_merged/` or `adapter/`).
 
-To prepare artifacts for a workshop, run the `full` recipe once, then copy its output to a bucket the workshop
-accounts can read and put that prefix in `config.PRETRAINED_S3_URI`:
+## Results (LIBERO sample, shipped adapter)
 
-```python
-from artifacts import copy_prefix
-copy_prefix(model_prefix, "s3://<shared-bucket>/openvla-lora/pretrained/<version>/")  # model_prefix from notebook 2
-```
+400 evenly spaced frames from 40 held-out demonstrations (one per task), actions generated by the model (greedy, 7
+action tokens) and compared with the recorded action in normalized units:
+
+| | L1, 7 axes | same 1/256 bin | gripper L1 |
+|---|---|---|---|
+| base `openvla/openvla-7b` (not trained on LIBERO) | 0.480 | 0.7% | 1.28 |
+| mean-action baseline (always predict the average) | 0.359 | 6.5% | 1.00 |
+| **fine-tuned, LoRA r=8, 3 epochs** | **0.221** | **18.6%** | **0.28** |
+
+Trained on one RTX PRO 6000 (EC2 g7e.2xlarge Spot) in ~11 min of training + merge; same script and recipe as the
+SageMaker job. 10 epochs gave 0.227: validation stops improving after ~3 epochs on 120 demonstrations, so the
+`full` recipe trains 3. Details in `pretrained/libero-r8/`.
 
 ## Differences from the blog's code (and why)
 
