@@ -4,9 +4,13 @@ A job runs in SageMaker independently of the notebook: closing the browser, a dr
 restart does not stop it. `latest_job` finds it again and `wait_for_job` picks the monitoring back up.
 """
 import time
+import warnings
 from datetime import datetime
 
 import boto3
+
+# The SDK emits a harmless serializer warning for every InstancePreference without training plans
+warnings.filterwarnings("ignore", message="Pydantic serializer warnings")
 
 TERMINAL = ("Completed", "Failed", "Stopped")
 
@@ -106,3 +110,28 @@ def selected_instance(job):
     """The instance type a job actually ran on (with "fallback", SageMaker picks it from the list)."""
     rc = job.get("ResourceConfig", {})
     return rc.get("SelectedInstanceType") or rc.get("InstanceType")
+
+
+def with_quota(instance_types, region=None, usage="training job usage"):
+    """Keeps the types with a quota of at least 1 for `usage` ("training job usage", "spot training job usage",
+    "endpoint usage"). SageMaker rejects a whole fallback list if any type in it has a quota of 0.
+    Returns the list unchanged if this role cannot read Service Quotas."""
+    sq = boto3.client("service-quotas", region_name=region)
+    wanted = {f"{t} for {usage}": t for t in instance_types}
+    found = {}
+    try:
+        for page in sq.get_paginator("list_service_quotas").paginate(ServiceCode="sagemaker"):
+            for q in page["Quotas"]:
+                if q["QuotaName"] in wanted:
+                    found[wanted[q["QuotaName"]]] = q["Value"]
+    except sq.exceptions.ClientError as e:
+        print(f"could not read Service Quotas ({e.response['Error']['Code']}); using all {len(instance_types)} types")
+        return list(instance_types)
+    usable = [t for t in instance_types if found.get(t, 0) >= 1]
+    skipped = [t for t in instance_types if t not in usable]
+    if skipped:
+        print(f"no '{usage}' quota, skipped: {', '.join(skipped)}")
+    if not usable:
+        raise RuntimeError(f"none of {instance_types} has a '{usage}' quota in {sq.meta.region_name}; "
+                           "request one in Service Quotas, or switch to a list you have quota for")
+    return usable

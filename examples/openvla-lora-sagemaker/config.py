@@ -29,8 +29,9 @@ TRAIN = {
 EVAL_INSTANCE_TYPES = ["ml.g6e.xlarge", "ml.g6e.2xlarge", "ml.g6e.4xlarge", "ml.g6e.8xlarge"]
 
 # How training and eval jobs get a GPU:
-#   "fallback"  (default) on-demand, first type in the list with capacity. You need a
-#               "<type> for training job usage" quota for the types you want SageMaker to use.
+#   "fallback"  (default) on-demand, first type in the list with capacity. SageMaker rejects the job if
+#               any listed type has a "<type> for training job usage" quota of 0, so the notebooks drop
+#               types without quota before submitting (job_utils.with_quota).
 #   "on-demand" first type only
 #   "spot"      managed Spot on the first type: cheaper, but can queue for hours (5.5 h observed for
 #               ml.g6e.xlarge in us-west-2), so use it for self-paced runs, not live sessions.

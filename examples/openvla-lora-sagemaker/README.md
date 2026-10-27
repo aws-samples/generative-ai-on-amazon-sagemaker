@@ -43,6 +43,8 @@ Serverless customization (`SFTTrainer`) only covers JumpStart text models, so th
    a CPU instance is enough.
 2. **Quotas** (Service Quotas → SageMaker), in the region you use. Training and eval jobs use
    `CAPACITY = "fallback"` by default: on-demand, on the first instance type in the list that has capacity.
+   SageMaker rejects a fallback list containing any type with a quota of 0; the notebooks check Service
+   Quotas and drop those types first (needs `servicequotas:ListServiceQuotas`; otherwise the full list is sent).
    * `ml.g6e.xlarge for training job usage` (and ideally `2xlarge`, `4xlarge`, `8xlarge`, each its own
      capacity pool): smoke run and eval job
    * `ml.g6e.12xlarge` / `24xlarge for training job usage`: full run (falls back to the single-GPU sizes,
