@@ -146,7 +146,7 @@ def save_checkpoint(accelerator, model, optimizer, scheduler, step, args):
     if not accelerator.is_main_process:
         return
     path = Path(args.checkpoint_dir) / f"step-{step:06d}"
-    accelerator.unwrap_model(model).save_pretrained(path / "adapter")
+    accelerator.unwrap_model(model).save_pretrained(path / "adapter", save_embedding_layers=False)
     torch.save({"optimizer": optimizer.state_dict(), "scheduler": scheduler.state_dict(), "step": step},
                path / "trainer_state.pt")
     for old in sorted(glob.glob(f"{args.checkpoint_dir}/step-*"))[: -args.keep_checkpoints]:
@@ -301,7 +301,9 @@ def main():
 
     accelerator.wait_for_everyone()
     if is_main:
-        accelerator.unwrap_model(model).save_pretrained(Path(args.model_dir) / "adapter")
+        # "all-linear" also puts LoRA on lm_head; PEFT would then save the full (unchanged) base lm_head too,
+        # doubling the adapter to ~460 MB. The base weights come from the base model, so skip them.
+        accelerator.unwrap_model(model).save_pretrained(Path(args.model_dir) / "adapter", save_embedding_layers=False)
     tracker.close()
     accelerator.wait_for_everyone()
     accelerator.end_training()
