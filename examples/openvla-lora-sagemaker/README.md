@@ -30,7 +30,9 @@ Serverless customization (`SFTTrainer`) only covers JumpStart text models, so th
 | `scripts/` | training job source: `run_finetuning.sh` → `train_openvla_lora.py`, recipes, eval job |
 | `serving/` | endpoint handler (`inference.py`) and its requirements |
 | `sample_data/bridge-300/` | 300-episode Parquet sample (19 MB, CC BY 4.0) so notebook 1 runs without Hugging Face access |
-| `job_utils.py` | find, follow and time training jobs; reconnect after a dropped connection or kernel restart |
+| `job_utils.py` | capacity modes; find, follow and time training jobs; reconnect after a dropped connection |
+| `artifacts.py` | register a merged checkpoint as a model package; copy a run's artifacts between S3 locations |
+| `2b-import-pretrained.ipynb` | alternative to notebook 2: import a previous run's artifacts instead of training |
 | `workshop_mlflow.py` | copied unchanged from the serverless workshop |
 
 ## Prerequisites
@@ -39,14 +41,14 @@ Serverless customization (`SFTTrainer`) only covers JumpStart text models, so th
    MLflow App), or any Studio domain whose role can run training jobs, read/write the default bucket,
    create model packages/endpoints and call the MLflow App. Run the notebooks in a JupyterLab space;
    a CPU instance is enough.
-2. **Quotas** (Service Quotas → SageMaker), in the region you use. Training and eval use managed Spot
-   by default (`USE_SPOT = True`):
-   * `ml.g6e.xlarge for spot training job usage`: smoke run and eval job
-   * `ml.g6e.12xlarge for spot training job usage`: full run (the blog used `ml.g6e.48xlarge`, which works
-     too with the same recipe)
+2. **Quotas** (Service Quotas → SageMaker), in the region you use. Training and eval jobs use
+   `CAPACITY = "fallback"` by default: on-demand, on the first instance type in the list that has capacity.
+   * `ml.g6e.xlarge for training job usage` (and ideally `2xlarge`, `4xlarge`, `8xlarge`, each its own
+     capacity pool): smoke run and eval job
+   * `ml.g6e.12xlarge` / `24xlarge` / `48xlarge for training job usage`: full run
    * endpoint: an `... for endpoint usage` quota for at least one type in `config.ENDPOINT_INSTANCE_TYPES`
-     (`ml.g5.2xlarge`, `ml.g6e.xlarge`, `ml.g6.2xlarge`, ...); the endpoint falls back through them in order
-   * with `USE_SPOT = False`: the on-demand `... for training job usage` quotas instead
+   * `CAPACITY = "spot"` uses the `... for spot training job usage` quota instead. Spot is cheaper but can
+     queue for hours (5.5 h for `ml.g6e.xlarge` in us-west-2 in our tests), so keep it for self-paced runs.
 3. **No Hugging Face token** is needed: `openvla/openvla-7b` is public.
 
 ## Run
@@ -70,6 +72,21 @@ Each run produces:
   (`compression_type="NONE"`) so the endpoint can load `hf_merged/` directly
 * **Checkpoints:** `checkpoints/<run>/step-*` (adapter + optimizer state). A restarted or Spot-interrupted
   job resumes from the latest one. Spot jobs can wait in `Starting` for capacity for up to `SPOT_MAX_WAIT_H`.
+
+## Skip training: import a pre-trained run
+
+`2b-import-pretrained.ipynb` replaces notebook 2 when no GPU is available or there is no time to train. Set
+`PRETRAINED_S3_URI` to the model output of an earlier run (the prefix holding `hf_merged/`); the notebook
+copies it into the account's default bucket if needed and registers it, so notebooks 3 and 4 run unchanged.
+Notebook 1 still has to run first (CPU only), because notebook 3 evaluates on its validation split.
+
+To prepare artifacts for a workshop, run the `full` recipe once, then copy its output to a bucket the workshop
+accounts can read and put that prefix in `config.PRETRAINED_S3_URI`:
+
+```python
+from artifacts import copy_prefix
+copy_prefix(model_prefix, "s3://<shared-bucket>/openvla-lora/pretrained/<version>/")  # model_prefix from notebook 2
+```
 
 ## Differences from the blog's code (and why)
 

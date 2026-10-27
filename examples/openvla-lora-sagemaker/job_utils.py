@@ -71,3 +71,36 @@ def _last_step_line(job_name, region):
     except logs.exceptions.ResourceNotFoundException:
         pass
     return last
+
+
+def capacity_config(instance_types, capacity, *, volume_size_in_gb, max_runtime_s, spot_max_wait_h):
+    """Compute + StoppingCondition for a job, for config.CAPACITY:
+
+    "fallback"  on-demand; SageMaker starts the job on the first type in `instance_types` with capacity
+    "on-demand" on-demand, instance_types[0] only
+    "spot"      managed Spot on instance_types[0]; may queue for hours, resumes from checkpoints if interrupted
+    """
+    from sagemaker.core.shapes import InstancePreference
+    from sagemaker.core.training.configs import Compute, StoppingCondition
+
+    if capacity == "fallback":
+        # Mutually exclusive with instance_type and Spot
+        compute = Compute(instance_preferences=[InstancePreference(instance_type=t) for t in instance_types],
+                          instance_count=1, volume_size_in_gb=volume_size_in_gb)
+    elif capacity in ("on-demand", "spot"):
+        compute = Compute(instance_type=instance_types[0], instance_count=1, volume_size_in_gb=volume_size_in_gb,
+                          enable_managed_spot_training=capacity == "spot")
+    else:
+        raise ValueError(f"CAPACITY must be 'fallback', 'on-demand' or 'spot', not {capacity!r}")
+    stop = StoppingCondition(
+        max_runtime_in_seconds=max_runtime_s,
+        # Spot only: total time allowed, including waiting for capacity and restarts after interruptions
+        max_wait_time_in_seconds=max(max_runtime_s, spot_max_wait_h * 3600) if capacity == "spot" else None,
+    )
+    return compute, stop
+
+
+def selected_instance(job):
+    """The instance type a job actually ran on (with "fallback", SageMaker picks it from the list)."""
+    rc = job.get("ResourceConfig", {})
+    return rc.get("SelectedInstanceType") or rc.get("InstanceType")

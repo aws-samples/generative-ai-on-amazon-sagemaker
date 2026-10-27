@@ -1,8 +1,7 @@
 # Shared settings for notebooks 1-5.
 #
-# RUN_MODE "smoke" trains 20 steps on one GPU (ml.g6e.xlarge) to prove the pipeline end to end;
-# "full" trains 10 epochs on ml.g6e.12xlarge (4x L40S, global batch 32: ~340 optimizer steps for 600 episodes).
-# ml.g6e.48xlarge (8x L40S, the blog's instance) also works with recipes/openvla_lora.yaml if you have quota.
+# RUN_MODE "smoke" trains 20 steps on one L40S GPU to prove the pipeline end to end; "full" trains 10 epochs on
+# 4-8 L40S GPUs (global batch 32: ~170 optimizer steps for the 300-episode sample).
 RUN_MODE = "smoke"
 
 BASE_MODEL_ID = "openvla/openvla-7b"
@@ -17,15 +16,29 @@ MAX_EPISODES = 600            # of 8,802 in VyoJ/BridgeData-V2-Scripted-Images (
 SOURCE_PARQUET_DIR = "sample_data/bridge-300"
 VAL_FRACTION = 0.1
 
+# Training instance types, tried in order when CAPACITY = "fallback". Each list keeps one GPU shape (L40S 48 GB),
+# so the recipe holds whichever type SageMaker picks; gradient accumulation adapts to the GPU count.
 TRAIN = {
-    "smoke": {"instance_type": "ml.g6e.xlarge", "recipe": "recipes/openvla_lora_smoke.yaml", "max_runtime_h": 2},
-    "full": {"instance_type": "ml.g6e.12xlarge", "recipe": "recipes/openvla_lora.yaml", "max_runtime_h": 10},
-}[RUN_MODE]
-# Managed Spot for training and eval jobs. Jobs wait up to SPOT_MAX_WAIT_H for capacity (queueing counts toward
-# it) and resume from /opt/ml/checkpoints after an interruption. Needs the "... for spot training job usage" quota.
-USE_SPOT = True
+    "smoke": {"instance_types": ["ml.g6e.xlarge", "ml.g6e.2xlarge", "ml.g6e.4xlarge", "ml.g6e.8xlarge"],
+              "recipe": "recipes/openvla_lora_smoke.yaml", "max_runtime_h": 2},
+    "full": {"instance_types": ["ml.g6e.12xlarge", "ml.g6e.24xlarge", "ml.g6e.48xlarge"],
+             "recipe": "recipes/openvla_lora.yaml", "max_runtime_h": 10},
+}
+EVAL_INSTANCE_TYPES = ["ml.g6e.xlarge", "ml.g6e.2xlarge", "ml.g6e.4xlarge", "ml.g6e.8xlarge"]
+
+# How training and eval jobs get a GPU:
+#   "fallback"  (default) on-demand, first type in the list with capacity. You need a
+#               "<type> for training job usage" quota for the types you want SageMaker to use.
+#   "on-demand" first type only
+#   "spot"      managed Spot on the first type: cheaper, but can queue for hours (5.5 h observed for
+#               ml.g6e.xlarge in us-west-2), so use it for self-paced runs, not live sessions.
+#               Waits up to SPOT_MAX_WAIT_H; resumes from /opt/ml/checkpoints after an interruption.
+CAPACITY = "fallback"
 SPOT_MAX_WAIT_H = 24
-EVAL_INSTANCE_TYPE = "ml.g6e.xlarge"
+
+# Pre-trained artifacts for notebook 2b (skip training): an S3 prefix holding hf_merged/ (and adapter/) from
+# a previous run, readable by your role. See the README for how to publish one.
+PRETRAINED_S3_URI = ""
 # Endpoint instance pools in priority order: SageMaker falls back to the next type when one has no capacity.
 # Each needs >= 24 GB GPU memory for the 15 GB bf16 model and an "... for endpoint usage" quota of >= 1.
 # CreateEndpointConfig accepts at most 5 pools (priorities 1-5).
