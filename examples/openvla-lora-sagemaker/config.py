@@ -44,11 +44,6 @@ EVAL_INSTANCE_TYPES = ["ml.g6e.xlarge", "ml.g6e.2xlarge", "ml.g6e.4xlarge", "ml.
 CAPACITY = "fallback"
 SPOT_MAX_WAIT_H = 24
 
-# Pre-trained model for notebook 2b (skip training). Default: the LoRA adapter shipped in this repo
-# (pretrained/libero-r8/, ~40 MB; the base model comes from the Hugging Face Hub). Alternatively an S3 prefix
-# holding hf_merged/ or adapter/ from a previous run, readable by your role.
-PRETRAINED_LOCAL_DIR = "pretrained/libero-r8"
-PRETRAINED_S3_URI = ""
 # Endpoint instance pools in priority order: SageMaker falls back to the next type when one has no capacity.
 # Each needs >= 24 GB GPU memory for the 15 GB bf16 model and an "... for endpoint usage" quota of >= 1.
 # CreateEndpointConfig accepts at most 5 pools (priorities 1-5).

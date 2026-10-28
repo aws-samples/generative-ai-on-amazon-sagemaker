@@ -1,12 +1,12 @@
-"""Model artifacts shared by notebook 2 (after training) and notebook 2b (importing pre-trained artifacts).
+"""Model artifacts of a training run (notebook 2).
 
 A training run's output prefix holds:
     adapter/            the LoRA adapter
     hf_merged/          adapter merged into the base model (what the endpoint and the eval job load)
 `register_model` stores the serving code next to the model (a merged checkpoint, or just a LoRA adapter whose base
 model is then downloaded from the Hugging Face Hub) and registers a model package, which is what notebooks 3 and 4
-start from. `copy_prefix` copies a run's artifacts between S3 locations, both to
-publish a run for others (see README) and to import one (notebook 2b).
+start from. `copy_prefix` copies a run's artifacts between S3 locations, e.g. to publish a run for others (see
+README).
 """
 import boto3
 

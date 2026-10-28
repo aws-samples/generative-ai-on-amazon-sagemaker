@@ -1,6 +1,6 @@
 # OpenVLA-7B LoRA recipe, based on openvla/vla-scripts/finetune.py (alpha=min(r,16), lr 5e-4, no dropout) with a
 # lighter adapter: r=8 on the Llama-2 language model only (no vision encoder / projector / lm_head), ~40 MB
-# instead of ~220 MB, small enough to ship in git. Global batch 32 = per_device_batch_size x GPUs x gradient accumulation; the
+# instead of ~220 MB. Global batch 32 = per_device_batch_size x GPUs x gradient accumulation; the
 # accumulation is derived from global_batch_size at startup (ml.g6e.12xlarge: 4 x 4 x 2, ml.g6e.48xlarge: 4 x 8 x 1).
 base_model: openvla/openvla-7b
 num_train_epochs: 3
