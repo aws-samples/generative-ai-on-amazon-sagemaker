@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-"""LoRA fine-tuning + evaluation of a small LLM on CPU, in a few minutes (SageMaker training job entry point).
+"""SFT with LoRA on CPU (SageMaker training job entry point, notebook 01). Training only: the separate evaluation
+job (evaluate.py) scores the result.
 
-0. reads the training and test examples from the `train` and `test` channels (JSONL files the notebook uploaded
-   to S3; SageMaker copies them to /opt/ml/input/data/<channel>/); without channels it generates the same data
-1. scores the base model on the held-out requests (exact JSON match, per-field accuracy)
-2. trains a LoRA adapter for a few dozen steps
-3. scores the fine-tuned model on the same requests
-4. writes the adapter to /opt/ml/model/adapter and metrics.json next to it
+1. reads the training examples from the `train` channel (JSONL the notebook uploaded to S3; SageMaker copies it to
+   /opt/ml/input/data/train/); without a channel it generates the same data
+2. trains a LoRA adapter for a few dozen steps, logging the loss (job log, and MLflow when enabled)
+3. writes the adapter to /opt/ml/model/adapter and training_metrics.json next to it; SageMaker uploads
+   /opt/ml/model to S3 when the job ends
 """
 import argparse
 import json
@@ -17,13 +17,10 @@ from pathlib import Path
 
 import torch
 from peft import LoraConfig, get_peft_model
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.insert(0, str(Path(__file__).parent))
 from booking_data import make_splits, messages  # noqa: E402
-from common import Tracker  # noqa: E402
-
-FIELDS = ["name", "party_size", "day", "time"]
+from common import Tracker, chat, load, read_jsonl  # noqa: E402
 
 
 def parse_args():
@@ -34,86 +31,39 @@ def parse_args():
     p.add_argument("--learning_rate", type=float, default=3e-4)
     p.add_argument("--lora_rank", type=int, default=8)
     p.add_argument("--n_train", type=int, default=400)
-    p.add_argument("--n_test", type=int, default=30)
     p.add_argument("--train_dir", default=os.environ.get("SM_CHANNEL_TRAIN"))
-    p.add_argument("--test_dir", default=os.environ.get("SM_CHANNEL_TEST"))
     p.add_argument("--model_dir", default=os.environ.get("SM_MODEL_DIR", "/opt/ml/model"))
     return p.parse_args()
 
 
-def read_jsonl(channel_dir):
-    """All records of the .jsonl files in a channel directory."""
-    return [json.loads(line) for f in sorted(Path(channel_dir).glob("*.jsonl"))
-            for line in f.read_text().splitlines() if line.strip()]
-
-
-def chat(tok, msgs, generation):
-    kw = {"enable_thinking": False} if "qwen3" in tok.name_or_path.lower() else {}
-    return tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=generation, **kw)
-
-
 def encode(tok, ex):
+    """Token ids of prompt + answer; the loss is computed on the answer tokens only (prompt labels = -100)."""
     prompt = chat(tok, messages(ex["request"]), generation=True)
-    full = prompt + ex["target"] + tok.eos_token
-    ids = tok(full, add_special_tokens=False).input_ids
+    ids = tok(prompt + ex["target"] + tok.eos_token, add_special_tokens=False).input_ids
     n_prompt = len(tok(prompt, add_special_tokens=False).input_ids)
     return ids, [-100] * n_prompt + ids[n_prompt:]
 
 
-@torch.inference_mode()
-def evaluate(model, tok, test, batch_size=16):
-    model.eval()
-    tok.padding_side = "left"
-    exact, field_hits, outputs = 0, {f: 0 for f in FIELDS}, []
-    for i in range(0, len(test), batch_size):
-        batch = test[i:i + batch_size]
-        prompts = [chat(tok, messages(ex["request"]), generation=True) for ex in batch]
-        enc = tok(prompts, return_tensors="pt", padding=True, add_special_tokens=False)
-        out = model.generate(**enc, max_new_tokens=48, do_sample=False, pad_token_id=tok.pad_token_id)
-        for ex, seq in zip(batch, out[:, enc.input_ids.shape[1]:]):
-            text = tok.decode(seq, skip_special_tokens=True).strip()
-            outputs.append(text)
-            want = json.loads(ex["target"])
-            try:
-                got = json.loads(text)
-            except json.JSONDecodeError:
-                got = {}
-            exact += got == want
-            for f in FIELDS:
-                field_hits[f] += isinstance(got, dict) and got.get(f) == want[f]
-    n = len(test)
-    return {"exact_match": exact / n, **{f"acc_{f}": h / n for f, h in field_hits.items()}}, outputs
-
-
 def main():
     args = parse_args()
-    torch.manual_seed(0)
-    torch.set_num_threads(os.cpu_count())
     t0 = time.time()
     tracker = Tracker("sft", vars(args))
-    if args.train_dir and args.test_dir:
-        train, test = read_jsonl(args.train_dir), read_jsonl(args.test_dir)
-        print(f"data from channels: {len(train)} train ({args.train_dir}), {len(test)} test ({args.test_dir})", flush=True)
+    if args.train_dir:
+        train = read_jsonl(args.train_dir)
+        print(f"data from channel: {len(train)} train examples ({args.train_dir})", flush=True)
     else:
-        train, test = make_splits(args.n_train, args.n_test)
-        print(f"no data channels: generated {len(train)} train / {len(test)} test examples", flush=True)
+        train, _ = make_splits(args.n_train)
+        print(f"no data channel: generated {len(train)} train examples", flush=True)
 
-    tok = AutoTokenizer.from_pretrained(args.model_id)
-    tok.pad_token = tok.pad_token or tok.eos_token
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, torch_dtype=torch.float32)
+    tok, model = load(args.model_id)
     print(f"loaded {args.model_id} in {time.time() - t0:.0f}s on {os.cpu_count()} CPUs", flush=True)
-
-    base_metrics, base_out = evaluate(model, tok, test)
-    print("base     ", json.dumps(base_metrics), flush=True)
-    tracker.log_eval("base", base_metrics)
-
     model = get_peft_model(model, LoraConfig(r=args.lora_rank, lora_alpha=2 * args.lora_rank, lora_dropout=0.0,
                                              target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
     model.print_trainable_parameters()
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.learning_rate)
     encoded = [encode(tok, ex) for ex in train]
     model.train()
-    t_train = time.time()
+    t_train, losses = time.time(), []
     for step in range(1, args.steps + 1):
         batch = [encoded[(step * args.batch_size + j) % len(encoded)] for j in range(args.batch_size)]
         width = max(len(ids) for ids, _ in batch)
@@ -123,24 +73,21 @@ def main():
         loss.backward()
         opt.step()
         opt.zero_grad()
+        losses.append(round(loss.item(), 4))
         tracker.log({"loss": loss.item()}, step=step)
         if step % 5 == 0 or step == 1:
             print(f"[step {step}] loss={loss.item():.4f} sec/step={(time.time() - t_train) / step:.2f}", flush=True)
 
-    tuned_metrics, tuned_out = evaluate(model, tok, test)
-    print("finetuned", json.dumps(tuned_metrics), flush=True)
-    tracker.log_eval("finetuned", tuned_metrics)
-
     out = Path(args.model_dir)
     model.save_pretrained(out / "adapter")
     tok.save_pretrained(out / "adapter")
-    metrics = {"base": base_metrics, "finetuned": tuned_metrics, "steps": args.steps, "model_id": args.model_id,
-               "seconds_total": round(time.time() - t0), "seconds_training": round(time.time() - t_train),
-               "examples": [{"request": ex["request"], "target": ex["target"], "base": b, "finetuned": f}
-                            for ex, b, f in list(zip(test, base_out, tuned_out))[:5]]}
-    (out / "metrics.json").write_text(json.dumps(metrics, indent=2))
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    metrics = {"technique": "sft", "model_id": args.model_id, "steps": args.steps, "train_examples": len(train),
+               "trainable_parameters": trainable, "loss": losses,
+               "seconds_training": round(time.time() - t_train), "seconds_total": round(time.time() - t0)}
+    (out / "training_metrics.json").write_text(json.dumps(metrics, indent=2))
     print(f"done in {metrics['seconds_total']}s (training {metrics['seconds_training']}s)", flush=True)
-    tracker.close(out)
+    tracker.close(out, "training_metrics.json")
 
 
 if __name__ == "__main__":

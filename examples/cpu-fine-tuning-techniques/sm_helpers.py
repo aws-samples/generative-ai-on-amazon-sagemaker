@@ -1,5 +1,6 @@
-"""Notebook-side helpers shared by 02-04 (01 spells the same steps out inline): session setup, MLflow, a CPU
-training job in one of the three capacity modes, waiting for jobs, and reading their metrics."""
+"""Notebook-side helpers. MLflow setup (resolve_mlflow, mlflow_environment, mlflow_url) is used by all labs; `Lab`
+(session, a CPU training job in one of the three capacity modes, waiting, metrics) by 02-04, while 01 spells the
+same steps out inline."""
 import json
 import time
 
@@ -11,6 +12,7 @@ from sagemaker.core.training.configs import Compute, OutputDataConfig, SourceCod
 from sagemaker.train import ModelTrainer
 
 INSTANCE_TYPE = "ml.c7i.4xlarge"
+SPOT_INSTANCE_TYPE = "ml.m5.4xlarge"  # Spot capacity differs by type (EC2 Spot placement score: see 01-sft.ipynb)
 FALLBACK_TYPES = ["ml.c7i.4xlarge", "ml.m7i.4xlarge", "ml.c6i.4xlarge", "ml.m6i.4xlarge", "ml.m5.4xlarge"]
 IMAGE = "763104351884.dkr.ecr.{region}.amazonaws.com/pytorch-training:2.8-cpu-py312"
 MLFLOW_EXPERIMENT = "cpu-fine-tuning-techniques"
@@ -62,8 +64,11 @@ class Lab:
             # adaptive retries: notebooks started together can hit the Service Quotas rate limit
             sq = boto3.client("service-quotas", region_name=self.region,
                               config=Config(retries={"max_attempts": 10, "mode": "adaptive"}))
-            quotas = {q["QuotaName"]: q["Value"] for page in sq.get_paginator("list_service_quotas")
-                      .paginate(ServiceCode="sagemaker") for q in page["Quotas"]}
+            # applied values override defaults; a quota still at its default is only in the defaults list
+            quotas = {}
+            for op in ("list_aws_default_service_quotas", "list_service_quotas"):
+                for page in sq.get_paginator(op).paginate(ServiceCode="sagemaker"):
+                    quotas.update({q["QuotaName"]: q["Value"] for q in page["Quotas"]})
             return [t for t in FALLBACK_TYPES if quotas.get(f"{t} for training job usage", 0) >= 1] or FALLBACK_TYPES
         except Exception as e:
             print(f"quota check skipped: {e}")
@@ -75,8 +80,8 @@ class Lab:
             compute = Compute(instance_preferences=[InstancePreference(instance_type=t) for t in self.fallback_types()],
                               instance_count=1, volume_size_in_gb=30)
         else:
-            compute = Compute(instance_type=INSTANCE_TYPE, instance_count=1, volume_size_in_gb=30,
-                              enable_managed_spot_training=capacity == "spot")
+            compute = Compute(instance_type=SPOT_INSTANCE_TYPE if capacity == "spot" else INSTANCE_TYPE,
+                              instance_count=1, volume_size_in_gb=30, enable_managed_spot_training=capacity == "spot")
         trainer = ModelTrainer(
             training_image=IMAGE.format(region=self.region),
             source_code=SourceCode(source_dir="scripts", requirements=requirements, entry_script=entry_script),

@@ -1,4 +1,4 @@
-"""Synthetic task for the quickstart: turn a free-text restaurant booking request into strict JSON.
+"""Synthetic tasks for the CPU labs: turn a free-text restaurant booking request into strict JSON.
 
 Generated in code, so the example needs no dataset download and has no licensing questions. The target format
 has conventions an instruction alone doesn't pin down (24-hour time, party size as an integer even when written as

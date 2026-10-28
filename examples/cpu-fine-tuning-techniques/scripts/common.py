@@ -27,6 +27,12 @@ def _tf5():
     return int(transformers.__version__.split(".")[0]) >= 5
 
 
+def read_jsonl(channel_dir):
+    """All records of the .jsonl files in a channel directory (/opt/ml/input/data/<channel>/)."""
+    return [json.loads(line) for f in sorted(Path(channel_dir).glob("*.jsonl"))
+            for line in f.read_text().splitlines() if line.strip()]
+
+
 def chat(tok, msgs, generation):
     kw = {"enable_thinking": False} if "qwen3" in tok.name_or_path.lower() else {}
     return tok.apply_chat_template(msgs, tokenize=False, add_generation_prompt=generation, **kw)
@@ -36,11 +42,9 @@ def booking_prompt(tok, request):
     return chat(tok, messages(request), generation=True)
 
 
-def parse_booking(text, lenient=False):
-    """The JSON object in `text`, or None. lenient=True also accepts it inside a markdown code block."""
+def parse_booking(text):
+    """The JSON object in `text`, or None (an answer inside a markdown code block does not count)."""
     text = text.strip()
-    if lenient and text.startswith("```"):
-        text = text.strip("`").removeprefix("json").strip()
     try:
         got = json.loads(text)
     except json.JSONDecodeError:
@@ -115,8 +119,8 @@ class Tracker:
             if "step" in entry and "train_runtime" not in entry:
                 self.log({k: v for k, v in entry.items() if k not in ("step", "epoch")}, step=entry["step"])
 
-    def close(self, model_dir):
-        self._call("log_artifact", str(Path(model_dir) / "metrics.json"))
+    def close(self, model_dir, filename="metrics.json"):
+        self._call("log_artifact", str(Path(model_dir) / filename))
         self._call("end_run")
 
 
