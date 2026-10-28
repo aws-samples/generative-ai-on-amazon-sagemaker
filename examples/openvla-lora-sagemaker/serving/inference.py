@@ -26,8 +26,12 @@ def model_fn(model_dir, context=None):
     model, processor = load_openvla(model_dir, DEVICE)
     stats_path = os.path.join(model_dir, "action_stats.json")
     stats = json.load(open(stats_path)) if os.path.exists(stats_path) else None
-    return {"model": model, "processor": processor, "action_tokenizer": ActionTokenizer(processor.tokenizer),
-            "stats": stats}
+    ctx = {"model": model, "processor": processor, "action_tokenizer": ActionTokenizer(processor.tokenizer),
+           "stats": stats}
+    # Warm-up: the first generate() pays one-time CUDA/kernel initialization (~80 s), longer than SageMaker's 60 s
+    # invocation limit. Doing it here, before the endpoint reports healthy, keeps the first real request fast.
+    predict_action(model, processor, ctx["action_tokenizer"], Image.new("RGB", (224, 224)), "warm up")
+    return ctx
 
 
 def input_fn(body, content_type="application/json"):
