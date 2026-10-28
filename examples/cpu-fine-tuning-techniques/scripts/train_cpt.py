@@ -18,7 +18,7 @@ from peft import LoraConfig, get_peft_model
 
 sys.path.insert(0, str(Path(__file__).parent))
 from booking_data import CLOZE, FACTS, TRAIN_SENTENCES, cpt_documents  # noqa: E402
-from common import generate, load, save  # noqa: E402
+from common import Tracker, generate, load, save  # noqa: E402
 
 
 def parse_args():
@@ -53,6 +53,7 @@ def perplexity(model, tok, texts):
 def main():
     args = parse_args()
     t0 = time.time()
+    tracker = Tracker("cpt", vars(args))
     tok, model = load(args.model_id)
     docs = cpt_documents(phrasings=2)
     heldout = [v[2] for v in TRAIN_SENTENCES.values()]  # third phrasing of each fact: never in training documents
@@ -60,6 +61,7 @@ def main():
     base_acc, base_out = cloze_accuracy(model, tok)
     base_ppl = perplexity(model, tok, heldout)
     print(f"base      cloze={base_acc:.0%} ppl={base_ppl:.1f}", flush=True)
+    tracker.log_eval("base", {"cloze_accuracy": base_acc, "heldout_perplexity": base_ppl})
 
     model = get_peft_model(model, LoraConfig(r=args.lora_rank, lora_alpha=2 * args.lora_rank, lora_dropout=0.0,
                                              target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
@@ -77,12 +79,14 @@ def main():
         loss.backward()
         opt.step()
         opt.zero_grad()
+        tracker.log({"loss": loss.item()}, step=step)
         if step % 10 == 0 or step == 1:
             print(f"[step {step}] loss={loss.item():.4f} sec/step={(time.time() - t_train) / step:.2f}", flush=True)
 
     tuned_acc, tuned_out = cloze_accuracy(model, tok)
     tuned_ppl = perplexity(model, tok, heldout)
     print(f"finetuned cloze={tuned_acc:.0%} ppl={tuned_ppl:.1f}", flush=True)
+    tracker.log_eval("finetuned", {"cloze_accuracy": tuned_acc, "heldout_perplexity": tuned_ppl})
     save(args.model_dir, model, tok, {
         "technique": "cpt", "model_id": args.model_id, "steps": args.steps,
         "base": {"cloze_accuracy": base_acc, "heldout_perplexity": base_ppl},
@@ -91,6 +95,7 @@ def main():
         "examples": [{"question": CLOZE[k], "fact": FACTS[k], "base": base_out[k], "finetuned": tuned_out[k]}
                      for k in sorted(CLOZE)[:4]],
     }, t0)
+    tracker.close(args.model_dir)
 
 
 if __name__ == "__main__":

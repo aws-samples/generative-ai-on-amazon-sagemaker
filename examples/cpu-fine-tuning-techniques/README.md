@@ -16,7 +16,9 @@ The models and runs are deliberately small: the labs show what each technique do
 | `04-grpo.ipynb` | RL with a verifiable reward | the booking task with a reward function | exact match, mean reward, reward per step |
 
 All data is generated in code (`scripts/booking_data.py`): nothing to download except the model, no licensing
-questions. Run 01 first; 02-04 are independent of each other.
+questions. 01 uploads its dataset to S3 and passes it to the job as input channels, as you would with your own
+data; 02-04 generate theirs inside the job. Every job logs to MLflow (experiment `cpu-fine-tuning-techniques`)
+when an MLflow App is available. Run 01 first; 02-04 are independent of each other.
 
 ## Layout
 
@@ -26,7 +28,8 @@ questions. Run 01 first; 02-04 are independent of each other.
 | `scripts/train.py` | SFT job (01) |
 | `scripts/train_cpt.py`, `train_dpo.py`, `train_grpo.py` | CPT, DPO, GRPO jobs (02-04); `common.py` holds what they share |
 | `scripts/requirements.txt`, `requirements-trl.txt` | job dependencies (DPO/GRPO use TRL, same versions as the GPU workshop) |
-| `sm_helpers.py` | notebook helpers for 02-04: session, a CPU job in one of the capacity modes, waiting, metrics |
+| `sm_helpers.py` | notebook helpers for 02-04: session, MLflow, a CPU job in one of the capacity modes, waiting, metrics |
+| `workshop_mlflow.py` | finds or creates the MLflow App (copied from the serverless customization workshop) |
 | `serving/inference.py` | CPU endpoint handler (01): base model from the Hub + adapter, merged at startup |
 
 ## Measured (us-east-1, `ml.c7i.4xlarge`)

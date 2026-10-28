@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """LoRA fine-tuning + evaluation of a small LLM on CPU, in a few minutes (SageMaker training job entry point).
 
+0. reads the training and test examples from the `train` and `test` channels (JSONL files the notebook uploaded
+   to S3; SageMaker copies them to /opt/ml/input/data/<channel>/); without channels it generates the same data
 1. scores the base model on the held-out requests (exact JSON match, per-field accuracy)
 2. trains a LoRA adapter for a few dozen steps
 3. scores the fine-tuned model on the same requests
@@ -19,6 +21,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 sys.path.insert(0, str(Path(__file__).parent))
 from booking_data import make_splits, messages  # noqa: E402
+from common import Tracker  # noqa: E402
 
 FIELDS = ["name", "party_size", "day", "time"]
 
@@ -32,8 +35,16 @@ def parse_args():
     p.add_argument("--lora_rank", type=int, default=8)
     p.add_argument("--n_train", type=int, default=400)
     p.add_argument("--n_test", type=int, default=30)
+    p.add_argument("--train_dir", default=os.environ.get("SM_CHANNEL_TRAIN"))
+    p.add_argument("--test_dir", default=os.environ.get("SM_CHANNEL_TEST"))
     p.add_argument("--model_dir", default=os.environ.get("SM_MODEL_DIR", "/opt/ml/model"))
     return p.parse_args()
+
+
+def read_jsonl(channel_dir):
+    """All records of the .jsonl files in a channel directory."""
+    return [json.loads(line) for f in sorted(Path(channel_dir).glob("*.jsonl"))
+            for line in f.read_text().splitlines() if line.strip()]
 
 
 def chat(tok, msgs, generation):
@@ -79,7 +90,13 @@ def main():
     torch.manual_seed(0)
     torch.set_num_threads(os.cpu_count())
     t0 = time.time()
-    train, test = make_splits(args.n_train, args.n_test)
+    tracker = Tracker("sft", vars(args))
+    if args.train_dir and args.test_dir:
+        train, test = read_jsonl(args.train_dir), read_jsonl(args.test_dir)
+        print(f"data from channels: {len(train)} train ({args.train_dir}), {len(test)} test ({args.test_dir})", flush=True)
+    else:
+        train, test = make_splits(args.n_train, args.n_test)
+        print(f"no data channels: generated {len(train)} train / {len(test)} test examples", flush=True)
 
     tok = AutoTokenizer.from_pretrained(args.model_id)
     tok.pad_token = tok.pad_token or tok.eos_token
@@ -88,6 +105,7 @@ def main():
 
     base_metrics, base_out = evaluate(model, tok, test)
     print("base     ", json.dumps(base_metrics), flush=True)
+    tracker.log_eval("base", base_metrics)
 
     model = get_peft_model(model, LoraConfig(r=args.lora_rank, lora_alpha=2 * args.lora_rank, lora_dropout=0.0,
                                              target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
@@ -105,11 +123,13 @@ def main():
         loss.backward()
         opt.step()
         opt.zero_grad()
+        tracker.log({"loss": loss.item()}, step=step)
         if step % 5 == 0 or step == 1:
             print(f"[step {step}] loss={loss.item():.4f} sec/step={(time.time() - t_train) / step:.2f}", flush=True)
 
     tuned_metrics, tuned_out = evaluate(model, tok, test)
     print("finetuned", json.dumps(tuned_metrics), flush=True)
+    tracker.log_eval("finetuned", tuned_metrics)
 
     out = Path(args.model_dir)
     model.save_pretrained(out / "adapter")
@@ -120,6 +140,7 @@ def main():
                             for ex, b, f in list(zip(test, base_out, tuned_out))[:5]]}
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2))
     print(f"done in {metrics['seconds_total']}s (training {metrics['seconds_training']}s)", flush=True)
+    tracker.close(out)
 
 
 if __name__ == "__main__":

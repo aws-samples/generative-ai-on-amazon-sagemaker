@@ -23,7 +23,7 @@ from trl import DPOConfig, DPOTrainer
 
 sys.path.insert(0, str(Path(__file__).parent))
 from booking_data import dpo_pairs, make_splits  # noqa: E402
-from common import booking_prompt, evaluate_booking, load, save  # noqa: E402
+from common import Tracker, booking_prompt, evaluate_booking, load, save  # noqa: E402
 
 
 def parse_args():
@@ -58,6 +58,7 @@ def preference_accuracy(model, tok, pairs):
 def main():
     args = parse_args()
     t0 = time.time()
+    tracker = Tracker("dpo", vars(args))
     train, test = make_splits(n_train=400, n_test=30)
     tok, model = load(args.model_id)
     test_pairs = dpo_pairs(test, seed=1)
@@ -65,6 +66,7 @@ def main():
     base_metrics, base_out = evaluate_booking(model, tok, test)
     base_metrics["preference_accuracy"] = preference_accuracy(model, tok, test_pairs)
     print("base     ", base_metrics, flush=True)
+    tracker.log_eval("base", base_metrics)
 
     # Standard (string) format with the chat template applied once, exactly as at inference time
     ds = Dataset.from_list([{"prompt": booking_prompt(tok, p["request"]), "chosen": p["chosen"] + tok.eos_token,
@@ -83,10 +85,12 @@ def main():
     t_train = time.time()
     trainer.train()
     model = trainer.model
+    tracker.log_history(trainer.state.log_history)
 
     tuned_metrics, tuned_out = evaluate_booking(model, tok, test)
     tuned_metrics["preference_accuracy"] = preference_accuracy(model, tok, test_pairs)
     print("finetuned", tuned_metrics, flush=True)
+    tracker.log_eval("finetuned", tuned_metrics)
     save(args.model_dir, model, tok, {
         "technique": "dpo", "model_id": args.model_id, "steps": args.steps, "beta": args.beta,
         "loss_type": args.loss_type,
@@ -96,6 +100,7 @@ def main():
         "examples": [{"request": ex["request"], "target": ex["target"], "base": b, "finetuned": f}
                      for ex, b, f in list(zip(test, base_out, tuned_out))[:3]],
     }, t0)
+    tracker.close(args.model_dir)
 
 
 if __name__ == "__main__":

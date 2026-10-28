@@ -21,7 +21,7 @@ from trl import GRPOConfig, GRPOTrainer
 
 sys.path.insert(0, str(Path(__file__).parent))
 from booking_data import booking_reward, make_splits  # noqa: E402
-from common import booking_prompt, evaluate_booking, load, save  # noqa: E402
+from common import Tracker, booking_prompt, evaluate_booking, load, save  # noqa: E402
 
 
 def parse_args():
@@ -47,12 +47,14 @@ def mean_reward(outputs, test):
 def main():
     args = parse_args()
     t0 = time.time()
+    tracker = Tracker("grpo", vars(args))
     train, test = make_splits(n_train=400, n_test=30)
     tok, model = load(args.model_id)
 
     base_metrics, base_out = evaluate_booking(model, tok, test)
     base_metrics["mean_reward"] = mean_reward(base_out, test)
     print("base     ", base_metrics, flush=True)
+    tracker.log_eval("base", base_metrics)
 
     ds = Dataset.from_list([{"prompt": booking_prompt(tok, ex["request"]), "target": ex["target"]} for ex in train])
     cfg = GRPOConfig(output_dir="/tmp/grpo", max_steps=args.steps, learning_rate=args.learning_rate,
@@ -67,10 +69,12 @@ def main():
     t_train = time.time()
     trainer.train()
     model = trainer.model
+    tracker.log_history(trainer.state.log_history)
 
     tuned_metrics, tuned_out = evaluate_booking(model, tok, test)
     tuned_metrics["mean_reward"] = mean_reward(tuned_out, test)
     print("finetuned", tuned_metrics, flush=True)
+    tracker.log_eval("finetuned", tuned_metrics)
     save(args.model_dir, model, tok, {
         "technique": "grpo", "model_id": args.model_id, "steps": args.steps,
         "base": base_metrics, "finetuned": tuned_metrics, "seconds_training": round(time.time() - t_train),
@@ -79,6 +83,7 @@ def main():
         "examples": [{"request": ex["request"], "target": ex["target"], "base": b, "finetuned": f}
                      for ex, b, f in list(zip(test, base_out, tuned_out))[:3]],
     }, t0)
+    tracker.close(args.model_dir)
 
 
 if __name__ == "__main__":

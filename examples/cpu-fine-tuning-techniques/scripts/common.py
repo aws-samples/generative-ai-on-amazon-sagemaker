@@ -1,4 +1,4 @@
-"""Shared by the training job scripts: model loading, prompts, booking-task evaluation, metrics output."""
+"""Shared by the training job scripts: model loading, prompts, booking-task evaluation, metrics output, MLflow."""
 import json
 import os
 import time
@@ -71,6 +71,53 @@ def evaluate_booking(model, tok, test):
             hits[f] += got.get(f) == want[f]
     n = len(test)
     return {"exact_match": exact / n, **{f"acc_{f}": h / n for f, h in hits.items()}}, outputs
+
+
+class Tracker:
+    """Logs to MLflow when the notebook passed MLFLOW_TRACKING_URI (the MLflow App ARN); a no-op otherwise.
+    Tracking is best-effort: an MLflow error is printed and never fails the job."""
+
+    def __init__(self, technique, params):
+        self.mlflow = None
+        if not os.environ.get("MLFLOW_TRACKING_URI"):
+            return
+        try:
+            import mlflow
+
+            mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT_NAME", "cpu-fine-tuning-techniques"))
+            mlflow.start_run(run_name=os.environ.get("TRAINING_JOB_NAME"), tags={"technique": technique})
+            mlflow.log_params({k: str(v) for k, v in params.items() if k != "model_dir"})
+            self.mlflow = mlflow
+            print(f"[mlflow] logging to experiment {mlflow.get_experiment(mlflow.active_run().info.experiment_id).name}",
+                  flush=True)
+        except Exception as e:
+            print(f"[mlflow] off: {e}", flush=True)
+
+    def _call(self, fn, *args, **kwargs):
+        if self.mlflow:
+            try:
+                getattr(self.mlflow, fn)(*args, **kwargs)
+            except Exception as e:
+                print(f"[mlflow] {fn} failed: {e}", flush=True)
+
+    def log(self, metrics, step=None):
+        """Numeric values only; nested dicts are skipped."""
+        self._call("log_metrics", {k.replace("/", "_"): float(v) for k, v in metrics.items()
+                                   if isinstance(v, (int, float)) and not isinstance(v, bool)}, step=step)
+
+    def log_eval(self, which, metrics):
+        """`which` = "base" or "finetuned": logged as base_exact_match, finetuned_exact_match, ..."""
+        self.log({f"{which}_{k}": v for k, v in metrics.items()})
+
+    def log_history(self, history):
+        """A TRL/transformers Trainer's state.log_history, one MLflow step per logged training step."""
+        for entry in history:
+            if "step" in entry and "train_runtime" not in entry:
+                self.log({k: v for k, v in entry.items() if k not in ("step", "epoch")}, step=entry["step"])
+
+    def close(self, model_dir):
+        self._call("log_artifact", str(Path(model_dir) / "metrics.json"))
+        self._call("end_run")
 
 
 def save(model_dir, model, tok, metrics, t0):

@@ -1,9 +1,10 @@
-"""Notebook-side helpers shared by 02-04 (01 spells the same steps out inline): session setup, a CPU training job
-in one of the three capacity modes, waiting for jobs, and reading their metrics."""
+"""Notebook-side helpers shared by 02-04 (01 spells the same steps out inline): session setup, MLflow, a CPU
+training job in one of the three capacity modes, waiting for jobs, and reading their metrics."""
 import json
 import time
 
 import boto3
+from botocore.config import Config
 from sagemaker.core.helper.session_helper import Session, get_execution_role
 from sagemaker.core.shapes import InstancePreference
 from sagemaker.core.training.configs import Compute, OutputDataConfig, SourceCode, StoppingCondition
@@ -12,10 +13,35 @@ from sagemaker.train import ModelTrainer
 INSTANCE_TYPE = "ml.c7i.4xlarge"
 FALLBACK_TYPES = ["ml.c7i.4xlarge", "ml.m7i.4xlarge", "ml.c6i.4xlarge", "ml.m6i.4xlarge", "ml.m5.4xlarge"]
 IMAGE = "763104351884.dkr.ecr.{region}.amazonaws.com/pytorch-training:2.8-cpu-py312"
+MLFLOW_EXPERIMENT = "cpu-fine-tuning-techniques"
+
+
+def resolve_mlflow(sm_client, session, arn=""):
+    """MLflow App ARN to log to: `arn` if set, else the account's app (created if there is none: several minutes,
+    first time only). None turns MLflow off. Never blocks the lab: on any error it prints why and returns None."""
+    if arn is None:
+        return None
+    from workshop_mlflow import resolve_app
+
+    try:
+        return resolve_app(sm_client, arn, session=session, native=True, app_name="serverless-customization-workshop")
+    except Exception as e:
+        print(f"MLflow off: {e}")
+        return None
+
+
+def mlflow_environment(arn):
+    """Job environment variables that make the training scripts log to MLflow (the URI must be the App ARN)."""
+    return {"MLFLOW_TRACKING_URI": arn, "MLFLOW_EXPERIMENT_NAME": MLFLOW_EXPERIMENT} if arn else {}
+
+
+def mlflow_url(sm_client, arn):
+    """Link to the MLflow UI, valid for a few minutes."""
+    return sm_client.create_presigned_mlflow_app_url(Arn=arn)["AuthorizedUrl"] if arn else None
 
 
 class Lab:
-    def __init__(self):
+    def __init__(self, mlflow_app_arn=""):
         self.sess = Session()
         self.region = self.sess.boto_region_name
         try:
@@ -26,12 +52,16 @@ class Lab:
         self.prefix = "/".join(p for p in (self.sess.default_bucket_prefix, "cpu-fine-tuning-techniques") if p)
         self.sm = boto3.client("sagemaker", region_name=self.region)
         self.s3 = boto3.client("s3", region_name=self.region)
-        print(f"role:   {self.role}\nregion: {self.region}\noutput: s3://{self.bucket}/{self.prefix}/")
+        self.mlflow_arn = resolve_mlflow(self.sm, self.sess, mlflow_app_arn)
+        print(f"role:   {self.role}\nregion: {self.region}\noutput: s3://{self.bucket}/{self.prefix}/\n"
+              f"MLflow: {self.mlflow_arn or 'off'}")
 
     def fallback_types(self):
         """FALLBACK_TYPES minus types without a training quota (SageMaker rejects lists containing one)."""
         try:
-            sq = boto3.client("service-quotas", region_name=self.region)
+            # adaptive retries: notebooks started together can hit the Service Quotas rate limit
+            sq = boto3.client("service-quotas", region_name=self.region,
+                              config=Config(retries={"max_attempts": 10, "mode": "adaptive"}))
             quotas = {q["QuotaName"]: q["Value"] for page in sq.get_paginator("list_service_quotas")
                       .paginate(ServiceCode="sagemaker") for q in page["Quotas"]}
             return [t for t in FALLBACK_TYPES if quotas.get(f"{t} for training job usage", 0) >= 1] or FALLBACK_TYPES
@@ -51,6 +81,7 @@ class Lab:
             training_image=IMAGE.format(region=self.region),
             source_code=SourceCode(source_dir="scripts", requirements=requirements, entry_script=entry_script),
             hyperparameters=hyperparameters,
+            environment=mlflow_environment(self.mlflow_arn),
             compute=compute,
             stopping_condition=StoppingCondition(max_runtime_in_seconds=3600,
                                                  max_wait_time_in_seconds=7200 if capacity == "spot" else None),
@@ -100,3 +131,6 @@ class Lab:
         d = self.sm.describe_training_job(TrainingJobName=job)
         b, k = (d["ModelArtifacts"]["S3ModelArtifacts"].rstrip("/") + "/")[5:].split("/", 1)
         return json.loads(self.s3.get_object(Bucket=b, Key=k + "metrics.json")["Body"].read())
+
+    def mlflow_url(self):
+        return mlflow_url(self.sm, self.mlflow_arn)
