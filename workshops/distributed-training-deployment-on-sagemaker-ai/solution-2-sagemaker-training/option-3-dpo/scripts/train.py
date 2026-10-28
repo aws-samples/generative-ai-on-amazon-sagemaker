@@ -1229,6 +1229,17 @@ def _save_artifacts_on_main(
     from the base model so the output is complete for multi-modal inference.
     """
     tokenizer.save_pretrained(final_output_dir)
+    # transformers 5 writes extra_special_tokens as a list, but the vLLM serving container's transformers 4.x
+    # expects a dict and fails to load the tokenizer ("'list' object has no attribute 'keys'"). The tokens are
+    # also defined in tokenizer.json, so drop the key for compatibility.
+    _tok_cfg_path = os.path.join(final_output_dir, "tokenizer_config.json")
+    if os.path.exists(_tok_cfg_path):
+        with open(_tok_cfg_path) as _f:
+            _tok_cfg = json.load(_f)
+        if isinstance(_tok_cfg.get("extra_special_tokens"), list):
+            _tok_cfg.pop("extra_special_tokens")
+            with open(_tok_cfg_path, "w") as _f:
+                json.dump(_tok_cfg, _f, indent=2, ensure_ascii=False)
     if processor is not None:
         processor.save_pretrained(final_output_dir)
         if (
