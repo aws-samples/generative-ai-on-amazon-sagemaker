@@ -1,45 +1,51 @@
-# LoRA fine-tuning on CPU in a few minutes
+# Fine-tuning techniques on CPU: SFT, continued pre-training, DPO and GRPO
 
-A minimal, end-to-end SageMaker fine-tuning example that needs **no GPU**: a CPU training job fine-tunes
-`Qwen/Qwen3-0.6B` with LoRA, evaluates base vs fine-tuned in the same job, and an optional CPU endpoint serves the
-result. It is meant to show the mechanics (ModelTrainer, adapters, metrics, endpoint) in any account, including
-when GPU capacity is unavailable.
+Four short labs that run the main LLM customization techniques end to end on **CPU-only SageMaker training jobs**,
+so they work in any account without waiting for GPU capacity. Each lab fine-tunes `Qwen/Qwen3-0.6B` (Apache-2.0)
+with a LoRA adapter and evaluates base vs fine-tuned in the same job, in about 4-14 minutes per lab.
+
+The models and runs are deliberately small: the labs show what each technique does and how it runs on SageMaker
+(ModelTrainer, capacity options, metrics, deployment). The multi-GPU recipes (QLoRA, FSDP, vLLM rollouts) are in
+`workshops/distributed-training-deployment-on-sagemaker-ai/`.
+
+| Notebook | Technique | Data | What the job measures |
+|---|---|---|---|
+| `01-sft.ipynb` | supervised fine-tuning | booking request → strict JSON (generated) | exact JSON match; also compares **on-demand / Spot / fallback** training and **real-time / instance pools / serverless** endpoints |
+| `02-continued-pretraining.ipynb` | continued pre-training | raw text about a fictional restaurant | fill-in-the-blank on unseen phrasings, perplexity on held-out sentences |
+| `03-dpo.ipynb` | direct preference optimization | the booking task as chosen/rejected pairs | exact match, preference accuracy; plain DPO vs DPO + SFT term |
+| `04-grpo.ipynb` | RL with a verifiable reward | the booking task with a reward function | exact match, mean reward, reward per step |
+
+All data is generated in code (`scripts/booking_data.py`): nothing to download except the model, no licensing
+questions. Run 01 first; 02-04 are independent of each other.
+
+## Layout
 
 | Path | What |
 |---|---|
-| `quickstart.ipynb` | the whole flow: data, training job, results, optional endpoint, cleanup |
-| `scripts/booking_data.py` | synthetic task: restaurant booking request → strict JSON (generated in code, no download) |
-| `scripts/train.py` | training job entry point: base eval → ~20 LoRA steps → fine-tuned eval → `adapter/` + `metrics.json` |
-| `serving/inference.py` | CPU endpoint handler: base model from the Hugging Face Hub + adapter, merged at startup |
+| `scripts/booking_data.py` | the tasks: booking requests, restaurant facts and documents, preference pairs, reward function |
+| `scripts/train.py` | SFT job (01) |
+| `scripts/train_cpt.py`, `train_dpo.py`, `train_grpo.py` | CPT, DPO, GRPO jobs (02-04); `common.py` holds what they share |
+| `scripts/requirements.txt`, `requirements-trl.txt` | job dependencies (DPO/GRPO use TRL, same versions as the GPU workshop) |
+| `sm_helpers.py` | notebook helpers for 02-04: session, a CPU job in one of the capacity modes, waiting, metrics |
+| `serving/inference.py` | CPU endpoint handler (01): base model from the Hub + adapter, merged at startup |
 
-## Measured (us-east-1)
+## Measured (us-east-1, `ml.c7i.4xlarge`)
 
-Training, three jobs in parallel on `ml.c7i.4xlarge` (about 4 minutes each, submit to completed):
-
-| capacity | to start | training phase | billed | SageMaker-reported spot savings |
-|---|---|---|---|---|
-| on-demand | 78 s | 131 s | 174 s | |
-| spot | 82 s | 116 s | 56 s | 65% |
-| fallback (`instance_preferences`) | 81 s | 136 s | 184 s | |
-
-All three: exact JSON match on 30 held-out requests, base 0% → fine-tuned 100% (20 steps, batch 8, LoRA r=8).
-
-Serving, three endpoints created in parallel (in service after 3.5 min), same request twice:
-
-| endpoint | first request | second request |
+| Lab | Result (30 held-out examples unless noted) | Job time |
 |---|---|---|
-| real-time `ml.m5.xlarge` | 4.9 s | 4.5 s |
-| real-time with `InstancePools` | 4.6 s | 4.5 s |
-| serverless (6 GB) | 46 s (cold start) | 3.6 s |
+| 01 SFT, 20 steps | exact JSON 0% → 100% | ~4 min (Spot: 57 s billed vs ~180 s on-demand) |
+| 02 CPT, 60 steps | questions answered 0% → 100% (8 questions, unseen phrasings), held-out perplexity 148 → 8.4 | 5.0 min |
+| 03 DPO, 40 steps | DPO + SFT: exact 0% → 90%, prefers chosen 53% → 100%. Plain DPO: prefers chosen 100% but exact 0% (it drops JSON altogether) | 9.4 min (both jobs in parallel) |
+| 04 GRPO, 40 steps | exact 0% → 40%, mean reward 0.46 → 0.79; name/party/day 100%, 24-hour time 40% (rarely sampled, so slowly learned) | 13.5 min |
 
-The base model gets the same instruction and mostly extracts the right values, but not in the required form: it
-wraps the JSON in a markdown code block, keeps "sunday" lowercase and writes "5:15pm". After 20 steps the output is
-exactly `{"name": "Priya", "party_size": 12, "day": "Sunday", "time": "17:15"}`.
+Serving (01), same model on three endpoints: real-time and real-time with instance pools ~4.5 s per request,
+serverless 46 s cold start then 3.6 s.
 
 ## Requirements
 
-* A SageMaker execution role (Studio's role works) and a training quota for one of the CPU types in
-  `INSTANCE_TYPES` (types without quota are dropped automatically if the role can read Service Quotas).
-* Internet access from the job and the endpoint to download `Qwen/Qwen3-0.6B` (public, Apache-2.0).
-* Endpoint quotas for `ml.m5.xlarge` (and the pool types `ml.m7i.xlarge`, `ml.c7i.2xlarge`), a Spot training quota
-  for `ml.c7i.4xlarge`, and serverless endpoints enabled. The last cell deletes the endpoints.
+* A SageMaker execution role (Studio's role works) and training quota for one of the CPU types in
+  `sm_helpers.FALLBACK_TYPES` (types without quota are dropped automatically if the role can read Service Quotas).
+  01 also needs a Spot training quota for `ml.c7i.4xlarge` and endpoint quotas for `ml.m5.xlarge`, `ml.m7i.xlarge`,
+  `ml.c7i.2xlarge`, with serverless endpoints enabled.
+* Internet access from the jobs and endpoints to download `Qwen/Qwen3-0.6B`.
+* 01's last cell deletes its endpoints; 02-04 create no endpoints.
