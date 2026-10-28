@@ -1,6 +1,7 @@
-"""SageMaker PyTorch inference handler for a merged OpenVLA checkpoint.
+"""SageMaker PyTorch inference handler for an OpenVLA checkpoint.
 
-Deployed by 4-deployment.ipynb next to the model as <model prefix>/code/ together with openvla_utils.py. The model prefix
+Uploaded next to the model as <model prefix>/code/ together with openvla_utils.py when notebook 2 registers the
+model (artifacts.register_model); notebook 4 deploys it. The model prefix
 holds either a merged checkpoint or just a LoRA adapter (the base model then comes from the Hugging Face Hub).
 
 Request  (application/json): {"image": "<base64 JPEG/PNG>", "instruction": "move object to target"}

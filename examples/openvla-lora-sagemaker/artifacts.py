@@ -5,8 +5,7 @@ A training run's output prefix holds:
     hf_merged/          adapter merged into the base model (what the endpoint and the eval job load)
 `register_model` stores the serving code next to the model (a merged checkpoint, or just a LoRA adapter whose base
 model is then downloaded from the Hugging Face Hub) and registers a model package, which is what notebooks 3 and 4
-start from. `copy_prefix` copies a run's artifacts between S3 locations, e.g. to publish a run for others (see
-README).
+start from.
 """
 import boto3
 
@@ -19,19 +18,6 @@ SERVING_FILES = [("serving/inference.py", "inference.py"), ("serving/requirement
 def split_s3(uri):
     bucket, _, key = uri[5:].partition("/")
     return bucket, key
-
-
-def copy_prefix(src_uri, dst_uri, region=None, progress=None):
-    """Server-side copy of every object under src_uri to dst_uri (multipart for the large weight shards)."""
-    s3 = boto3.client("s3", region_name=region)
-    (sb, sk), (db, dk) = split_s3(src_uri.rstrip("/") + "/"), split_s3(dst_uri.rstrip("/") + "/")
-    keys = [o["Key"] for page in s3.get_paginator("list_objects_v2").paginate(Bucket=sb, Prefix=sk)
-            for o in page.get("Contents", [])]
-    if not keys:
-        raise RuntimeError(f"nothing under {src_uri}")
-    for k in (progress or (lambda it, **_: it))(keys, desc="copy"):
-        s3.copy({"Bucket": sb, "Key": k}, db, dk + k[len(sk):])
-    return len(keys)
 
 
 def register_model(model_s3_uri, *, source, run_mode, region):
@@ -51,7 +37,7 @@ def register_model(model_s3_uri, *, source, run_mode, region):
         sm.describe_model_package_group(ModelPackageGroupName=config.MODEL_PACKAGE_GROUP)
     except sm.exceptions.ClientError:
         sm.create_model_package_group(ModelPackageGroupName=config.MODEL_PACKAGE_GROUP,
-                                      ModelPackageGroupDescription="OpenVLA-7B LoRA, BridgeData V2 (pseudo-labelled)")
+                                      ModelPackageGroupDescription=f"OpenVLA-7B LoRA, {config.DATASET} dataset")
 
     return sm.create_model_package(
         ModelPackageGroupName=config.MODEL_PACKAGE_GROUP,

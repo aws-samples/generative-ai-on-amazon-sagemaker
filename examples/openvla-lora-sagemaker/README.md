@@ -1,7 +1,7 @@
 # LoRA fine-tuning of a VLA (OpenVLA-7B) on SageMaker Training Jobs
 
 End-to-end lab: robot demonstrations → LoRA fine-tune on a SageMaker Training Job → closed-form evaluation →
-model registry → real-time endpoint. Training, evaluation and the endpoint each use one GPU (L40S or A10G
+model registry → real-time endpoint. Training, evaluation and the endpoint each use one GPU (L40S, L4 or A10G
 class); notebook 2 explains the capacity options when that GPU is scarce.
 
 The default data is **LIBERO** (simulated tabletop manipulation, 40 tasks, real 7-DoF actions), which OpenVLA was
@@ -68,14 +68,16 @@ Serverless customization (`SFTTrainer`) only covers JumpStart text models, so th
 
 The full recipe (`scripts/recipes/openvla_lora.yaml`) follows OpenVLA's reference `finetune.py`:
 
-* LoRA r=32, alpha=16, dropout 0, `all-linear` target modules (110.8 M trainable parameters, 1.45 %)
+* LoRA r=8, alpha=8, dropout 0, on the language model's attention and MLP projections (q/k/v/o/gate/up/down;
+  ~20 M trainable parameters, ~0.3 %, a ~40 MB adapter): lighter than OpenVLA's reference (r=32 on all linear
+  layers)
 * AdamW, lr 5e-4, cosine schedule with 5 % warmup, bf16
-* global batch 32 = 4 samples/GPU × GPUs × gradient accumulation (derived at startup), 10 epochs
+* global batch 32 = 4 samples/GPU × GPUs × gradient accumulation (derived at startup), 3 epochs
 * Supervision on the 7 action tokens + EOS only
 
 Each run produces:
 
-* **Metrics:** stdout `[step N] train/loss … val/l1 …` lines and the MLflow App experiment `openvla-lora-bridge`
+* **Metrics:** stdout `[step N] train/loss … val/l1 …` lines and the MLflow App experiment `openvla-lora-<dataset>` (`openvla-lora-libero` by default)
 * **Model:** `training-output/<job>/output/model/{adapter,hf_merged}/`, stored uncompressed
   (`compression_type="NONE"`) so the endpoint can load `hf_merged/` directly
 * **Checkpoints:** `checkpoints/<run>/step-*` (adapter + optimizer state). A restarted or Spot-interrupted
@@ -121,29 +123,24 @@ SageMaker job. 10 epochs gave 0.227: validation stops improving after ~3 epochs 
 7. **Library versions.** `transformers==4.40.1`, `tokenizers==0.19.1`, `timm==0.9.10`, `peft==0.11.1`:
    the versions OpenVLA's remote code targets. The blog's transformers 4.57.6 is not used.
 
-## What was verified, and what wasn't
+## What was verified
 
-These were verified locally on an Apple-silicon Mac (MPS), using the real `openvla/openvla-7b` weights
-and a 6-episode dataset built by `bridge_data.py`:
-
-* the prompt/action token layout matches the tokenizer and OpenVLA's `predict_action` convention
-* training runs and the loss falls (12.8 → 0.2 within 6 steps on 8 samples)
-* validation metrics are computed
-* checkpoints save, and resume continues at the right step
-* the adapter merges and the merged checkpoint reloads with `trust_remote_code`
-* `evaluate_openvla.py` and `serving/inference.py` (`model_fn` → `predict_fn`) run on that merged checkpoint
-
-**Not yet run on AWS:**
-
-* the SageMaker jobs themselves: CUDA, multi-GPU DDP, the DLC's package install, MLflow App logging from
-  the job role
-* model-package registration with an uncompressed `ModelDataSource`
-* the PyTorch inference DLC loading `/opt/ml/model/code` from that package
-* run times and costs
+* Locally (Apple-silicon Mac, real `openvla/openvla-7b` weights, a 6-episode dataset): prompt/action token layout
+  vs OpenVLA's `predict_action`, training loss falling, validation metrics, checkpoint save/resume, adapter merge
+  and reload with `trust_remote_code`, `evaluate_openvla.py` and `serving/inference.py` on the merged checkpoint.
+* On SageMaker (us-east-1 / us-west-2, 2026-10): the smoke training job on a single L40S (~20 min end to end,
+  most of it startup), model-package registration with an uncompressed
+  `ModelDataSource`, the evaluation job (LIBERO: L1 0.220 fine-tuned vs 0.478 base vs 0.359 mean action,
+  Approved), and the endpoint from the approved package (in service in ~8 min, ~0.45 s per request after
+  warm-up).
+* The `full` recipe was run with the same training script on one RTX PRO 6000 (EC2 g7e) for the Results table;
+  the multi-GPU `full` job on SageMaker (DDP across 4 L40S) has not been run end to end.
 
 Run the smoke mode first.
 
 ## Caveats
+
+These apply to `DATASET = "bridge"` (the AWS blog's setup); the LIBERO default uses recorded robot actions.
 
 * The pseudo-labels (mean optical flow, one fixed instruction) only demo the pipeline; they are not real
   robot actions. For a real use case, put your robot's actions and instructions in `bridge_data.py`.
@@ -153,3 +150,11 @@ Run the smoke mode first.
   but not the prior, so lab 3 approves on "beats the base model" and reports the baseline as context.
 * z, rotation and gripper are constant (0) in these labels. The base model's prior for the gripper is
   "open" (+1), which is why its initial loss is high.
+
+## Licenses
+
+* **Model:** `openvla/openvla-7b` is built on Llama 2; its weights, and adapters or merged checkpoints derived
+  from them, are subject to the Llama 2 Community License (see the model card on the Hugging Face Hub). This lab
+  downloads the base model from the Hub and stores your fine-tuned artifacts in your own S3 bucket; it does not
+  redistribute weights.
+* **Data:** the LIBERO and BridgeData V2 samples in `sample_data/` are CC BY 4.0 (see `sample_data/README.md`).

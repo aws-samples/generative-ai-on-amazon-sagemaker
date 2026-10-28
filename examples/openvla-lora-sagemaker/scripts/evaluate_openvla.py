@@ -60,7 +60,7 @@ def main():
     action_tokenizer = ActionTokenizer(processor.tokenizer)
 
     results = {"num_samples": len(rows),
-               # trivial reference: always predict the mean training action (here ~zero motion)
+               # trivial reference: always predict the mean action of the evaluated frames (a label prior)
                "mean_action_baseline": score(np.zeros_like(gts) + gts.mean(0), gts, action_tokenizer)}
     for name, path in [("base", args.base_model), ("finetuned", args.tuned_model_dir)]:
         print(f"evaluating {name}: {path}", flush=True)
