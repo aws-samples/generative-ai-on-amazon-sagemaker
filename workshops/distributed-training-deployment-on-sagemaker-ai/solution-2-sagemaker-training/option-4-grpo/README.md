@@ -59,9 +59,9 @@ Training needs four L40S cards, so `ml.g5.12xlarge` will not do. Serving needs o
 Quota is not capacity: a request can be within quota and still fail with
 `InsufficientInstanceCapacity` because the region has no instance of that size free.
 Lab 3 handles that for the endpoint by listing several instance types in priority order,
-and section 8.3 of that notebook explains the failure modes. For training there is no
-equivalent fallback — a job that cannot get capacity sits in `Pending`, which is not
-billed, until it can.
+and section 8.3 of that notebook explains the failure modes. Lab 2 does the same for training
+with `CAPACITY = "fallback"` (a list of 4x L40S types), or uses Spot with `CAPACITY = "spot"`; a
+job that cannot get capacity waits in `Starting`, which is not billed, until it can.
 
 ## Time and cost
 
