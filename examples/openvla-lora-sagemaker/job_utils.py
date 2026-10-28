@@ -26,12 +26,13 @@ def latest_job(name_contains, region=None):
 
 
 def job_status(job_name, region=None):
-    """One-line status: state, current stage, elapsed time, and the latest `[step N]` log line."""
+    """(describe output, "Status/SecondaryStatus", latest `[step N]` log line, elapsed minutes)."""
     sm = boto3.client("sagemaker", region_name=region)
     d = sm.describe_training_job(TrainingJobName=job_name)
     end = d.get("TrainingEndTime") or datetime.now(d["CreationTime"].tzinfo)
     elapsed = int((end - d["CreationTime"]).total_seconds() // 60)
-    return d, f"{d['TrainingJobStatus']}/{d['SecondaryStatus']} ({elapsed} min) {_last_step_line(job_name, region)}"
+    state = f"{d['TrainingJobStatus']}/{d['SecondaryStatus']}"
+    return d, state, _last_step_line(job_name, region), elapsed
 
 
 def wait_for_job(job_name, region=None, poll=60):
@@ -41,10 +42,10 @@ def wait_for_job(job_name, region=None, poll=60):
     print(f"https://{region}.console.aws.amazon.com/sagemaker/home?region={region}#/jobs/{job_name}")
     last = None
     while True:
-        d, line = job_status(job_name, region)
-        if line != last:
-            print(time.strftime("%H:%M:%S"), line, flush=True)
-            last = line
+        d, state, step, elapsed = job_status(job_name, region)
+        if (state, step) != last:  # print on change only, not every poll
+            print(time.strftime("%H:%M:%S"), f"{state} ({elapsed} min) {step}", flush=True)
+            last = (state, step)
         if d["TrainingJobStatus"] in TERMINAL:
             if d["TrainingJobStatus"] != "Completed":
                 raise RuntimeError(d.get("FailureReason", d["TrainingJobStatus"]))
