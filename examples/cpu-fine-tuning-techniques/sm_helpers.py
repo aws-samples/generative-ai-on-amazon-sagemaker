@@ -23,7 +23,7 @@ class Lab:
         except ValueError:
             self.role = boto3.client("iam").get_role(RoleName="sagemaker_execution_role")["Role"]["Arn"]
         self.bucket = self.sess.default_bucket()
-        self.prefix = "/".join(p for p in (self.sess.default_bucket_prefix, "cpu-lora-quickstart") if p)
+        self.prefix = "/".join(p for p in (self.sess.default_bucket_prefix, "cpu-fine-tuning-techniques") if p)
         self.sm = boto3.client("sagemaker", region_name=self.region)
         self.s3 = boto3.client("s3", region_name=self.region)
         print(f"role:   {self.role}\nregion: {self.region}\noutput: s3://{self.bucket}/{self.prefix}/")
@@ -56,7 +56,7 @@ class Lab:
                                                  max_wait_time_in_seconds=7200 if capacity == "spot" else None),
             output_data_config=OutputDataConfig(s3_output_path=f"s3://{self.bucket}/{self.prefix}/jobs",
                                                 compression_type="NONE"),
-            base_job_name=f"cpu-lora-{name}",
+            base_job_name=f"cpu-ft-{name}",
             role=self.role,
             sagemaker_session=self.sess,
         )
@@ -67,7 +67,7 @@ class Lab:
 
     def latest(self, name):
         """Most recent job started with submit(name, ...): use after a kernel restart."""
-        prefix = f"cpu-lora-{name}-"
+        prefix = f"cpu-ft-{name}-"
         jobs = self.sm.list_training_jobs(NameContains=prefix, SortBy="CreationTime", SortOrder="Descending",
                                           MaxResults=20)["TrainingJobSummaries"]
         # "dpo" must not match "dpo-sft-...": the name continues with the job timestamp
