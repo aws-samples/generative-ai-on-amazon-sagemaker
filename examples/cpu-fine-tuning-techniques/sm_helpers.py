@@ -74,20 +74,23 @@ class Lab:
             print(f"quota check skipped: {e}")
             return FALLBACK_TYPES
 
-    def submit(self, name, entry_script, hyperparameters, capacity="fallback", requirements="requirements.txt"):
-        """Starts a CPU training job running scripts/<entry_script>; capacity: on-demand | spot | fallback."""
+    def submit(self, name, entry_script, hyperparameters, capacity="fallback", requirements="requirements.txt",
+               instance_count=1, distributed=None):
+        """Starts a CPU training job running scripts/<entry_script>; capacity: on-demand | spot | fallback.
+        instance_count > 1 with distributed=Torchrun() runs one process per instance (notebook 05)."""
         if capacity == "fallback":
             compute = Compute(instance_preferences=[InstancePreference(instance_type=t) for t in self.fallback_types()],
-                              instance_count=1, volume_size_in_gb=30)
+                              instance_count=instance_count, volume_size_in_gb=30)
         else:
             compute = Compute(instance_type=SPOT_INSTANCE_TYPE if capacity == "spot" else INSTANCE_TYPE,
-                              instance_count=1, volume_size_in_gb=30, enable_managed_spot_training=capacity == "spot")
+                              instance_count=instance_count, volume_size_in_gb=30, enable_managed_spot_training=capacity == "spot")
         trainer = ModelTrainer(
             training_image=IMAGE.format(region=self.region),
             source_code=SourceCode(source_dir="scripts", requirements=requirements, entry_script=entry_script),
             hyperparameters=hyperparameters,
             environment=mlflow_environment(self.mlflow_arn),
             compute=compute,
+            distributed=distributed,
             stopping_condition=StoppingCondition(max_runtime_in_seconds=3600,
                                                  max_wait_time_in_seconds=7200 if capacity == "spot" else None),
             output_data_config=OutputDataConfig(s3_output_path=f"s3://{self.bucket}/{self.prefix}/jobs",
@@ -132,10 +135,11 @@ class Lab:
                       f"billed {d['BillableTimeInSeconds']} s")
         return desc
 
-    def metrics(self, job):
+    def metrics(self, job, filename="metrics.json"):
+        """A JSON file the job wrote to /opt/ml/model (metrics.json for 02-04, training_metrics.json for 05)."""
         d = self.sm.describe_training_job(TrainingJobName=job)
         b, k = (d["ModelArtifacts"]["S3ModelArtifacts"].rstrip("/") + "/")[5:].split("/", 1)
-        return json.loads(self.s3.get_object(Bucket=b, Key=k + "metrics.json")["Body"].read())
+        return json.loads(self.s3.get_object(Bucket=b, Key=k + filename)["Body"].read())
 
     def mlflow_url(self):
         return mlflow_url(self.sm, self.mlflow_arn)
