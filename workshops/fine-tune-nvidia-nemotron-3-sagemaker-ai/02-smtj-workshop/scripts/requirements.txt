@@ -17,12 +17,6 @@ sagemaker-mlflow==0.5.0
 sentencepiece==0.2.2
 scikit-learn==1.9.0
 tokenizers>=0.22.0,<=0.23.0  # mirrors transformers' own range; unchanged since 5.13
-causal_conv1d @ https://github.com/Dao-AILab/causal-conv1d/releases/download/v1.7.0/causal_conv1d-1.7.0%2Bcu12torch2.8cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
-# v2.3.1, NOT v2.3.2 / v2.3.2.post1: from v2.3.2 on, mamba-ssm requires `triton>=3.5.0`
-# (and pulls in tilelang / apache-tvm-ffi / quack-kernels), which cannot coexist with the
-# `triton==3.4.0` that torch 2.8.0 pins - pip aborts with ResolutionImpossible before
-# training starts. v2.3.1's wheel metadata requires plain unpinned `triton`.
-mamba_ssm @ https://github.com/state-spaces/mamba/releases/download/v2.3.1/mamba_ssm-2.3.1%2Bcu12torch2.8cxx11abiTRUE-cp312-cp312-linux_x86_64.whl
 triton==3.4.0
 triton_kernels @ https://github.com/triton-lang/triton/archive/refs/tags/v3.4.0.tar.gz#subdirectory=python/triton_kernels
 trl==1.10.0

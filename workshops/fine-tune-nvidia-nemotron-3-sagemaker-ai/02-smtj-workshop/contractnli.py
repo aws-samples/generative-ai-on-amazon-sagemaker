@@ -30,23 +30,26 @@ reason about, which is the main thing the messages format buys here.
 serves through it — it exists so notebook 1 can print the whole request and measure its
 length in one piece.
 
-TURNING REASONING OFF. Nemotron 3 Nano is a reasoning model: asked to deliberate over a
-17-item checklist it will spend its whole generation budget inside <think> and get cut
-off before the JSON. The switch is NOT a magic string in the prompt — this model's chat
-template takes an `enable_thinking` flag:
+TURNING REASONING OFF. Nemotron 3.5 Bolt E4B is a reasoning model: asked to deliberate
+over a 17-item checklist with reasoning on, it spends its generation budget in a thought
+channel before the JSON. The switch is NOT a magic string in the prompt — this model's
+(Gemma 4) chat template takes an `enable_thinking` flag:
 
-    {%- set enable_thinking = enable_thinking if enable_thinking is defined else True %}
+    {%- set enable_thinking = enable_thinking | default(false) -%}
     ...
-    {%- if enable_thinking %}
-        {{- '<|im_start|>assistant\\n<think>\\n' }}
-    {%- else %}
-        {{- '<|im_start|>assistant\\n<think></think>' }}
+    {%- if enable_thinking or tools or (messages and messages[0]['role'] in ['system', ...]) -%}
+        {{- '<|turn>system\\n' -}}
+        {%- if enable_thinking -%}
+            {{- '<|think|>\\n' -}}
 
-With the flag false the template pre-fills an empty think block, so the model has no
-open <think> to continue and answers directly. It reaches the template three ways, all
-carrying the same dict: as a per-record `chat_template_kwargs` column that TRL forwards
-(training), as `chat_template_kwargs` in the request body (vLLM), and not at all for
-Bedrock, whose models do not share this template.
+With the flag true the template injects a `<|think|>` token at the top of the system
+turn and the model opens a `<|channel>thought ... <channel|>` block before answering.
+With it false there is no `<|think|>` token and the model answers directly. The template
+already defaults to false, but the flag is passed explicitly anyway so the record, the
+request and this module all state the same thing. It reaches the template three ways,
+all carrying the same dict: as a per-record `chat_template_kwargs` column that TRL
+forwards (training), as `chat_template_kwargs` in the request body (vLLM), and not at
+all for Bedrock, whose models do not share this template.
 """
 
 import io
@@ -109,8 +112,8 @@ def gold_for(doc):
     return doc["annotation_sets"][0]["annotations"]
 
 
-# Reasoning models spend their whole generation budget inside <think> on a 17-item
-# checklist and can be cut off before the JSON. This model's chat template takes a flag
+# Reasoning models can spend their whole generation budget reasoning on a 17-item
+# checklist and be cut off before the JSON. This model's chat template takes a flag
 # rather than a magic string in the prompt — see the module docstring for the three
 # places it is passed.
 CHAT_TEMPLATE_KWARGS = {"enable_thinking": False}

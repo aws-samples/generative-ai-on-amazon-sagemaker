@@ -2,7 +2,7 @@ import re
 
 # Base model for this lab: a Hugging Face model id, pulled from the Hub inside the
 # Training job.
-BASE_MODEL_ID = "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16"
+BASE_MODEL_ID = "nvidia/NVIDIA-Nemotron-3.5-Bolt-E4B-BF16"
 
 # A Hugging Face id is not a legal SageMaker resource name: every job, model, endpoint and
 # endpoint config has to match
