@@ -45,7 +45,7 @@ when an MLflow App is available. Run 01 first; 02-05 are independent of each oth
 | 02 CPT, 60 steps | questions answered 0% → 100% (8 questions, unseen phrasings), held-out perplexity 148 → 8.4 | 5.0 min |
 | 03 DPO, 40 steps | DPO + SFT: exact 0% → 90%, prefers chosen 53% → 100%. Plain DPO: prefers chosen 100% but exact 0% (it drops JSON altogether) | 9.4 min (both jobs in parallel) |
 | 04 GRPO, 40 steps | exact 0% → 40%, mean reward 0.46 → 0.79; name/party/day 100%, 24-hour time 40% (rarely sampled, so slowly learned) | 13.5 min |
-| 05 distributed, 15 steps, full fine-tune | loss identical across single / DDP / FSDP; parameters per rank 596 M / 596 M / 298 M; peak memory per rank 21 / 17 / 12 GB; exact JSON 100% for all | 4-7.5 min (3 jobs, 5 instances, in parallel) |
+| 05 distributed, 15 steps, full fine-tune | loss identical across single / DDP / FSDP; parameters per rank 596 M / 596 M / 298 M; peak memory per rank 21 / 17 / 12 GB; exact JSON 100% for all | 4-7.5 min (DDP and FSDP jobs, 4 instances, in parallel; the optional single-instance baseline adds 1) |
 
 Serving (01), same model on three endpoints: real-time and real-time with instance pools ~4.5 s per request,
 serverless 46 s cold start then 3.6 s.
@@ -58,4 +58,4 @@ serverless 46 s cold start then 3.6 s.
   `ml.c7i.2xlarge`, with serverless endpoints enabled.
 * Internet access from the jobs and endpoints to download `Qwen/Qwen3-0.6B`.
 * 01's last cell deletes its endpoints; 02-05 create no endpoints.
-* 05 runs 5 instances at the same time (1 + 2 + 2) of a type in the fallback list.
+* 05 runs 4 instances at the same time (2 + 2; 5 with the optional baseline) of types in the fallback list with a training quota of at least 2.

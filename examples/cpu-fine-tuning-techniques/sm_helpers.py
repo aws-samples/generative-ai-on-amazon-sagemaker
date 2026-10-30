@@ -58,8 +58,9 @@ class Lab:
         print(f"role:   {self.role}\nregion: {self.region}\noutput: s3://{self.bucket}/{self.prefix}/\n"
               f"MLflow: {self.mlflow_arn or 'off'}")
 
-    def fallback_types(self):
-        """FALLBACK_TYPES minus types without a training quota (SageMaker rejects lists containing one)."""
+    def fallback_types(self, min_count=1):
+        """FALLBACK_TYPES minus types whose training quota is below min_count, the job's instance count (SageMaker
+        rejects a list containing one). Quota is per account and type, shared by all running jobs."""
         try:
             # adaptive retries: notebooks started together can hit the Service Quotas rate limit
             sq = boto3.client("service-quotas", region_name=self.region,
@@ -69,7 +70,7 @@ class Lab:
             for op in ("list_aws_default_service_quotas", "list_service_quotas"):
                 for page in sq.get_paginator(op).paginate(ServiceCode="sagemaker"):
                     quotas.update({q["QuotaName"]: q["Value"] for q in page["Quotas"]})
-            return [t for t in FALLBACK_TYPES if quotas.get(f"{t} for training job usage", 0) >= 1] or FALLBACK_TYPES
+            return [t for t in FALLBACK_TYPES if quotas.get(f"{t} for training job usage", 0) >= min_count] or FALLBACK_TYPES
         except Exception as e:
             print(f"quota check skipped: {e}")
             return FALLBACK_TYPES
@@ -79,7 +80,7 @@ class Lab:
         """Starts a CPU training job running scripts/<entry_script>; capacity: on-demand | spot | fallback.
         instance_count > 1 with distributed=Torchrun() runs one process per instance (notebook 05)."""
         if capacity == "fallback":
-            compute = Compute(instance_preferences=[InstancePreference(instance_type=t) for t in self.fallback_types()],
+            compute = Compute(instance_preferences=[InstancePreference(instance_type=t) for t in self.fallback_types(instance_count)],
                               instance_count=instance_count, volume_size_in_gb=30)
         else:
             compute = Compute(instance_type=SPOT_INSTANCE_TYPE if capacity == "spot" else INSTANCE_TYPE,
