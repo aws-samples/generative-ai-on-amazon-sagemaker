@@ -1,0 +1,8 @@
+# DPO and GRPO jobs (TRL), installed on top of the PyTorch 2.8 CPU training DLC. Same versions as the
+# distributed-training workshop's TRL recipes.
+transformers==5.13.1
+trl==1.5.1
+peft==0.19.1
+accelerate==1.12.0
+mlflow-skinny==3.9.0
+sagemaker-mlflow==0.5.0

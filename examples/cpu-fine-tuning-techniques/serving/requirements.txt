@@ -1,0 +1,4 @@
+# Installed by the PyTorch CPU inference DLC at container start
+transformers==4.57.6
+peft==0.18.1
+accelerate==1.12.0
