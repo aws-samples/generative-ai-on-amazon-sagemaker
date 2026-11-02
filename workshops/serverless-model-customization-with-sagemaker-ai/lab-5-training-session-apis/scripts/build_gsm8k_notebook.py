@@ -192,6 +192,8 @@ md("""
 
 `create_lora_training_client` starts the session and returns when it is running. `create_sampling_client` returns
 a sampler for the current weights (the base model, before any update).
+
+**Run time:** from under a minute to a few minutes, until the session is running.
 """)
 code("""
 # Start a training session with a LoRA adapter (rank 32) on the base model. The call returns when the session is
@@ -244,6 +246,8 @@ md("""
 The evaluation below does the same for every evaluation problem, twice each. Sampling is random at temperature
 0.7, so each problem is sampled twice to reduce the noise in the accuracy. `sample` returns a future right away,
 so all requests are submitted before waiting on any of them.
+
+**Run time:** about 1 minute for 200 responses.
 """)
 code("""
 from sagemaker.train.training_session import StopReason
@@ -305,6 +309,9 @@ Each step of the loop below does this for {{PROMPTS}} problems at once:
    the advantage on every response token, and weights (0 for prompt tokens, 1 for response tokens).
 4. `forward_backward` with the `ppo` loss ([proximal policy optimization](https://arxiv.org/abs/1707.06347)), then `optim_step`.
 5. `save_weights_and_get_sampling_client` so the next step samples from the updated weights.
+
+**Run time:** about 15 to 20 minutes for 12 steps. A step takes 30 seconds to 3.5 minutes; steps where most groups
+are skipped are faster.
 """)
 code("""
 def build_datum(prompt_tokens, response_tokens, logprobs, advantage):
@@ -377,7 +384,7 @@ plt.xlabel("step"); plt.ylabel("train accuracy (temperature 1.0)"); plt.grid(alp
 plt.show()
 """)
 
-md("## 5. Evaluate, save, clean up")
+md("## 5. Evaluate, save, clean up\n\n**Run time:** about 1 minute for the evaluation.")
 code("""
 t0 = time.time()
 trained_accuracy, trained_cut, trained_tokens = evaluate(eval_problems)

@@ -55,8 +55,8 @@ directly with text or a tool call.
 | 1. Setup | 5 min |
 | 2. The calendars and the agent | 10 min |
 | 3. Open a training session, measure the base model | 5 min |
-| 4. Train with GRPO | 30 min |
-| 5. Evaluate, save the adapter | 5 min |
+| 4. Train with GRPO | 30 to 60 min |
+| 5. Evaluate, save the adapter | 5 to 10 min |
 """)
 
 md("## 1. Setup")
@@ -321,6 +321,8 @@ md("""
 Run one request with a model on Amazon Bedrock
 ([`gpt-oss-120b`](https://huggingface.co/openai/gpt-oss-120b)) to see the agent work. `show` prints the tool calls
 and results.
+
+**Run time:** under a minute.
 """)
 code("""
 def show(messages, width=300):
@@ -356,6 +358,8 @@ md("""
 on `127.0.0.1`. The gateway renders prompts with the model's chat template; `chat_template_kwargs` turns thinking
 off. `run.rollout(run_agent, task)` registers a gateway session, calls `run_agent` with a `model_config` pointing
 to the gateway, and returns the reward together with the token-level records of every model call.
+
+**Run time:** from under a minute to a few minutes, until the session is running.
 """)
 code("""
 from lab.runtime import RunConfig, TrainingRun
@@ -371,6 +375,11 @@ cfg = RunConfig(region=REGION, base_model_arn=BASE_MODEL_ARN, role_arn=ROLE_ARN,
 # open() starts the training session (returns when it is running) and the rollout gateway on 127.0.0.1.
 run = TrainingRun(cfg).open()
 print("training session:", run.session_name)
+""")
+md("""
+The base model runs once on each of the 128 test requests at temperature 0.
+
+**Run time:** about 3 to 5 minutes.
 """)
 code("""
 async def evaluate(tasks):
@@ -419,8 +428,10 @@ await run.refresh()   # save_weights_and_get_sampling_client
 ```
 
 `ppo` is the [proximal policy optimization](https://arxiv.org/abs/1707.06347) loss. After the update, `run.refresh()` snapshots the new weights, so the
-next step samples from the updated model. A step takes about 2 to 2.5 minutes; the progress bar shows the 64
-episodes of the current step.
+next step samples from the updated model. The progress bar shows the 64 episodes of the current step.
+
+**Run time:** about 30 to 60 minutes for 12 steps. A step takes 2 to 9 minutes, depending on how long the episodes
+are and on the load of the service.
 """)
 code("""
 GROUPS, STEPS = 8, 12
@@ -443,7 +454,7 @@ plt.xlabel("step"); plt.ylabel("mean train reward (temperature 1.0)"); plt.grid(
 plt.show()
 """)
 
-md("## 5. Evaluate and save")
+md("## 5. Evaluate and save\n\n**Run time:** about 3 to 7 minutes for the evaluation.")
 code("""
 t0 = time.time()
 trained_score, trained_rollouts = await evaluate(test_tasks)

@@ -210,6 +210,9 @@ md("""
 
 The prompt goes through the model's [chat template](https://huggingface.co/docs/transformers/chat_templating) with {{REASONING}} reasoning effort. Responses have up to 12,288 tokens at
 temperature 1.0. Each problem is sampled twice; the progress bars show sampling and then grading.
+
+**Run time:** opening the session takes from under a minute to a few minutes. The evaluation of 100 responses
+takes about 5 to 8 minutes; most of it is waiting for the longest responses.
 """)
 code("""
 from sagemaker.train.training_session import AdamParams, SamplingParams, ServiceClient
@@ -290,6 +293,8 @@ tokens, the sampling logprobs, the advantage, and weights (0 for prompt tokens, 
 
 {{GRPO_STEPS}} steps of 8 problems are not enough to change the held-out pass rate; section 5 measures an adapter trained
 for 20 steps of 64 problems.
+
+**Run time:** about 5 to 10 minutes per step, so about 10 to 20 minutes for {{GRPO_STEPS}} steps.
 """)
 code("""
 def build_datum(prompt, response_tokens, logprobs, advantage):
@@ -378,6 +383,8 @@ S3. To use them, copy them to your bucket and register them as a model package i
 
 The same steps move an adapter between accounts or Regions, and let you continue training from an adapter that a
 long-running script produced.
+
+**Run time:** about 1 minute to copy the 0.9 GB adapter and register it.
 """)
 code("""
 from urllib.parse import urlparse
@@ -410,6 +417,8 @@ print(package_arn)
 md("""
 `create_sampling_client()` on a client created from a model package samples the base weights. Call
 `save_weights_and_get_sampling_client()` once to get a sampler for the loaded adapter.
+
+**Run time:** about 6 to 10 minutes: opening the session, then the same evaluation as in section 3.
 """)
 code("""
 # Start a new training session from the registered adapter's weights.
