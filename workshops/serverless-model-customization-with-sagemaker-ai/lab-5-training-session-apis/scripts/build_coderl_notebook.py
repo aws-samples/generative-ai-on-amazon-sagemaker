@@ -59,6 +59,21 @@ sandbox and the loop.
   network access or AWS credentials. The cookbook's grading code expects a [SandboxFusion](https://github.com/bytedance/SandboxFusion)-style HTTP endpoint, so a
   small local endpoint on `127.0.0.1` in this kernel forwards each program to Code Interpreter.
 
+### The helper files
+
+The notebook cells show the prompt, the grading call and the training loop. The rest is in a few files and in the
+cookbook package:
+
+| File | What it does | Used in |
+|---|---|---|
+| `coderl/code_interpreter.py` | `CodeInterpreterSandbox` keeps 16 Code Interpreter sessions open. `run(request)` writes the program and its files to a new directory in one session, runs it with a time limit, and returns stdout, stderr and the exit code. | Section 1 and every grading call |
+| `coderl/sandbox_proxy.py` | `LocalSandbox` serves `/run_code` on `127.0.0.1` and passes each request to `CodeInterpreterSandbox.run`, so the cookbook's grading code can use Code Interpreter. | Section 1 |
+| `coderl/progress.py` | `gather` waits for many requests at once and shows a progress bar. | Sections 3 to 5 |
+| Training sessions cookbook (installed package) | The problems (`load_deepcoder_tasks`), the prompt (`apply_hf`), code extraction, the LiveCodeBench test harness and the reward. | Sections 2 to 5 |
+
+Section 3 has an optional cell that follows one response from text to reward. `coderl/eval_adapter.py` evaluates
+an adapter from the command line; the notebook does not use it.
+
 ### What you do
 
 Responses are up to 12,288 tokens, so a training step that moves the pass rate (64 problems x 8 attempts) takes 13
@@ -280,6 +295,43 @@ print(f"base model: pass rate {base_pass:.1%} on {len(test_tasks)} held-out prob
 """)
 
 md("""
+### Optional: follow one response from text to reward
+
+This cell takes one base-model response that contains a code block and grades it step by step:
+
+1. `extract_code_from_model` takes the last fenced code block from the response.
+2. `sandbox_check_correctness` sends one request to `SANDBOX_URL` with four files: the extracted code (`code.py`),
+   the problem's test cases (`test_cases.txt`), the LiveCodeBench test runner (`testing_util.py`), and a short main
+   program that runs every test and exits with 0 only if all of them pass.
+3. `CodeInterpreterSandbox.run` writes the files to a new directory in one Code Interpreter session, runs the main
+   program with a time limit, and returns its output and exit code.
+4. `deepcoder_reward` turns the result into the reward.
+
+**Run time:** under a minute.
+""")
+code("""
+# Pick the first response with a code block (responses cut at the token limit often have none).
+task, text = next(((t, x) for t, x in base_texts if extract_code_from_model(x)), base_texts[0])
+print("PROBLEM (first 500 characters):\\n" + task.problem[:500])
+print("\\nFIRST TEST CASE:", json.dumps(task.tests[0])[:300])
+
+solution = extract_code_from_model(text)
+print(f"\\nRESPONSE: {len(text)} characters. Extracted code block:")
+print(solution[:1500] if solution else "(none)")
+
+passed = False
+if solution is not None:
+    # The same call that grade() makes. details is the sandbox response in SandboxFusion format.
+    passed, details = await sandbox_check_correctness(task.tests, solution, 6)
+    run_result = details.get("run_result") or {}
+    print("\\nSANDBOX: status", details.get("status"), "| exit code", run_result.get("return_code"),
+          "| run time", run_result.get("execution_time"))
+    # The test runner prints details only when a test fails.
+    print("test runner output:", (run_result.get("stdout") or "")[:500] or "(none)")
+print("\\nall tests passed:", passed, "| reward:", deepcoder_reward(text, passed)[0])
+""")
+
+md("""
 ## 4. A few GRPO steps
 
 ![One GRPO step](images/grpo.svg)
@@ -436,6 +488,37 @@ code("""
 # Stop the session and close the Code Interpreter sessions. The code interpreter and the model package are kept.
 pretrained_client.stop()
 sandbox.close()
+""")
+
+md("""
+## Use this for your own task
+
+Replace three things and keep the sandbox and the training loop:
+
+| Part | In this notebook | For your task |
+|---|---|---|
+| Problems | DeepCoder competitive programming problems, each with test cases | Your tasks, each with an automatic check: unit tests, a SQL query against a small database with the expected rows, a schema or configuration validator |
+| Check | `grade`: extract the code, run the tests in the sandbox | Run your check in the sandbox. Return 1.0 when it passes; partial credit is possible, for example the share of tests passed |
+| Prompt | The problem text through the chat template | Your instructions, context and output format |
+
+Files the check needs, such as a database file or a test suite, travel with each request in its `files` field,
+as `test_cases.txt` does here. Measure the base model first: training needs tasks that the base model solves
+sometimes and fails sometimes. Here it passed about 12% before training.
+""")
+md("""
+## From this notebook to production
+
+- **Long training runs belong in a script.** The adapter in section 5 was trained for about 6 hours with the
+  cookbook's Code RL recipe, which runs from the command line (`examples/rl_coderl.sh` in the cookbook). `save_state` and
+  `create_training_client_from_state_with_optimizer` let a run continue in a new session.
+- **The sandbox scales with sessions.** `CodeInterpreterSandbox` uses 16 sessions here. The default Code Interpreter
+  quotas are 1,000 concurrent sessions per account and 30 `InvokeCodeInterpreter` requests per second, so more
+  sessions grade more responses in parallel.
+- **The adapter deploys like other models.** It is registered as a model package and can be deployed to a SageMaker
+  endpoint. The [training sessions cookbook](https://github.com/aws/sagemaker-training-sessions-cookbook) has a
+  deployment notebook that serves several adapters on one endpoint.
+- **Run generated code in a sandbox in production too.** If the trained model's code runs in your application,
+  run it in Code Interpreter or another isolated environment, as during training.
 """)
 
 nb = nbf.v4.new_notebook()
