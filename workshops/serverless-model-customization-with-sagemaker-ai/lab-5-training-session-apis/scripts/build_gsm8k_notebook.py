@@ -65,7 +65,7 @@ accuracy, and the share of answers cut off at 512 tokens.
 
 ### What this notebook is for
 
-The task is small, so the whole loop runs in about 15 minutes and every part of it is a cell you can read and
+The task is small, so the training loop runs in about 15 to 20 minutes and every part of it is a cell you can read and
 change: the reward, the advantage, the loss, the batch size. Use it to see how a
 [GRPO (Group Relative Policy Optimization)](https://arxiv.org/abs/2402.03300) loop maps onto the training session APIs, and as a starting point to try your own reward function or
 training algorithm. The last section lists what to change for that.

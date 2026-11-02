@@ -7,8 +7,8 @@ again.
 | Notebook | Task | Training in the notebook | Held-out result | Notebook run time |
 |---|---|---|---|---|
 | `5a_gsm_hard_grpo.ipynb` | GSM-Hard math (non-negative whole-number answers), 512-token budget, low reasoning effort | 12 GRPO steps, 16 problems x 8 samples, lr 4e-5 | accuracy 62.5% -> 82.5%, answers cut at 512 tokens 34.5% -> 3.5% (100 problems x 2) | ~25 min |
-| `5b_code_rl.ipynb` | Competitive programming (DeepCoder), code run in AgentCore Code Interpreter, medium reasoning | 2 GRPO steps, 8 problems x 8 attempts, then a pre-trained adapter | pass rate 12.5% -> 38.5% with the pre-trained adapter (100 problems x 2) | ~45 min |
-| `5c_scheduling_agent.ipynb` | Strands scheduling agent, 2 tools, per-person working hours, 9 time zones, calendars in local time or UTC; thinking off | 12 GRPO steps, 8 requests x 8 attempts | mean reward 0.719 -> 0.887 (128 requests) | ~40 min |
+| `5b_code_rl.ipynb` | Competitive programming (DeepCoder), code run in AgentCore Code Interpreter, medium reasoning | 2 GRPO steps, 8 problems x 8 attempts, then a pre-trained adapter | pass rate 12.0-12.5% -> 36.0-38.5% with the pre-trained adapter (100 problems x 2; the notebook uses 50) | ~45 min |
+| `5c_scheduling_agent.ipynb` | Strands scheduling agent, 2 tools, per-person working hours, 9 time zones, calendars in local time or UTC; thinking off | 12 GRPO steps, 8 requests x 8 attempts | mean reward 0.699-0.719 -> 0.887-0.953 (128 requests, 2 runs) | ~55-90 min |
 
 Pre-trained Code RL adapter (cookbook recipe, single turn, 64 problems x 8 attempts per step, 13-22 min per step).
 Accuracy is the cookbook's validation on 100 test problems x 1 attempt; pass rate is `coderl/eval_adapter.py` with
