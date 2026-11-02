@@ -9,7 +9,7 @@ V = dict(MODEL="Qwen/Qwen3.8-27B", MODEL_SHORT="Qwen3.8-27B", OUT="5b_code_rl.ip
          BASE_MODEL_SPEC='{"HubContentName": "huggingface-vlm-qwen3-8-27b", "HubContentVersion": "1.3.0"}',
          RESULTS=("At medium reasoning effort, many of the base model's responses reach the 12,288-token limit before they\n"
                   "contain code. In the reference runs (100 problems x 2 attempts), the base model passed 12.0-12.5% and the\n"
-                  "pre-trained adapter 36.0-38.5%. This notebook uses 50 problems to save time, so expect some variation."))
+                  "pre-trained adapter 36.0-38.5%. This notebook uses 50 problems, so expect some variation from the reference result."))
 
 cells = []
 
@@ -77,7 +77,7 @@ an adapter from the command line; the notebook does not use it.
 ### What you do
 
 Responses are up to 12,288 tokens, so a training step that moves the pass rate (64 problems x 8 attempts) takes 13
-to 22 minutes. Training for hours does not fit in a workshop, so you:
+to 22 minutes. In this notebook you:
 
 1. measure the base model on held-out problems,
 2. run {{GRPO_STEPS}} [GRPO (Group Relative Policy Optimization)](https://arxiv.org/abs/2402.03300) steps yourself to see the loop work,

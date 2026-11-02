@@ -135,8 +135,7 @@ The environment is generated in Python, so it is fast, deterministic and free to
   "Please book a 60-minute meeting with Hugo, Greta and Elif on Thursday 2026-11-12, as early as possible."
 - **Correct answer:** the earliest start in UTC that fits every attendee, found by checking every 15-minute step
   of the day. About 6% of the requests have no possible slot; the agent should then book `none`.
-- **Train and test** requests use different people and calendars, so the test measures whether the agent applies
-  the rules, not whether it remembers the data.
+- **Train and test** requests use different people and calendars.
 
 The next cell loads the requests and prints one with its correct answer.
 """)
