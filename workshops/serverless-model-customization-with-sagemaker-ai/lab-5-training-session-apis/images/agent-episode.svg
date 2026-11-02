@@ -72,6 +72,6 @@
   <line x1="356" y1="440" x2="274" y2="440" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
 
   <!-- footer -->
-  <text x="540" y="594" text-anchor="middle" font-size="14" fill="#444">The tool results go back to the model as the next turn. The gateway records the tokens of every model call, and each becomes</text>
+  <text x="540" y="594" text-anchor="middle" font-size="14" fill="#444">The tool results go back to the model as the next turn. The gateway records all model calls as one token sequence, which becomes</text>
   <text x="540" y="614" text-anchor="middle" font-size="14" fill="#444">a training datum with the episode's advantage.</text>
 </svg>

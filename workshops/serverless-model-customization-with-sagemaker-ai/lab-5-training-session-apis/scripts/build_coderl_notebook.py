@@ -1,10 +1,10 @@
-"""Build 5c_code_rl.ipynb (Qwen3.8-27B)."""
+"""Build 5b_code_rl.ipynb (Qwen3.8-27B)."""
 import textwrap
 from pathlib import Path
 
 import nbformat as nbf
 
-V = dict(MODEL="Qwen/Qwen3.8-27B", MODEL_SHORT="Qwen3.8-27B", OUT="5c_code_rl.ipynb",
+V = dict(MODEL="Qwen/Qwen3.8-27B", MODEL_SHORT="Qwen3.8-27B", OUT="5b_code_rl.ipynb",
          REASONING="medium", EVAL_N="50", GRPO_STEPS="2",
          BASE_MODEL_SPEC='{"HubContentName": "huggingface-vlm-qwen3-8-27b", "HubContentVersion": "1.3.0"}',
          RESULTS=("At medium reasoning effort, many of the base model's responses reach the 12,288-token limit before they\n"
@@ -32,7 +32,7 @@ def code(s):
 
 
 md("""
-# Code RL with SageMaker AI training sessions
+# Code RL with [SageMaker AI training sessions](https://docs.aws.amazon.com/sagemaker/latest/dg/training-sessions-getting-started.html)
 
 This notebook trains a model with reinforcement learning (RL) on code. The model gets a competitive-programming
 problem and writes a Python solution. The solution runs against the problem's test cases in a sandbox, and the
@@ -47,14 +47,16 @@ sandbox and the loop.
 
 ![Code RL loop](images/code-rl-loop.svg)
 
-- **Training loop** (your code, in this kernel): samples attempts from the training session, scores them and sends
+- **[Training loop](https://aws.amazon.com/blogs/machine-learning/write-your-own-training-loop-without-managing-gpus-with-amazon-sagemaker-training-sessions/)** (your code, in this kernel): samples attempts from the training session, scores them and sends
   the update.
-- **Training session** (SageMaker AI): holds `{{MODEL_SHORT}}` with a LoRA (low-rank adaptation) adapter, generates
+- **Training session** (SageMaker AI): holds [`{{MODEL_SHORT}}`](https://huggingface.co/{{MODEL}}) with a
+  [LoRA (low-rank adaptation)](https://arxiv.org/abs/2106.09685) adapter, generates
   responses and runs `forward_backward` and `optim_step`.
 - **Grading** ([training sessions cookbook](https://github.com/aws/sagemaker-training-sessions-cookbook)): extracts
-  the code block from a response and runs the problem's tests with the LiveCodeBench harness.
-- **Sandbox**: the model's code is untrusted, so it runs in Amazon Bedrock AgentCore Code Interpreter, without
-  network access or AWS credentials. The cookbook's grading code expects a SandboxFusion-style HTTP endpoint, so a
+  the code block from a response and runs the problem's tests with the [LiveCodeBench](https://livecodebench.github.io) harness.
+- **Sandbox**: the model's code is untrusted, so it runs in
+  [Amazon Bedrock AgentCore Code Interpreter](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/code-interpreter-tool.html), without
+  network access or AWS credentials. The cookbook's grading code expects a [SandboxFusion](https://github.com/bytedance/SandboxFusion)-style HTTP endpoint, so a
   small local endpoint on `127.0.0.1` in this kernel forwards each program to Code Interpreter.
 
 ### What you do
@@ -63,7 +65,7 @@ Responses are up to 12,288 tokens, so a training step that moves the pass rate (
 to 22 minutes. Training for hours does not fit in a workshop, so you:
 
 1. measure the base model on held-out problems,
-2. run {{GRPO_STEPS}} GRPO (Group Relative Policy Optimization) steps yourself to see the loop work,
+2. run {{GRPO_STEPS}} [GRPO (Group Relative Policy Optimization)](https://arxiv.org/abs/2402.03300) steps yourself to see the loop work,
 3. load an adapter that was trained beforehand with the cookbook's Code RL recipe (20 steps, about 6 hours) and
    measure it on the same problems.
 
@@ -84,12 +86,15 @@ The next cell connects to your AWS account:
 
 - **Region and account** come from the default boto3 session, so the training session runs in the Region your
   notebook uses.
-- **`ROLE_ARN`** is the IAM role `SageMakerTrainingSessionRole`. The training session service assumes it to read the
+- **`ROLE_ARN`** is the IAM role `SageMakerTrainingSessionRole` (see the
+  [prerequisites](https://docs.aws.amazon.com/sagemaker/latest/dg/training-sessions-prereqs.html)). The training session service assumes it to read the
   base model and write adapters to S3. The workshop stack creates it.
 - **`S3_OUTPUT`** is the S3 prefix where the service writes the adapter files, in your
   `sagemaker-<region>-<account>` bucket.
-- **`MPG_ARN`** is a model package group, `code-rl`. Every adapter you save is registered there as a model package
-  version. The cell creates the group, or reuses it if it already exists.
+- **`MPG_ARN`** is a [model package group](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry-model-group.html),
+  `code-rl`. Every adapter you save is registered there in
+  [Model Registry](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry.html) as a
+  [model package version](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry-version.html). The cell creates the group, or reuses it if it already exists.
 - **`PRETRAINED_ADAPTER`** is the S3 prefix of the adapter trained beforehand, used in section 5. It comes from the
   environment variable `PRETRAINED_ADAPTER_S3`; the workshop environment sets it for you.
 """)
@@ -103,9 +108,11 @@ REGION = session.region_name
 ACCOUNT = session.client("sts").get_caller_identity()["Account"]
 ROLE_ARN = session.client("iam").get_role(RoleName="SageMakerTrainingSessionRole")["Role"]["Arn"]
 S3_OUTPUT = f"s3://sagemaker-{REGION}-{ACCOUNT}/training-sessions/code-rl/"
+# The placeholder default is used only when the environment variable is not set; section 5 needs the real prefix.
 PRETRAINED_ADAPTER = os.environ.get("PRETRAINED_ADAPTER_S3", "s3://<bucket>/code-rl/adapter/model/")
 
 sm = session.client("sagemaker")
+# Create the model package group. If it already exists, the call raises a ClientError and the existing group is used.
 try:
     MPG_ARN = sm.create_model_package_group(ModelPackageGroupName="code-rl")["ModelPackageGroupArn"]
 except sm.exceptions.ClientError:
@@ -115,9 +122,11 @@ print(REGION, ROLE_ARN, MPG_ARN, sep="\\n")
 md("""
 ### The sandbox
 
-Generated code runs in Amazon Bedrock AgentCore Code Interpreter. The code interpreter created below has network
+Generated code runs in Amazon Bedrock AgentCore Code Interpreter. The code interpreter
+[created](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/code-interpreter-create.html) below has network
 mode `SANDBOX` (no network access) and no execution role, so the code it runs has no AWS credentials.
-`CodeInterpreterSandbox` (in `coderl/code_interpreter.py`) keeps 16 sessions open and runs each program in its own
+`CodeInterpreterSandbox` (in `coderl/code_interpreter.py`) keeps 16
+[sessions](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/code-interpreter-resource-session-management.html) open and runs each program in its own
 directory of one of them.
 
 The cookbook's grading code sends programs to a SandboxFusion-style HTTP endpoint, so `LocalSandbox` serves
@@ -154,7 +163,8 @@ print(sandbox.run({"code": "print(sum(range(10)))", "run_timeout": 10})["run_res
 md("""
 ## 2. Problems and reward
 
-`load_deepcoder_tasks` returns problems with their test cases. The prompt asks for a solution in a fenced Python
+`load_deepcoder_tasks` returns problems from the
+[DeepCoder dataset](https://huggingface.co/datasets/agentica-org/DeepCoder-Preview-Dataset) with their test cases. The prompt asks for a solution in a fenced Python
 block. `grade` extracts the last code block, runs the LiveCodeBench test harness in the sandbox, and computes the
 cookbook's reward: 1.0 if all tests pass, minus 0.1 if the answer has no code block.
 """)
@@ -165,6 +175,7 @@ from training_sessions_cookbook.rl.envs.lcb_utils import extract_code_from_model
 from training_sessions_cookbook.rl.envs.sandbox import sandbox_check_correctness
 from training_sessions_cookbook.rl.prompts import apply_hf
 
+# 512 training problems, shuffled with a fixed seed, and the first {{EVAL_N}} problems of the test split.
 train_tasks = load_deepcoder_tasks("train", seed=0, max_prompts=512)
 test_tasks = load_deepcoder_tasks("test")[:{{EVAL_N}}]
 print(len(train_tasks), "train |", len(test_tasks), "test")
@@ -174,15 +185,22 @@ print(test_tasks[0].problem[:800])
 async def grade(task, response_text):
     \"\"\"Run the code in one response against the task's tests and return (reward, passed).
 
-    task is a problem from load_deepcoder_tasks; task.tests holds its test cases. response_text is the decoded
-    response. passed is True when all tests pass. reward is 1.0 when all tests pass and 0.0 otherwise, minus 0.1
-    when the response has no fenced code block. The code runs in Code Interpreter through SANDBOX_URL.
+    Args:
+      task: a problem from load_deepcoder_tasks. task.tests holds its test cases.
+      response_text: the decoded model response.
+
+    Returns a tuple (reward, passed). passed is True when all tests pass. reward is 1.0 when all tests pass and
+    0.0 otherwise, minus 0.1 when the response has no fenced code block.
+
+    Side effects: when the response has a code block, the code and tests are sent to SANDBOX_URL, which runs them
+    in Code Interpreter. A response without a code block is not sent.
     \"\"\"
     code = extract_code_from_model(response_text)  # the last fenced code block, or None
     passed = False
     if code is not None:
         # Runs the LiveCodeBench test harness in the sandbox, with a limit of 6 seconds per test.
         passed, _ = await sandbox_check_correctness(task.tests, code, 6)
+    # The cookbook's reward function. Only the first returned value, the reward, is used.
     reward, _ = deepcoder_reward(response_text, passed)
     return reward, passed
 """)
@@ -190,7 +208,7 @@ async def grade(task, response_text):
 md("""
 ## 3. Base model on held-out problems
 
-The prompt goes through the model's chat template with {{REASONING}} reasoning effort. Responses have up to 12,288 tokens at
+The prompt goes through the model's [chat template](https://huggingface.co/docs/transformers/chat_templating) with {{REASONING}} reasoning effort. Responses have up to 12,288 tokens at
 temperature 1.0. Each problem is sampled twice; the progress bars show sampling and then grading.
 """)
 code("""
@@ -215,18 +233,31 @@ SAMPLING = SamplingParams(max_tokens=12288, temperature=1.0)
 def prompt_tokens(task):
     \"\"\"Return the prompt for one task as a list of token ids.
 
-    apply_hf (from the cookbook) wraps the problem text in a user message and calls tokenizer.apply_chat_template,
-    which adds the special tokens the model was trained with and ends where the model starts its answer. The
-    reasoning setting is passed to the chat template as the reasoning effort.
+    Args:
+      task: a problem from load_deepcoder_tasks. Only task.problem, the problem text, is used.
+
+    Returns the list of token ids to pass to sample(). apply_hf (from the cookbook) wraps the problem text in a
+    user message and calls tokenizer.apply_chat_template, which adds the special tokens the model was trained with
+    and ends where the model starts its answer. The reasoning setting is passed to the chat template as the
+    reasoning effort. The function has no side effects.
     \"\"\"
     return apply_hf(task.problem, tokenizer, reasoning="{{REASONING}}")
 
 
 async def evaluate(client, tasks, samples_per_problem=2):
-    \"\"\"Sample each task samples_per_problem times with the sampler client and grade the responses.
+    \"\"\"Sample each task samples_per_problem times with a sampling client and grade the responses.
 
-    Returns (pass rate, list of (task, response text) pairs). The pass rate is the share of responses that pass
-    all tests. All sampling requests are submitted first; sample() returns a future right away.
+    Args:
+      client: a sampling client, for example from create_sampling_client or save_weights_and_get_sampling_client.
+      tasks: the problems to evaluate, from load_deepcoder_tasks.
+      samples_per_problem: number of responses sampled for each problem.
+
+    Returns a tuple (pass rate, pairs). The pass rate is the share of all responses that pass all tests. pairs is a
+    list of (task, response text), samples_per_problem entries per task, in the order of tasks.
+
+    Side effects: sends one sampling request per task to the training session and one grading request per response
+    with a code block to the sandbox, and shows a progress bar for each phase. All sampling requests are submitted
+    first; sample() returns a future right away. The weights are not changed.
     \"\"\"
     futures = [client.sample(prompt_tokens(t), num_samples=samples_per_problem, sampling_params=SAMPLING) for t in tasks]
     # f.result() blocks until the response arrives, so each wait runs in a thread. gather (from coderl/progress.py)
@@ -254,7 +285,7 @@ Each step samples 8 attempts for each of 8 training problems and grades them in 
 the advantage of an attempt is its reward minus the group mean, divided by the group standard deviation. Groups
 where all 8 attempts got the same reward are skipped. One training datum per attempt holds the prompt and response
 tokens, the sampling logprobs, the advantage, and weights (0 for prompt tokens, 1 for response tokens).
-`forward_backward` with the `ppo` loss (proximal policy optimization) and `optim_step` update the adapter, and
+`forward_backward` with the `ppo` loss ([proximal policy optimization](https://arxiv.org/abs/1707.06347)) and `optim_step` update the adapter, and
 `save_weights_and_get_sampling_client` gives a sampler for the new weights.
 
 {{GRPO_STEPS}} steps of 8 problems are not enough to change the held-out pass rate; section 5 measures an adapter trained
@@ -271,6 +302,10 @@ def build_datum(prompt, response_tokens, logprobs, advantage):
                    compare the current weights with the weights that produced the sample
       advantages - the response's advantage on every response position, 0 on prompt positions
       weights    - 0 for prompt positions and 1 for response positions, so only the response is trained
+
+    Returns a dict with modelInput (the input tokens) and lossFnInputs (target_tokens, logprobs, advantages and
+    weights, each with data, dtype and shape). All arrays have one entry per input position. The function has no
+    side effects.
     \"\"\"
     tokens = prompt + list(response_tokens)
     inputs, targets = tokens[:-1], tokens[1:]
@@ -290,11 +325,11 @@ def build_datum(prompt, response_tokens, logprobs, advantage):
 
 STEPS, PROBLEMS_PER_STEP, K = {{GRPO_STEPS}}, 8, 8  # training steps, problems per step, attempts per problem
 ADAM = AdamParams(learning_rate=1e-5, beta2=0.95, grad_clip_norm=1.0)  # optimizer settings for optim_step
-rng = random.Random(0)
+rng = random.Random(0)  # fixed seed, so every run picks the same training problems
 
 for step in range(STEPS):
     t0 = time.time()
-    batch = rng.sample(train_tasks, PROBLEMS_PER_STEP)
+    batch = rng.sample(train_tasks, PROBLEMS_PER_STEP)  # PROBLEMS_PER_STEP distinct problems for this step
     prompts = [prompt_tokens(t) for t in batch]
     # One sample() call per problem returns K attempts for it.
     futures = [sampling_client.sample(p, num_samples=K, sampling_params=SAMPLING) for p in prompts]
@@ -354,6 +389,7 @@ dest_prefix = "training-sessions/code-rl/pretrained/model/"
 for page in s3.get_paginator("list_objects_v2").paginate(Bucket=src.netloc, Prefix=src.path.lstrip("/")):
     for obj in page.get("Contents", []):
         rel = obj["Key"][len(src.path.lstrip("/")):]
+        # s3.copy is a managed copy within S3; the object data does not pass through the notebook.
         s3.copy({"Bucket": src.netloc, "Key": obj["Key"]}, f"sagemaker-{REGION}-{ACCOUNT}", dest_prefix + rel)
 
 # Register the copied files as a model package version in the code-rl group. BaseModel identifies the base model

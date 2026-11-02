@@ -1,5 +1,9 @@
 """Run generated code in Amazon Bedrock AgentCore Code Interpreter.
 
+This module is the sandbox backend of the code RL (reinforcement learning) notebook 5b and of
+`coderl/eval_adapter.py`. Model-generated programs are untrusted, so they run in Code Interpreter instead of
+on the notebook host.
+
 `CodeInterpreterSandbox.run(request)` takes a SandboxFusion-style request
 ({"code": ..., "files": {name: base64}, "run_timeout": seconds}) and returns a
 SandboxFusion-style response, so the cookbook's grading code can use it through
@@ -22,12 +26,26 @@ from botocore.config import Config
 
 
 class CodeInterpreterSandbox:
-    """A pool of Code Interpreter sessions that runs Python programs in SandboxFusion request format."""
+    """A pool of Code Interpreter sessions that runs Python programs in SandboxFusion request format.
+
+    Attributes:
+      id: the code interpreter ID.
+      client: the boto3 `bedrock-agentcore` data-plane client used for all session calls.
+      sessions: a queue of session IDs that are free to use.
+
+    `run` is safe to call from several threads at once; each call holds one session while it runs.
+    """
 
     def __init__(self, code_interpreter_id: str, region: str, sessions: int = 16):
         """Start `sessions` Code Interpreter sessions on the code interpreter `code_interpreter_id` in `region`.
 
-        The sessions are kept in a queue; each `run` call takes one, uses it, and puts it back.
+        Args:
+          code_interpreter_id: ID of an existing code interpreter that is in status READY.
+          region: AWS Region of the code interpreter.
+          sessions: number of sessions to start, which is the maximum number of programs that run at once.
+
+        Side effects: starts `sessions` sessions, one API call each. The sessions are kept in a queue; each `run`
+        call takes one, uses it, and puts it back. Call `close` to stop them.
         """
         self.id = code_interpreter_id
         self.client = boto3.client("bedrock-agentcore", region_name=region,
@@ -38,15 +56,24 @@ class CodeInterpreterSandbox:
             self.sessions.put(self._start())
 
     def _start(self) -> str:
-        """Start a new Code Interpreter session that times out after 3 hours and return its session ID."""
+        """Start a new Code Interpreter session that times out after 3 hours and return its session ID.
+
+        Side effects: one StartCodeInterpreterSession call. The session is not added to the queue here; the caller
+        adds it.
+        """
         return self.client.start_code_interpreter_session(
             codeInterpreterIdentifier=self.id, sessionTimeoutSeconds=3 * 3600)["sessionId"]
 
     def _call(self, session_id: str, name: str, arguments: dict) -> dict:
         """Invoke the Code Interpreter tool `name` with `arguments` in a session and return the tool result.
 
-        The response is an event stream; the first event that has a result is returned. If none has one, an
-        error result is returned.
+        Args:
+          session_id: the session to run the tool in.
+          name: the tool name, for example "writeFiles" or "executeCommand".
+          arguments: the tool arguments, as documented for InvokeCodeInterpreter.
+
+        Returns the result dict of the first event in the response stream that has one. If no event has a result,
+        returns {"isError": True, "content": [{"text": "no result"}]}. API errors are raised to the caller.
         """
         out = self.client.invoke_code_interpreter(codeInterpreterIdentifier=self.id, sessionId=session_id,
                                                   name=name, arguments=arguments)
@@ -58,10 +85,20 @@ class CodeInterpreterSandbox:
     def run(self, request: dict) -> dict:
         """Run one SandboxFusion-style request and return a SandboxFusion-style response.
 
-        `request["code"]` is written to main.py and each entry of `request["files"]` (base64-encoded) is written next
-        to it, in a new directory of a pooled session. main.py runs with `request["run_timeout"]` seconds (default
-        30) and no stdin, then the directory is removed. Blocks until a session is free. On a Code Interpreter
-        error, returns status "SandboxError" and no run result.
+        Args:
+          request: a dict with "code" (the Python program), optionally "files" (a dict from file name to
+            base64-encoded content) and optionally "run_timeout" (seconds, default 30).
+
+        `request["code"]` is written to main.py and each entry of `request["files"]` is written next to it, in a new
+        directory of a pooled session. main.py runs with python3 under `timeout`, with no stdin, then the directory
+        is removed. Blocks until a session is free.
+
+        Returns a dict with "status" ("Success" when main.py exits with code 0, "Failed" otherwise), "message",
+        "compile_result" (always None) and "run_result". run_result has "status" ("Finished" or
+        "TimeLimitExceeded"), "return_code" (None on timeout), "stdout", "stderr" and "execution_time". On a Code
+        Interpreter error, returns status "SandboxError", the error message, and run_result None.
+
+        Side effects: if the session has expired, a new session is started in its place.
         """
         work = f"job-{uuid.uuid4().hex}"
         timeout = float(request.get("run_timeout", 30))
@@ -90,7 +127,11 @@ class CodeInterpreterSandbox:
         return {"status": "Success" if code == 0 else "Failed", "message": "", "compile_result": None, "run_result": run}
 
     def close(self):
-        """Stop every session in the pool. Errors from individual sessions are ignored."""
+        """Stop every session that is in the pool and empty the pool.
+
+        Errors from individual sessions are ignored. Sessions held by a `run` call that is still in progress are not
+        stopped. The code interpreter itself is kept.
+        """
         while not self.sessions.empty():
             try:
                 self.client.stop_code_interpreter_session(codeInterpreterIdentifier=self.id,

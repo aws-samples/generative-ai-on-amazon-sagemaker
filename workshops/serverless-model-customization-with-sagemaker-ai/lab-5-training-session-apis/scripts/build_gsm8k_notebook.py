@@ -28,7 +28,7 @@ def code(s):
 
 
 md("""
-# Write your own reinforcement learning loop with SageMaker AI training sessions: {{DATASET}}
+# Write your own reinforcement learning loop with [SageMaker AI training sessions](https://docs.aws.amazon.com/sagemaker/latest/dg/training-sessions-getting-started.html): {{DATASET}}
 
 > **Note:** This is a toy problem. It is small enough to run in minutes, so you can see the mechanics of a
 > reinforcement learning loop and the parts of the training session APIs. It does not show how to build a
@@ -36,7 +36,9 @@ md("""
 
 With a managed RLVR (reinforcement learning from verifiable rewards) job, you supply a
 dataset and a reward function, and the service runs the training loop. In this notebook you write that loop yourself
-on a **training session**, a live training client for a LoRA (low-rank adaptation) adapter on `{{MODEL_SHORT}}`,
+on a **[training session](https://aws.amazon.com/blogs/machine-learning/write-your-own-training-loop-without-managing-gpus-with-amazon-sagemaker-training-sessions/)**,
+a live training client for a [LoRA (low-rank adaptation)](https://arxiv.org/abs/2106.09685) adapter on
+[`{{MODEL_SHORT}}`](https://huggingface.co/{{MODEL}}),
 with three operations:
 
 | Operation | What it does |
@@ -48,7 +50,7 @@ with three operations:
 ### The task
 
 The model solves math word problems from [GSM-Hard](https://huggingface.co/datasets/reasoning-machines/gsm-hard).
-GSM-Hard takes the grade-school word problems of GSM8K and replaces their numbers with much larger ones, so the
+GSM-Hard takes the grade-school word problems of [GSM8K](https://huggingface.co/datasets/openai/gsm8k) and replaces their numbers with much larger ones, so the
 reasoning stays simple but the arithmetic gets long. An example from the training set:
 
 > James is in charge of running messages from the office to each teacher's classroom. If he delivers 428598 messages
@@ -64,8 +66,8 @@ accuracy, and the share of answers cut off at 512 tokens.
 ### What this notebook is for
 
 The task is small, so the whole loop runs in about 15 minutes and every part of it is a cell you can read and
-change: the reward, the advantage, the loss, the batch size. Use it to see how a GRPO (Group Relative Policy
-Optimization) loop maps onto the training session APIs, and as a starting point to try your own reward function or
+change: the reward, the advantage, the loss, the batch size. Use it to see how a
+[GRPO (Group Relative Policy Optimization)](https://arxiv.org/abs/2402.03300) loop maps onto the training session APIs, and as a starting point to try your own reward function or
 training algorithm. The last section lists what to change for that.
 
 | Step | Time |
@@ -91,12 +93,15 @@ The next cell connects to your AWS account:
 
 - **Region and account** come from the default boto3 session, so the training session runs in the Region your
   notebook uses.
-- **`ROLE_ARN`** is the IAM role `SageMakerTrainingSessionRole`. The training session service assumes it to read the
+- **`ROLE_ARN`** is the IAM role `SageMakerTrainingSessionRole` (see the
+  [prerequisites](https://docs.aws.amazon.com/sagemaker/latest/dg/training-sessions-prereqs.html)). The training session service assumes it to read the
   base model and write adapters to S3. The workshop stack creates it.
 - **`S3_OUTPUT`** is the S3 prefix where the service writes the adapter files, in your
   `sagemaker-<region>-<account>` bucket.
-- **`MPG_ARN`** is a model package group, `gsm8k-grpo`. Every adapter you save is registered there as a model package
-  version. The cell creates the group, or reuses it if it already exists.
+- **`MPG_ARN`** is a [model package group](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry-model-group.html),
+  `gsm8k-grpo`. Every adapter you save is registered there in
+  [Model Registry](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry.html) as a
+  [model package version](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry-version.html). The cell creates the group, or reuses it if it already exists.
 - **`svc`** is the `ServiceClient`, the entry point to the training session APIs. It creates the session in
   section 3.
 """)
@@ -141,7 +146,7 @@ print(len(train_problems), "train |", len(eval_problems), "eval")
 print(train_problems[0])
 """)
 md("""
-The prompt uses the model's chat template. The reward is 1.0 when the number after the last `####` matches the
+The prompt uses the model's [chat template](https://huggingface.co/docs/transformers/chat_templating). The reward is 1.0 when the number after the last `####` matches the
 ground truth, 0.0 otherwise.
 """)
 code("""
@@ -298,7 +303,7 @@ Each step of the loop below does this for {{PROMPTS}} problems at once:
    divided by the group standard deviation. Groups where all 8 responses scored the same are skipped.
 3. Build one training datum per response: prompt and response tokens, the response tokens' sampling logprobs,
    the advantage on every response token, and weights (0 for prompt tokens, 1 for response tokens).
-4. `forward_backward` with the `ppo` loss (proximal policy optimization), then `optim_step`.
+4. `forward_backward` with the `ppo` loss ([proximal policy optimization](https://arxiv.org/abs/1707.06347)), then `optim_step`.
 5. `save_weights_and_get_sampling_client` so the next step samples from the updated weights.
 """)
 code("""

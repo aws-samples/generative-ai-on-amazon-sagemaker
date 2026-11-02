@@ -28,7 +28,7 @@
   <rect x="50" y="360" width="520" height="140" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
   <text x="310" y="398" text-anchor="middle" font-size="17" font-weight="bold" fill="#3f2fa6">GRPO step (your code)</text>
   <text x="310" y="430" text-anchor="middle" font-size="14" fill="#3f2fa6">8 attempts per request: advantage = (reward − mean) / std</text>
-  <text x="310" y="456" text-anchor="middle" font-size="14" fill="#3f2fa6">one training datum per model call</text>
+  <text x="310" y="456" text-anchor="middle" font-size="14" fill="#3f2fa6">one training datum per attempt</text>
   <text x="310" y="482" text-anchor="middle" font-size="14" fill="#3f2fa6">skip groups where all attempts scored the same</text>
 
   <!-- remote -->

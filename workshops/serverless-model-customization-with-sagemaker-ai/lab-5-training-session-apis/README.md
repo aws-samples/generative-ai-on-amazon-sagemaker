@@ -7,8 +7,8 @@ again.
 | Notebook | Task | Training in the notebook | Held-out result | Notebook run time |
 |---|---|---|---|---|
 | `5a_gsm_hard_grpo.ipynb` | GSM-Hard math (non-negative whole-number answers), 512-token budget, low reasoning effort | 12 GRPO steps, 16 problems x 8 samples, lr 4e-5 | accuracy 62.5% -> 82.5%, answers cut at 512 tokens 34.5% -> 3.5% (100 problems x 2) | ~25 min |
-| `5b_scheduling_agent.ipynb` | Strands scheduling agent, 2 tools, per-person working hours, 9 time zones, calendars in local time or UTC; thinking off | 12 GRPO steps, 8 requests x 8 attempts | mean reward 0.719 -> 0.887 (128 requests) | ~40 min |
-| `5c_code_rl.ipynb` | Competitive programming (DeepCoder), code run in AgentCore Code Interpreter, medium reasoning | 2 GRPO steps, 8 problems x 8 attempts, then a pre-trained adapter | pass rate 12.5% -> 38.5% with the pre-trained adapter (100 problems x 2) | ~45 min |
+| `5b_code_rl.ipynb` | Competitive programming (DeepCoder), code run in AgentCore Code Interpreter, medium reasoning | 2 GRPO steps, 8 problems x 8 attempts, then a pre-trained adapter | pass rate 12.5% -> 38.5% with the pre-trained adapter (100 problems x 2) | ~45 min |
+| `5c_scheduling_agent.ipynb` | Strands scheduling agent, 2 tools, per-person working hours, 9 time zones, calendars in local time or UTC; thinking off | 12 GRPO steps, 8 requests x 8 attempts | mean reward 0.719 -> 0.887 (128 requests) | ~40 min |
 
 Pre-trained Code RL adapter (cookbook recipe, single turn, 64 problems x 8 attempts per step, 13-22 min per step).
 Accuracy is the cookbook's validation on 100 test problems x 1 attempt; pass rate is `coderl/eval_adapter.py` with
@@ -35,19 +35,19 @@ Requirements in the account (`us-west-2`):
 
 - IAM role `SageMakerTrainingSessionRole` that trusts `training-session.sagemaker.amazonaws.com` and can write to
   `sagemaker-<region>-<account>` buckets.
-- Quota for 2 concurrent training sessions (5c uses two sessions one after the other).
-- 5b: Amazon Bedrock access to `openai.gpt-oss-120b-1:0` for the demo request in section 2.
-- 5c: `bedrock-agentcore:CreateCodeInterpreter`, `ListCodeInterpreters`, `GetCodeInterpreter`,
+- Quota for 2 concurrent training sessions (5b uses two sessions one after the other).
+- 5b: `bedrock-agentcore:CreateCodeInterpreter`, `ListCodeInterpreters`, `GetCodeInterpreter`,
   `StartCodeInterpreterSession`, `InvokeCodeInterpreter` and `StopCodeInterpreterSession` (the notebook creates a code
   interpreter named `code_rl_sandbox` with network mode `SANDBOX` if it does not exist), `sagemaker:CreateModelPackage`,
   and the pre-trained adapter in S3 (`PRETRAINED_ADAPTER_S3`, a prefix that contains
   `checkpoints/hf/adapter_config.json` and `checkpoints/hf/adapter_model.safetensors`, 0.9 GB).
+- 5c: Amazon Bedrock access to `openai.gpt-oss-120b-1:0` for the demo request in section 2.
 
 ## Layout
 
 | Path | Content |
 |---|---|
-| `lab/runtime.py` | `TrainingRun` (5b): training session, rollout gateway on 127.0.0.1, rollouts, GRPO step, sampler refresh, progress bars |
+| `lab/runtime.py` | `TrainingRun` (5c): training session, rollout gateway on 127.0.0.1, rollouts, GRPO step, sampler refresh, progress bars |
 | `lab/agents.py` | Strands helpers: gateway or Amazon Bedrock model, transcripts |
 | `usecases/scheduling_hard.py` | Scheduling environment: people, calendars, requests, correct answers, tools, reward |
 | `coderl/` | Code Interpreter sandbox (`code_interpreter.py`), local `/run_code` endpoint (`sandbox_proxy.py`), progress helper, adapter evaluation (`eval_adapter.py`) |
@@ -62,10 +62,10 @@ Requirements in the account (`us-west-2`):
   samples the base weights. Call `save_weights_and_get_sampling_client()` once to sample the loaded adapter.
 - **Adapters across accounts and Regions.** Copy the adapter prefix to a bucket in the target account and Region and
   call `CreateModelPackage` with `IsCheckpoint: false` and the `BaseModel` of the original package
-  (`scripts/register_adapter.py`, section 5 of 5c).
+  (`scripts/register_adapter.py`, section 5 of 5b).
 - **Model packages.** Every `save_weights_and_get_sampling_client()` call registers a model package version, so the
   model package group holds one version per training step.
-- **Sandbox.** 5c runs generated code in AgentCore Code Interpreter with network mode `SANDBOX` (no network) and
+- **Sandbox.** 5b runs generated code in AgentCore Code Interpreter with network mode `SANDBOX` (no network) and
   no execution role (no AWS credentials). 16 sessions start in about 15 s; each program runs in its own directory with
   `timeout`. Grading agrees with a SandboxFusion container on 80 of 80 Qwen responses. The default quotas are 1000 concurrent
   sessions per account and 30 `InvokeCodeInterpreter` requests per second.

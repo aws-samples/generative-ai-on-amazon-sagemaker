@@ -107,8 +107,8 @@ Write your own reinforcement learning loop on a training session: a LoRA trainin
 | Notebook                    | Use case                                                                                                         |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `5a_gsm_hard_grpo.ipynb`    | GSM-Hard math with a 512-token budget: the full GRPO loop in notebook cells, as a base for new rewards or algorithms |
-| `5b_scheduling_agent.ipynb` | Train the model behind a multi-turn Strands agent with tools, through the AgentCore RL Toolkit rollout gateway   |
-| `5c_code_rl.ipynb`          | Competitive programming graded in AgentCore Code Interpreter; load a pre-trained adapter into a new session      |
+| `5b_code_rl.ipynb`          | Competitive programming graded in AgentCore Code Interpreter; load a pre-trained adapter into a new session      |
+| `5c_scheduling_agent.ipynb` | Train the model behind a multi-turn Strands agent with tools, through the AgentCore RL Toolkit rollout gateway   |
 
 ## Prerequisites
 
@@ -237,11 +237,11 @@ Each notebook contains:
 │   └── requirements.txt
 └── lab-5-training-session-apis/
     ├── 5a_gsm_hard_grpo.ipynb
-    ├── 5b_scheduling_agent.ipynb
-    ├── 5c_code_rl.ipynb
-    ├── lab/              # training run and rollout gateway helpers (5b)
-    ├── usecases/         # scheduling environment (5b)
-    ├── coderl/           # Code Interpreter sandbox and adapter evaluation (5c)
+    ├── 5b_code_rl.ipynb
+    ├── 5c_scheduling_agent.ipynb
+    ├── lab/              # training run and rollout gateway helpers (5c)
+    ├── usecases/         # scheduling environment (5c)
+    ├── coderl/           # Code Interpreter sandbox and adapter evaluation (5b)
     ├── images/
     ├── scripts/          # notebook builders and command-line tools
     ├── requirements.txt

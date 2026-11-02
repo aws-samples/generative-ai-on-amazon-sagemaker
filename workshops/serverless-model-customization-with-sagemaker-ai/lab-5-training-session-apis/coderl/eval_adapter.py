@@ -1,9 +1,26 @@
 """Pass rate of a model package (or the base model) on DeepCoder test problems.
 
-Code runs in AgentCore Code Interpreter.
+This script measures the same pass rate as the evaluation in the code RL (reinforcement learning) notebook 5b,
+outside the notebook. It opens a training session from a model package (or on the base model), samples
+`--samples` responses for each of the first `--n` problems of the DeepCoder test split, and grades them with the
+training sessions cookbook. Code runs in AgentCore Code Interpreter, through a local SandboxFusion-style endpoint.
 
 python coderl/eval_adapter.py --model-package-arn ARN --n 100 --samples 2 --reasoning low \
     [--base-model Qwen/Qwen3.8-27B]
+
+Arguments:
+  --model-package-arn: model package to evaluate. Without it, the base model is evaluated.
+  --n: number of test problems (default 100).
+  --samples: responses per problem (default 2).
+  --reasoning: reasoning effort passed to the prompt template (default medium).
+  --max-tokens: maximum response length in tokens (default 12288).
+  --code-interpreter-name: code interpreter to reuse, or to create with network mode SANDBOX (default
+    code_rl_sandbox).
+  --out: file to append the result to, as one JSON line.
+  --base-model: base model ID. It selects the prompt template and, without --model-package-arn, the model.
+
+Environment variables: AWS_REGION, ROLE_ARN (the training session role), MODEL_PACKAGE_GROUP_ARN and
+S3_OUTPUT_PATH. The script sets SANDBOX_URL and SANDBOX_MAX_CONCURRENCY for the cookbook's grading code.
 """
 import argparse
 import asyncio
@@ -54,8 +71,12 @@ from training_sessions_cookbook.rl.prompts import apply_gpt_oss, apply_hf  # noq
 async def main():
     """Sample and grade the test problems, print the result as a JSON line prefixed with EVAL, and stop the session.
 
-    With --out, the JSON line is also appended to that file. The training session and the Code Interpreter
-    sessions are stopped at the end, also on error.
+    The JSON line has the arguments, pass_rate (share of responses that pass all tests), cut (share of responses
+    that reached --max-tokens), tokens_mean (mean response length in tokens) and the time spent sampling, grading
+    and in total, in seconds. With --out, the JSON line is also appended to that file.
+
+    Side effects: starts a training session, sends sampling requests to it and grading requests to Code
+    Interpreter. The training session and the Code Interpreter sessions are stopped at the end, also on error.
     """
     svc = ServiceClient(region=REGION, role_arn=os.environ["ROLE_ARN"],
                         model_package_group_arn=os.environ["MODEL_PACKAGE_GROUP_ARN"], s3_output_path=os.environ["S3_OUTPUT_PATH"])
@@ -73,19 +94,37 @@ async def main():
         sp = SamplingParams(max_tokens=a.max_tokens, temperature=1.0)
 
         def prompt(problem):
-            """Return the prompt token ids for one problem, using the gpt-oss template or the model's chat template."""
+            """Return the prompt token ids for one problem, using the gpt-oss template or the model's chat template.
+
+            Args:
+              problem: the problem text.
+
+            For gpt-oss base models, apply_gpt_oss builds the prompt text, which is then encoded without extra special
+            tokens. For other models, apply_hf applies the tokenizer's chat template. Both pass --reasoning as the
+            reasoning effort.
+            """
             if "gpt-oss" in a.base_model:
                 return tok.encode(apply_gpt_oss(problem, reasoning=a.reasoning), add_special_tokens=False)
             return apply_hf(problem, tok, reasoning=a.reasoning)
 
         t1 = time.time()
+        # sample() returns a future right away, so all requests are submitted before waiting on any of them.
         futs = [sc.sample(prompt(t.problem), num_samples=a.samples, sampling_params=sp) for t in tasks]
+        # f.result() blocks, so each wait runs in a thread.
         res = await asyncio.gather(*[asyncio.to_thread(f.result) for f in futs])
         sample_s = time.time() - t1
         seqs = [s for r in res for s in r.sequences]
 
         async def grade(task, text):
-            """Return True if the last code block in `text` passes all tests of `task` in the sandbox."""
+            """Return True if the last code block in `text` passes all tests of `task` in the sandbox.
+
+            Args:
+              task: a problem from load_deepcoder_tasks; task.tests holds its test cases.
+              text: the decoded response.
+
+            Returns False when the response has no code block. Side effects: when there is a code block, the code
+            and tests are sent to SANDBOX_URL, with a limit of 6 seconds per test.
+            """
             code = extract_code_from_model(text)
             ok = False
             if code is not None:
