@@ -6,8 +6,8 @@
 # prebuilt veRL base image. Installing it in a notebook kernel would try to pull
 # veRL and its CUDA stack onto the Studio instance, which is neither needed nor
 # possible there: the notebooks only prepare data, submit jobs, and call endpoints.
-sagemaker==3.16.0
-boto3==1.43.67
+sagemaker>=3.22,<4  # 3.22+: InstancePreference (instance-type fallback for training jobs)
+boto3>=1.43.90,<2  # required by sagemaker-core 2.22+
 datasets==4.8.5
 pandas==2.3.3
 pyarrow==22.0.0
