@@ -1,0 +1,15 @@
+# Cheap end-to-end check on ml.g6e.xlarge (1x L40S): 20 steps, then the same adapter save + merge as a full run.
+base_model: openvla/openvla-7b
+max_train_steps: 20
+per_device_batch_size: 4
+learning_rate: 5.0e-4
+lr_scheduler: cosine
+warmup_ratio: 0.1
+lora_rank: 8
+lora_alpha: 8
+lora_target_modules: q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj
+eval_steps: 20
+checkpoint_steps: 10
+keep_checkpoints: 1
+logging_steps: 5
+num_workers: 2
