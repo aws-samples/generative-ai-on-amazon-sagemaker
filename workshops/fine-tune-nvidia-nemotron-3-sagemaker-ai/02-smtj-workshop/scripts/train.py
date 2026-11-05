@@ -11,6 +11,7 @@ import logging
 import mlflow
 from mlflow.models import infer_signature
 import os
+import shutil
 from peft import (
     AutoPeftModelForCausalLM,
     LoraConfig,
@@ -183,6 +184,13 @@ class ScriptArguments:
     )
     load_in_4bit: bool = field(
         default=True, metadata={"help": "Load model in 4-bit quantization"}
+    )
+    auto_4bit_below_gpu_gib: Optional[float] = field(
+        default=None,
+        metadata={
+            "help": "Enable load_in_4bit automatically when GPU 0 has less memory "
+            "than this (GiB). Lets one recipe serve a mixed instance preference list."
+        },
     )
     lora_r: Optional[int] = field(default=8, metadata={"help": "lora_r"})
     lora_alpha: Optional[int] = field(default=16, metadata={"help": "lora_alpha"})
@@ -600,6 +608,35 @@ def load_model(config_builder: ModelConfigBuilder, script_args: ScriptArguments)
     except Exception as e:
         logger.error(f"Error loading model {script_args.model_id}: {e}")
         raise
+
+
+def _expose_text_config_loss_attrs(model) -> None:
+    """Mirror the loss-relevant `text_config` fields onto a multimodal top-level config.
+
+    Gemma 4 checkpoints (e.g. NVIDIA Nemotron-3.5-Bolt-E4B) load through
+    AutoModelForCausalLM as `Gemma4ForConditionalGeneration`, whose
+    `final_logit_softcapping` (30.0) lives only on `config.text_config`. TRL's default
+    `chunked_nll` loss reads it from `text_config` only when the processing class is a
+    processor; this script passes the tokenizer on the text path, so TRL reads the
+    top-level config, finds nothing, and computes the loss on uncapped logits while
+    inference applies the cap. Copying the value up fixes the training loss without
+    changing the model's own forward, which reads `text_config`. Only attributes the
+    top-level config does not already define are filled; text-only models, whose config
+    has no `text_config`, are left untouched. The merge reloads the base config from the
+    hub, so the copied attribute never reaches the exported `config.json`.
+    """
+    config = getattr(model, "config", None)
+    text_config = getattr(config, "text_config", None) if config is not None else None
+    if text_config is None or text_config is config:
+        return
+    for attr in ("final_logit_softcapping", "logit_scale"):
+        value = getattr(text_config, attr, None)
+        if value is not None and getattr(config, attr, None) is None:
+            setattr(config, attr, value)
+            logger.info(
+                f"config.{attr} <- text_config.{attr} = {value} "
+                f"(read by TRL's chunked loss)"
+            )
 
 
 def load_tokenizer(
@@ -1785,6 +1822,72 @@ def _save_artifacts_on_main(
             ) from e
 
 
+def _restore_base_only_shards(base_model_id: Optional[str], final_output_dir: str) -> None:
+    """Copy base-checkpoint shards whose tensors `save_pretrained` dropped entirely.
+
+    Gemma 4 (e.g. NVIDIA Nemotron-3.5-Bolt-E4B) shares K/V across its last
+    `num_kv_shared_layers` layers. Transformers never builds `k_proj`/`v_proj`/`k_norm`
+    for those layers, so a merged `save_pretrained` export omits them, while the hub
+    checkpoint ships them in a separate `model-frozen-shared-kv.safetensors`. vLLM
+    releases before 0.30 refuse a checkpoint without them ("Following weights were not
+    initialized from checkpoint"). Restoring the shard makes the export match the hub
+    layout the model was validated with.
+
+    Only shards none of whose keys exist in the export are copied, so a merged tensor
+    is never overwritten or duplicated. A no-op for models without such shards.
+    """
+    if not base_model_id:
+        return
+    out_index_path = os.path.join(final_output_dir, "model.safetensors.index.json")
+    if not os.path.isfile(out_index_path):
+        return  # single-file export: nothing indexed to extend
+    try:
+        if os.path.isdir(base_model_id):
+            base_index_path = os.path.join(base_model_id, "model.safetensors.index.json")
+            if not os.path.isfile(base_index_path):
+                return
+        else:
+            from huggingface_hub import hf_hub_download
+
+            base_index_path = hf_hub_download(
+                base_model_id, "model.safetensors.index.json"
+            )
+    except Exception as e:  # base repo has no index (single-file checkpoint)
+        logger.info(f"No base safetensors index for {base_model_id}: {e}")
+        return
+
+    with open(base_index_path, encoding="utf-8") as f:
+        base_map = json.load(f).get("weight_map", {})
+    with open(out_index_path, encoding="utf-8") as f:
+        out_index = json.load(f)
+    out_map = out_index.setdefault("weight_map", {})
+
+    keys_by_shard: Dict[str, List[str]] = {}
+    for key, shard in base_map.items():
+        keys_by_shard.setdefault(shard, []).append(key)
+
+    restored = []
+    for shard, keys in sorted(keys_by_shard.items()):
+        if any(key in out_map for key in keys) or os.path.exists(
+            os.path.join(final_output_dir, shard)
+        ):
+            continue
+        if os.path.isdir(base_model_id):
+            source = os.path.join(base_model_id, shard)
+        else:
+            from huggingface_hub import hf_hub_download
+
+            source = hf_hub_download(base_model_id, shard)
+        shutil.copyfile(source, os.path.join(final_output_dir, shard))
+        out_map.update({key: shard for key in keys})
+        restored.append(f"{shard} ({len(keys)} tensors)")
+
+    if restored:
+        with open(out_index_path, "w", encoding="utf-8") as f:
+            json.dump(out_index, f, indent=2, sort_keys=True)
+        logger.info(f"Restored base-only shards into the export: {restored}")
+
+
 def _is_visual_weight_key(key: str) -> bool:
     return (
         key.startswith(("visual.", "vision_model.", "vision_tower."))
@@ -1905,6 +2008,9 @@ def save_model(
                     vlm_base_model_id=script_args.vlm_base_model_id,
                     trc_kwargs=trust_remote_code_for(script_args, training_args),
                 )
+                _restore_base_only_shards(
+                    vlm_source_model_id or script_args.model_id, final_output_dir
+                )
                 _save_artifacts_on_main(
                     tokenizer, processor, final_output_dir, vlm_source_model_id
                 )
@@ -1938,6 +2044,9 @@ def save_model(
                     final_output_dir,
                     torch_dtype=save_dtype,
                     vlm_base_model_id=script_args.vlm_base_model_id,
+                )
+                _restore_base_only_shards(
+                    vlm_source_model_id or script_args.model_id, final_output_dir
                 )
                 _save_artifacts_on_main(
                     tokenizer, processor, final_output_dir, vlm_source_model_id
@@ -2295,6 +2404,9 @@ def train(script_args, training_args, train_ds, test_ds):
     tokenizer = load_tokenizer(script_args, training_args)
     processor = load_processor(script_args, training_args)
     is_vlm = script_args.modality_type == "image"
+    if not is_vlm:
+        # Text path on a multimodal checkpoint (Gemma 4): see the helper's docstring.
+        _expose_text_config_loss_attrs(model)
 
     # Detect the format up front (on ORIGINAL column names) so we can auto-calc the
     # length and set dataset_text_field before the messages column gets renamed.
@@ -2528,6 +2640,18 @@ def main() -> None:
     """Main function to parse arguments and start training."""
     parser = TrlParser((ScriptArguments, SFTConfig))
     script_args, training_args = parser.parse_args_and_config()
+
+    # Pick the recipe for whatever instance SageMaker launched: QLoRA on 24 GB cards,
+    # bf16 LoRA on 48 GB cards. Logged so the run records which path it took.
+    if script_args.auto_4bit_below_gpu_gib and torch.cuda.is_available():
+        gpu_gib = torch.cuda.get_device_properties(0).total_memory / 2**30
+        if gpu_gib < script_args.auto_4bit_below_gpu_gib:
+            script_args.load_in_4bit = True
+        logger.info(
+            f"GPU {torch.cuda.get_device_name(0)} {gpu_gib:.1f} GiB "
+            f"(threshold {script_args.auto_4bit_below_gpu_gib} GiB) "
+            f"-> load_in_4bit={script_args.load_in_4bit}"
+        )
 
     set_custom_env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
     setup_mlflow(script_args)

@@ -1,6 +1,6 @@
-# Fine-tune NVIDIA Nemotron 3 Nano 4B with SageMaker Training jobs
+# Fine-tune NVIDIA Nemotron 3.5 Bolt E4B with SageMaker Training jobs
 
-Fine-tune `nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16` with LoRA to review non-disclosure agreements:
+Fine-tune `nvidia/NVIDIA-Nemotron-3.5-Bolt-E4B-BF16` with LoRA to review non-disclosure agreements:
 for each of 17 checklist items, return a verdict and the contract clauses that support it. The
 data is [ContractNLI](https://stanfordnlp.github.io/contract-nli/). Training runs as a SageMaker
 AI Training job, the model is served from a SageMaker AI real-time endpoint, and evaluation
@@ -13,8 +13,8 @@ Run them in order.
 | Notebook                | What it does                                                                                                                                                        | Time               |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `1-prepare-data.ipynb`  | Installs dependencies, builds prompt/completion records, uploads train and validation splits to S3, keeps the test split locally                                    | ~1 min             |
-| `2-fine-tune-llm.ipynb` | Writes the training recipe, launches `scripts/train.py` as a Training job (first choice `ml.g5.xlarge`), and waits for it                                          | ~35 min            |
-| `3-deployment.ipynb`    | Deploys the merged checkpoint to an endpoint (first choice `ml.g5.xlarge`) with vLLM and sends a test request                                                        | ~11 min            |
+| `2-fine-tune-llm.ipynb` | Writes the training recipe, launches `scripts/train.py` as a Training job (first choice `ml.g7.2xlarge`), and waits for it                                         | ~30 min            |
+| `3-deployment.ipynb`    | Deploys the merged checkpoint to an endpoint (first choice `ml.g7.2xlarge`) with vLLM and sends a test request                                                        | ~15-20 min         |
 | `4-evaluation.ipynb`    | Scores the endpoint on 123 held-out contracts, compares against the untuned model and a frontier model, runs an LLM-as-a-Judge evaluation, and deletes the endpoint | seconds to ~25 min |
 
 Notebook 4 has two switches, both `False` by default, which read pre-computed results from
@@ -31,8 +31,8 @@ Reference run, 123 held-out contracts:
 
 | Model                          | Accuracy | Evidence F1 | Contradiction correctness | Valid JSON |
 | ------------------------------ | -------- | ----------- | ---------------- | ---------- |
-| Nemotron 3 Nano 4B, untuned    | 13.6     | 7.8         | 3.8              | 30.1       |
-| Nemotron 3 Nano 4B, fine-tuned | 87.9     | 76.6        | 70.1             | 100.0      |
+| Nemotron 3.5 Bolt E4B, untuned | 63.5     | 57.9        | 57.5             | 94.3       |
+| Nemotron 3.5 Bolt E4B, fine-tuned | 87.6  | 80.2        | 65.8             | 100.0      |
 | Claude Sonnet 5                | 84.1     | 68.6        | 62.3             | 100.0      |
 
 ## Evaluation notebook structure
@@ -48,8 +48,8 @@ Before live judging, inspect the utility's rubric and dataset builder: the judge
 ## Prerequisites
 
 - A SageMaker Studio JupyterLab space on SageMaker Distribution 4.5.0 with Python 3.12. Install `requirements.txt` and restart the kernel. It uses `../constraints-notebook.txt` to pin the SDK modules and adds the tokenizer dependency. See the [workshop dependency notes](../README.md#notebook-dependencies) for validation limits and the native Studio smoke test.
-- Training job quota of 1 for each of `ml.g5.xlarge`, `ml.g5.2xlarge`, `ml.g6.2xlarge`, `ml.g6e.2xlarge` and `ml.g6.xlarge`. The job lists all five as instance preferences and is rejected if any of them has no quota.
-- Endpoint quota of 1 for the endpoint instance pools: `ml.g5.xlarge`, `ml.g6.xlarge`, `ml.g6.2xlarge` and `ml.g6e.xlarge`.
+- Training job quota of 1 for each of `ml.g7.2xlarge`, `ml.g6e.2xlarge`, `ml.g5.2xlarge`, `ml.g6.2xlarge` and `ml.g6e.xlarge`. The job lists all five as instance preferences and is rejected if any of them has no quota.
+- Endpoint quota of 1 for the endpoint instance pools: `ml.g7.2xlarge`, `ml.g5.xlarge`, `ml.g6.xlarge`, `ml.g6.2xlarge` and `ml.g6e.xlarge`.
 - MLflow App permissions as described in [MLflow setup](../README.md#monitor-training-and-mlflow). `MLFLOW_APP_ARN` is optional and always wins. If empty, notebook 2 first reuses the uniquely matching tagged stack app, ahead of any named duplicate. Only if none matches does it reuse `MLFLOW_APP_NAME` in the current account/Region or create it. Ambiguity stops setup; pending apps are waited for. Creation uses the notebook execution role and bucket's `mlflow-artifacts` prefix unless overridden by `MLFLOW_ROLE_ARN` and `MLFLOW_ARTIFACT_STORE_URI`. No domain/tracking server is required and no defaults are changed. Notebook 2 prints the app ARN, link and experiment; metrics appear after training startup.
 - For `RUN_JUDGE_EVAL = True`: Bedrock access to the
   `us.anthropic.claude-sonnet-4-5-20250929-v1:0` inference profile, and an execution role that
