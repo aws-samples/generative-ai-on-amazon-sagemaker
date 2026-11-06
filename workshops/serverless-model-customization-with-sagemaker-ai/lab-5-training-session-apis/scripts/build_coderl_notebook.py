@@ -38,6 +38,10 @@ This notebook trains a model with reinforcement learning (RL) on code. The model
 problem and writes a Python solution. The solution runs against the problem's test cases in a sandbox, and the
 reward is 1.0 when all tests pass.
 
+![One attempt in code RL](images/code-rl-attempt.svg)
+
+The figure shows a simplified example. One attempt is a single model response: the code block is taken from it and run against the problem's tests in the sandbox. Other attempts at the same problem may fail a test (reward 0.0) or reach the token limit before they contain code (reward −0.1); GRPO compares the rewards within each group of attempts.
+
 The same setup works for any output that you can run and check automatically: SQL queries checked against a
 database, code checked by unit tests, configuration files checked by a validator, data transformations checked
 against expected output. To use it for your own task, replace the problems and the `grade` function and keep the
