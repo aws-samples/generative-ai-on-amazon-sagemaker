@@ -24,13 +24,16 @@ hyperpod/
 ```bash
 export IMAGE=<acct>.dkr.ecr.<region>.amazonaws.com/lerobot-vla:0.6.1 HF_TOKEN=hf_xxx
 ./launch.sh --model groot --instance-type ml.g7e.2xlarge                       # 1 node, 1 GPU, fine-tune
-./launch.sh --model act   --instance-type ml.g6.12xlarge --nodes 2             # 2 nodes x 4 GPUs, DDP over EFA
-./launch.sh --model pi05  --instance-type ml.g6.12xlarge --peft --batch-size 4 # LoRA on 24 GB GPUs
+./launch.sh --model act   --instance-type ml.g6.12xlarge --gpus 4 --efa 1 --nodes 2   # 2 nodes x 4 GPUs, DDP over EFA
+./launch.sh --model pi05  --instance-type ml.g6.12xlarge --gpus 4 --peft --batch-size 4 # LoRA on 24 GB GPUs
 ./launch.sh --model groot --instance-type ml.g6.12xlarge --batch-size 4 \
-            --extra-args "--policy.tune_diffusion_model=false"                 # GR00T on 24 GB (single GPU only)
+            --extra-args "--policy.tune_diffusion_model=false"                 # GR00T on 24 GB (one GPU)
 ./launch.sh ... --steps 300 --dry-run                                           # print the manifest
 kubectl get pytorchjob; kubectl logs -f <job>-master-0
 ```
+
+`--gpus` is the number of GPUs per node to use (default 1) and `--efa` the number of EFA interfaces to
+request per pod on multi-node jobs (default 0). Take both from the EC2 specs of the instance type.
 
 Other flags: `--steps`, `--save-freq`, `--batch-size`, `--dataset <hub repo id>`, `--dataset-root <fsx path>`, `--namespace`, `--pvc`,
 `--job-name`, `--hf-token`, `--distributed fsdp` (opt-in, needs `FSDP_WRAP_CLS` in the preset).
@@ -49,8 +52,8 @@ multi-node job) reads it from FSx. To use a dataset that is already on FSx (no H
 The Kubeflow operator injects pod-level `MASTER_ADDR`, `MASTER_PORT`, `RANK` (pod index) and `WORLD_SIZE`
 (pod count). `train.sh` reads them, counts GPUs with `nvidia-smi`, unsets the pod-level `RANK`/`WORLD_SIZE`, and
 runs `accelerate launch --num_processes=<gpus x nodes> --num_machines=<nodes> --machine_rank=<pod index>
---main_process_ip=$MASTER_ADDR`. For `--nodes > 1` the launcher adds `vpc.amazonaws.com/efa: N` to the pod
-resources (N from the instance type: 1 on g5/g6/g6e up to 12xlarge, 4 on g7e/g6e.48xlarge, 32 on p5).
+--main_process_ip=$MASTER_ADDR`. For `--nodes > 1` and `--efa N` the launcher adds `vpc.amazonaws.com/efa: N` to the pod
+resources.
 Check `NCCL INFO Assigned NET plugin Libfabric` in the master log to confirm EFA is in use.
 
 ## Scaling instance groups

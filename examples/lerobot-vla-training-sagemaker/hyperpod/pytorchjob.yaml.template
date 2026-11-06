@@ -38,7 +38,6 @@ spec:
                 - {name: STEPS, value: "${STEPS}"}
                 - {name: SAVE_FREQ, value: "${SAVE_FREQ}"}
                 - {name: BATCH_SIZE, value: "${BATCH_SIZE}"}
-                - {name: NUM_WORKERS, value: "${NUM_WORKERS}"}
                 - {name: PEFT, value: "${PEFT}"}
                 - {name: DISTRIBUTED, value: "${DISTRIBUTED}"}
                 - {name: WANDB_ENABLE, value: "false"}
@@ -82,7 +81,6 @@ spec:
                 - {name: STEPS, value: "${STEPS}"}
                 - {name: SAVE_FREQ, value: "${SAVE_FREQ}"}
                 - {name: BATCH_SIZE, value: "${BATCH_SIZE}"}
-                - {name: NUM_WORKERS, value: "${NUM_WORKERS}"}
                 - {name: PEFT, value: "${PEFT}"}
                 - {name: DISTRIBUTED, value: "${DISTRIBUTED}"}
                 - {name: WANDB_ENABLE, value: "false"}

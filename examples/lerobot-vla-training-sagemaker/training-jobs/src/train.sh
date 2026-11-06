@@ -54,6 +54,10 @@ else
 fi
 NPROC_PER_NODE=$(nvidia-smi -L | wc -l | tr -d ' ')
 WORLD_SIZE=$((NNODES * NPROC_PER_NODE))
+# Dataloader workers per training process: vCPUs per GPU, capped at 8, unless NUM_WORKERS is set.
+if [[ -z "${NUM_WORKERS:-}" ]]; then
+  NUM_WORKERS=$(( $(nproc) / NPROC_PER_NODE )); (( NUM_WORKERS > 8 )) && NUM_WORKERS=8; (( NUM_WORKERS < 1 )) && NUM_WORKERS=1
+fi
 
 echo "=== SageMaker LeRobot training ==="
 echo "model=${MODEL} host=${CURRENT_HOST} master=${MASTER_HOST} nnodes=${NNODES} node_rank=${NODE_RANK} gpus/node=${NPROC_PER_NODE} world=${WORLD_SIZE}"
@@ -165,7 +169,7 @@ set -x
     --steps="${STEPS:-20000}" \
     --batch_size="${BATCH_SIZE:-16}" \
     --save_checkpoint=true --save_freq="${SAVE_FREQ:-2500}" \
-    --num_workers="${NUM_WORKERS:-8}" --prefetch_factor=2 --persistent_workers=true \
+    --num_workers="${NUM_WORKERS}" --prefetch_factor=2 --persistent_workers=true \
     --log_freq=10 --env_eval_freq=0 --eval_steps=0 \
     --wandb.enable="${WANDB_ENABLE:-false}" \
     --policy.push_to_hub=false \

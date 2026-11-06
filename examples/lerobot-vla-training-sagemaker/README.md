@@ -35,7 +35,7 @@ python launch_training_job.py --model act   --instance-type ml.g6.12xlarge --ins
 cd hyperpod
 export IMAGE=<your ECR image> HF_TOKEN=hf_xxx
 ./launch.sh --model groot --instance-type ml.g7e.2xlarge
-./launch.sh --model act   --instance-type ml.g6.12xlarge --nodes 2
+./launch.sh --model act   --instance-type ml.g6.12xlarge --gpus 4 --efa 1 --nodes 2
 ```
 
 ## What was validated

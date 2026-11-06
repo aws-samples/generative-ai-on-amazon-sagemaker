@@ -69,7 +69,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--bucket", default=None, help="S3 bucket for outputs/checkpoints (default: SDK default bucket)")
     p.add_argument("--instance-type", default="ml.g7e.8xlarge",
                    help="One type, or a comma-separated list in priority order (instance preferences). "
-                        "ml.g7e.2xlarge/8xlarge = 1x RTX PRO 6000 96GB; ml.g7e.48xlarge / ml.p5.48xlarge = 8 GPUs")
+                        "GPUs per instance are detected in the container")
     p.add_argument("--instance-count", type=int, default=1)
     p.add_argument("--volume-size", type=int, default=300, help="EBS volume in GB (dataset cache + checkpoints)")
     p.add_argument("--max-runtime", type=int, default=12 * 3600, help="Hard stop in seconds")
@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--distributed", choices=["ddp", "fsdp"], default="ddp",
                    help="Multi-GPU mode via accelerate (LeRobot 0.6.1). fsdp needs FSDP_WRAP_CLS in the preset")
     p.add_argument("--save-freq", type=int, default=2500)
-    p.add_argument("--num-workers", type=int, default=None, help="Dataloader workers per process (default 4 on *.2xlarge, else 8)")
+    p.add_argument("--num-workers", type=int, default=None, help="Dataloader workers per process (default: vCPUs per GPU, max 8)")
     p.add_argument("--hf-token", default=os.environ.get("HF_TOKEN"),
                    help="Hugging Face token (or set HF_TOKEN). Needed for GR00T (Cosmos-Reason2-2B gate) and pi0.5 "
                         "(PaliGemma gate). Passed to the job as the HF_TOKEN environment variable.")
@@ -153,16 +153,14 @@ def main() -> None:
         "STEPS": str(args.steps),
         "SAVE_FREQ": str(args.save_freq),
         "WANDB_ENABLE": "true" if args.wandb else "false",
-        # Dataloader workers ship decoded frames through /dev/shm; SageMaker gives the
-        # container a large shm by default, but keep workers modest on the 4-vCPU g7e.2xlarge.
-        "NUM_WORKERS": str(args.num_workers) if args.num_workers else ("4" if any(t.endswith("2xlarge") for t in instance_types) else "8"),
     }
     if args.batch_size is not None:
         environment["BATCH_SIZE"] = str(args.batch_size)
     if args.peft:
         environment["PEFT"] = "1"
-    if args.instance_count > 1 or not all(t.endswith(("2xlarge", "4xlarge", "8xlarge")) for t in instance_types):
-        environment["DISTRIBUTED"] = args.distributed
+    environment["DISTRIBUTED"] = args.distributed
+    if args.num_workers:
+        environment["NUM_WORKERS"] = str(args.num_workers)
     if args.hf_token:
         environment["HF_TOKEN"] = args.hf_token
     for kv in args.env:
