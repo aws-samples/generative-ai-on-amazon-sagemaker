@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="470" viewBox="0 0 1080 470" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8a8a"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="470" fill="#ffffff"/>
+  <text x="540" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1d1d1f">One GRPO step for one prompt</text>
+
+  <!-- prompt -->
+  <rect x="20" y="175" width="140" height="90" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="90" y="212" text-anchor="middle" font-size="17" font-weight="bold" fill="#3f2fa6">Prompt</text>
+  <text x="90" y="238" text-anchor="middle" font-size="14" fill="#3f2fa6">one task</text>
+
+  <line x1="162" y1="220" x2="226" y2="220" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="194" y="208" text-anchor="middle" font-size="12" font-family="Menlo, monospace" fill="#1e6b45">sample()</text>
+  <text x="194" y="242" text-anchor="middle" font-size="12" fill="#444">8 times</text>
+
+  <!-- responses -->
+  <text x="330" y="62" text-anchor="middle" font-size="15" font-weight="bold" fill="#1e6b45">Responses</text>
+  <text x="475" y="62" text-anchor="middle" font-size="15" font-weight="bold" fill="#3f2fa6">Reward</text>
+  <g font-size="14">
+    <rect x="230" y="74" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="96" text-anchor="middle" fill="#1e6b45">response 1</text><text x="475" y="96" text-anchor="middle" fill="#3f2fa6">1</text>
+    <rect x="230" y="114" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="136" text-anchor="middle" fill="#1e6b45">response 2</text><text x="475" y="136" text-anchor="middle" fill="#3f2fa6">0</text>
+    <rect x="230" y="154" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="176" text-anchor="middle" fill="#1e6b45">response 3</text><text x="475" y="176" text-anchor="middle" fill="#3f2fa6">1</text>
+    <rect x="230" y="194" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="216" text-anchor="middle" fill="#1e6b45">response 4</text><text x="475" y="216" text-anchor="middle" fill="#3f2fa6">1</text>
+    <rect x="230" y="234" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="256" text-anchor="middle" fill="#1e6b45">response 5</text><text x="475" y="256" text-anchor="middle" fill="#3f2fa6">0</text>
+    <rect x="230" y="274" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="296" text-anchor="middle" fill="#1e6b45">response 6</text><text x="475" y="296" text-anchor="middle" fill="#3f2fa6">0</text>
+    <rect x="230" y="314" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="336" text-anchor="middle" fill="#1e6b45">response 7</text><text x="475" y="336" text-anchor="middle" fill="#3f2fa6">1</text>
+    <rect x="230" y="354" width="200" height="34" rx="6" fill="#e3f4ea" stroke="#7fc29b"/><text x="330" y="376" text-anchor="middle" fill="#1e6b45">response 8</text><text x="475" y="376" text-anchor="middle" fill="#3f2fa6">0</text>
+  </g>
+
+  <!-- group stats -->
+  <line x1="512" y1="220" x2="566" y2="220" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="570" y="165" width="170" height="110" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="655" y="198" text-anchor="middle" font-size="16" font-weight="bold" fill="#3f2fa6">Group</text>
+  <text x="655" y="226" text-anchor="middle" font-size="14" fill="#3f2fa6">mean = 0.5</text>
+  <text x="655" y="250" text-anchor="middle" font-size="14" fill="#3f2fa6">std = 0.5</text>
+
+  <!-- advantages -->
+  <line x1="742" y1="220" x2="782" y2="220" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="835" y="50" text-anchor="middle" font-size="15" font-weight="bold" fill="#3f2fa6">Advantage</text>
+  <text x="835" y="66" text-anchor="middle" font-size="12" fill="#555">(reward − mean) / std</text>
+  <g font-size="15" font-weight="bold" text-anchor="middle">
+    <text x="835" y="96" fill="#1e7d45">+1</text>
+    <text x="835" y="136" fill="#b3261e">−1</text>
+    <text x="835" y="176" fill="#1e7d45">+1</text>
+    <text x="835" y="216" fill="#1e7d45">+1</text>
+    <text x="835" y="256" fill="#b3261e">−1</text>
+    <text x="835" y="296" fill="#b3261e">−1</text>
+    <text x="835" y="336" fill="#1e7d45">+1</text>
+    <text x="835" y="376" fill="#b3261e">−1</text>
+  </g>
+
+  <!-- update -->
+  <line x1="878" y1="220" x2="906" y2="220" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="910" y="130" width="150" height="180" rx="10" fill="#e3f4ea" stroke="#7fc29b"/>
+  <text x="985" y="164" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e6b45">Update</text>
+  <text x="985" y="190" text-anchor="middle" font-size="12" font-family="Menlo, monospace" fill="#1e6b45">forward_backward</text>
+  <text x="985" y="208" text-anchor="middle" font-size="12" font-family="Menlo, monospace" fill="#1e6b45">optim_step</text>
+  <text x="985" y="240" text-anchor="middle" font-size="13" fill="#1e7d45">+ responses:</text>
+  <text x="985" y="258" text-anchor="middle" font-size="13" fill="#1e6b45">more likely</text>
+  <text x="985" y="280" text-anchor="middle" font-size="13" fill="#b3261e">− responses:</text>
+  <text x="985" y="298" text-anchor="middle" font-size="13" fill="#1e6b45">less likely</text>
+
+  <!-- legend -->
+  <text x="540" y="428" text-anchor="middle" font-size="14" fill="#444">If all 8 responses get the same reward, every advantage is 0 and the group is skipped.</text>
+  <rect x="330" y="446" width="14" height="14" rx="3" fill="#e3f4ea" stroke="#7fc29b"/>
+  <text x="350" y="458" font-size="13" fill="#444">runs in the training session</text>
+  <rect x="560" y="446" width="14" height="14" rx="3" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="580" y="458" font-size="13" fill="#444">runs in your notebook</text>
+</svg>
