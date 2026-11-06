@@ -327,7 +327,7 @@ class TrainingRun:
         Returns:
             self, so that TrainingRun(cfg).open() can be assigned directly.
 
-        Side effects: creates a training session (billed while it runs) and blocks until it is running; loads
+        Side effects: creates a training session (it counts against the concurrent-session quota until close) and blocks until it is running; loads
         the tokenizer; creates a SamplingClient for the current weights; starts the gateway server thread on a
         free port of 127.0.0.1. Errors from the training session service and from the gateway start
         (TimeoutError, RuntimeError) are raised unchanged.

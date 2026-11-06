@@ -543,7 +543,7 @@ code("""
 model_package_arn = run.save(inference=True)
 print(model_package_arn)
 """)
-md("## Clean up\n\nStop the training session. It is billed while it is open.")
+md("## Clean up\n\nStop the training session. It counts against your concurrent-session quota until it is stopped.")
 code("""
 # Stop the training session and the rollout gateway. The saved model package is kept.
 run.close()

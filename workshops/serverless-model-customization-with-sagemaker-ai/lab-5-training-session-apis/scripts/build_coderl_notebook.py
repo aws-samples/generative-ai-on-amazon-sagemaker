@@ -237,7 +237,7 @@ from coderl.progress import gather
 # svc is the entry point to the training session APIs.
 svc = ServiceClient(region=REGION, role_arn=ROLE_ARN, model_package_group_arn=MPG_ARN, s3_output_path=S3_OUTPUT)
 # Start a training session with a LoRA adapter (rank 32) on the base model. The call returns when the session is
-# running; the session holds resources until training_client.stop().
+# running; it counts against your concurrent-session quota until training_client.stop().
 training_client = svc.create_lora_training_client(
     "{{MODEL}}", training_session_name=f"code-rl-{int(time.time())}", rank=32, alpha=64)
 # The model's tokenizer, loaded from the session. It turns text into token ids and back.

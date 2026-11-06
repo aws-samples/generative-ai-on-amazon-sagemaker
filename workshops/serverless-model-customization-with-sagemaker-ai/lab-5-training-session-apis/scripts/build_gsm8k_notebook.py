@@ -197,7 +197,7 @@ a sampler for the current weights (the base model, before any update).
 """)
 code("""
 # Start a training session with a LoRA adapter (rank 32) on the base model. The call returns when the session is
-# running; the session holds resources until training_client.stop() at the end of the notebook.
+# running; it counts against your concurrent-session quota until training_client.stop() at the end of the notebook.
 training_client = svc.create_lora_training_client(
     "{{MODEL}}", training_session_name=f"{{TAG}}-grpo-{int(time.time())}", rank=32, alpha=64)
 # The model's tokenizer, loaded from the session. It turns text into token ids and back.
@@ -402,7 +402,7 @@ code("""
 weights = training_client.save_weights_for_sampler(description="{{TAG}} grpo").result()
 print("adapter:", weights.model_package_arn)
 """)
-md("Stop the session. It holds resources while it is open.")
+md("Stop the session. It counts against your concurrent-session quota until it is stopped.")
 code("""
 # Stop the session and release its resources. The saved model package is kept.
 training_client.stop()
