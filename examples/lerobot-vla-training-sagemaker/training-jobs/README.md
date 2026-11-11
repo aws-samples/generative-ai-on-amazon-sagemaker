@@ -45,7 +45,7 @@ python launch_training_job.py --model groot --instance-type ml.g7e.2xlarge,ml.g7
 # managed Spot; an interrupted job resumes from the last checkpoint in S3
 python launch_training_job.py --model act --instance-type ml.g7e.4xlarge --spot
 # dataset from S3 instead of the Hub; resume = same --job-name again
-python launch_training_job.py --model act --dataset-s3-uri s3://bucket/prefix/so101_teleop_vials_rack_left/
+python launch_training_job.py --model act --dataset-s3-uri s3://amzn-s3-demo-bucket/prefix/so101_teleop_vials_rack_left/
 python launch_training_job.py --model act --job-name my-run --steps 20000   # ... later, same name + more steps resumes
 ```
 
@@ -70,11 +70,11 @@ Two ways; both end in the same `lerobot-train` flags.
    `lerobot-train --dataset.repo_id=$DATASET_REPO_ID` and LeRobot downloads the dataset into `HF_LEROBOT_HOME`
    (`/opt/ml/cache/huggingface/lerobot` on the job's EBS volume). ~400 MB for the 75-episode dataset, a few
    seconds; every job downloads afresh. Needs outbound internet (default) or a Hub proxy in a private VPC.
-2. **From S3 as a SageMaker input channel.** `--dataset-s3-uri s3://bucket/prefix/` creates
+2. **From S3 as a SageMaker input channel.** `--dataset-s3-uri s3://amzn-s3-demo-bucket/prefix/` creates
    `InputData(channel_name="dataset")`; SageMaker copies the prefix to `/opt/ml/input/data/dataset` before the
    container starts; `train.sh` sees that directory and adds `--dataset.root=/opt/ml/input/data/dataset`
    (`--dataset.repo_id` is still passed, LeRobot uses it as the dataset name). No Hub access at runtime. Stage the
-   dataset once with `hf download <repo> --repo-type dataset --local-dir d && aws s3 sync d s3://bucket/prefix/`.
+   dataset once with `hf download <repo> --repo-type dataset --local-dir d && aws s3 sync d s3://amzn-s3-demo-bucket/prefix/`.
    For datasets in the tens of GB use FastFile mode or an FSx for Lustre `FileSystemDataSource` instead.
 
 Datasets without a `v3.0` codebase tag on the Hub (e.g. `..._sim_and_real`) need
