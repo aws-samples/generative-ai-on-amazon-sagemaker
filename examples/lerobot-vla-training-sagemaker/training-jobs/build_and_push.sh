@@ -10,7 +10,7 @@ AWS_REGION="${AWS_REGION:-us-east-1}"
 REPO="${REPO:-lerobot-vla}"
 LEROBOT_VERSION="${LEROBOT_VERSION:-0.6.1}"
 TAG="${TAG:-${LEROBOT_VERSION}}"
-DOCKERFILE="${DOCKERFILE:-docker/Dockerfile}"   # or docker/Dockerfile.dlc
+DOCKERFILE="${DOCKERFILE:-docker/Dockerfile}"
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 REGISTRY="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 IMAGE_URI="${REGISTRY}/${REPO}:${TAG}"
@@ -20,7 +20,7 @@ aws ecr describe-repositories --repository-names "$REPO" --region "$AWS_REGION" 
 
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "$REGISTRY"
-# The DLC base lives in AWS's registry; log in there too (harmless for the NVIDIA-base Dockerfile).
+# The DLC base image lives in AWS's ECR registry; log in there too.
 aws ecr get-login-password --region "$AWS_REGION" \
   | docker login --username AWS --password-stdin "763104351884.dkr.ecr.${AWS_REGION}.amazonaws.com" 2>/dev/null || true
 

@@ -5,10 +5,8 @@ also run on HyperPod EKS; that part lives in `../hyperpod/`.
 
 ```
 training-jobs/
-├── docker/Dockerfile.dlc      # PRIMARY: AWS DLC pytorch-training 2.10.0 (py3.13, cu130; EFA + aws-ofi-nccl included)
+├── docker/Dockerfile          # AWS DLC pytorch-training 2.10.0 (py3.13, cu130; EFA + aws-ofi-nccl included)
 │                              # + lerobot[groot,pi,peft,training]==0.6.1 (torch pinned), minus torchcodec/flash-attn
-├── docker/Dockerfile          # ALTERNATIVE: nvidia/cuda:13.0.3 + uv + torch 2.11 cu130 + EFA 1.50.0 + aws-ofi-nccl
-│                              # (for a torch newer than the DLC ships; needs the libnccl-net.so symlink)
 ├── build_and_push.sh          # docker build (linux/amd64, context = this dir) + push to ECR
 ├── launch_training_job.py     # SageMaker Python SDK v3 ModelTrainer (Training Jobs path)
 ├── results.py                 # summarise jobs: status, wall, peak VRAM, errors from CloudWatch
@@ -22,8 +20,7 @@ training-jobs/
 ```bash
 pip install "sagemaker>=3.22" boto3
 export AWS_REGION=us-east-2
-DOCKERFILE=docker/Dockerfile.dlc ./build_and_push.sh   # prints TRAINING_IMAGE_URI (~10 min on a c6i.4xlarge)
-# or DOCKERFILE=docker/Dockerfile for the NVIDIA-base variant
+./build_and_push.sh   # prints TRAINING_IMAGE_URI (~10 min on a c6i.4xlarge)
 export TRAINING_IMAGE_URI=<acct>.dkr.ecr.us-east-2.amazonaws.com/lerobot-vla:0.6.1
 export SAGEMAKER_ROLE_ARN=arn:aws:iam::<acct>:role/<role sagemaker.amazonaws.com can assume>
 export HF_TOKEN=hf_xxx   # or --hf-token on each command; needed for groot and pi05 (gated backbones)
@@ -114,8 +111,6 @@ Training Jobs pick up a new preset at launch; HyperPod runs `train.sh` from the 
   dataset); use `--policy.empty_cameras=1`.
 - LoRA: pass `--peft.*` only; `--policy.use_peft=true` means "load an adapter".
 - GR00T has no LoRA in LeRobot 0.6.1; on 24 GB use `--policy.tune_diffusion_model=false` (projector only).
-- NCCL 2.28 (torch cu130) loads `libnccl-net.so`; symlink the aws-ofi plugin to that name or you silently get
-  Socket instead of EFA.
 - `.xlarge` sizes cap `VolumeSizeInGB` at 250.
 - `CreateTrainingJob` must be able to assume the role you pass (`sagemaker.amazonaws.com` in its trust policy).
 - Capacity for the larger GPU instance sizes varies by Region. Pass a comma-separated `--instance-type` list

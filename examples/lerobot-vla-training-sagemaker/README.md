@@ -6,7 +6,7 @@ Training Pipeline*. One container image and one launcher script fine-tune NVIDIA
 **SageMaker HyperPod (EKS)**, from a single GPU to multi-node with EFA.
 
 ```
-training-jobs/   image (Dockerfile.dlc primary, Dockerfile alternative), SDK v3 launcher, train.sh, presets
+training-jobs/   image (Dockerfile on the AWS Deep Learning Container), SDK v3 launcher, train.sh, presets
 hyperpod/        PyTorchJob template + launcher that runs the same image and train.sh on HyperPod EKS
 ```
 
@@ -20,7 +20,7 @@ Dataset used throughout: `sreetz-nv/so101_teleop_vials_rack_left` from NVIDIA's
 cd training-jobs
 pip install "sagemaker>=3.22" boto3
 export AWS_REGION=us-east-2
-DOCKERFILE=docker/Dockerfile.dlc ./build_and_push.sh          # builds + pushes to ECR, prints TRAINING_IMAGE_URI
+./build_and_push.sh                                          # builds + pushes to ECR, prints TRAINING_IMAGE_URI
 export TRAINING_IMAGE_URI=... SAGEMAKER_ROLE_ARN=... HF_TOKEN=hf_xxx   # token needed for GR00T and π₀.₅
 
 python launch_training_job.py --model groot --instance-type ml.g7e.2xlarge
