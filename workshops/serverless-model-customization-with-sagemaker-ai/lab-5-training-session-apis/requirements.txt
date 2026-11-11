@@ -11,3 +11,7 @@ transformers==5.5.4
 strands-agents[openai]==1.62.0
 agentcore-rl-toolkit[core,gateway]==0.2.0
 training-sessions-cookbook[code-rl] @ git+https://github.com/aws/sagemaker-training-sessions-cookbook@7f2d3e0
+
+# MLflow tracking (same as the other labs)
+mlflow
+sagemaker-mlflow==0.5.0

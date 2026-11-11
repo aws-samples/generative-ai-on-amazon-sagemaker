@@ -139,6 +139,17 @@ except sm.exceptions.ClientError:
 print(REGION, ROLE_ARN, MPG_ARN, sep="\\n")
 """)
 md("""
+### MLflow tracking
+
+The notebook logs its settings, the metrics of each training step and the evaluation results to the workshop's
+[SageMaker AI MLflow App](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow.html), in the experiment `lab5-code-rl`.
+`tracking.py` finds the app the same way as the other labs (`workshop_mlflow.py`). If no MLflow App is available,
+tracking is turned off with a message and the notebook runs as before.
+""")
+code("""
+import tracking
+""")
+md("""
 ### The sandbox
 
 Generated code runs in Amazon Bedrock AgentCore Code Interpreter. The code interpreter
@@ -294,7 +305,12 @@ async def evaluate(client, tasks, samples_per_problem=2):
 
 t0 = time.time()
 # Jupyter runs top-level await in the notebook's event loop.
+# Start an MLflow run named after the session and log the main settings.
+tracking.start("lab5-code-rl", training_client.training_session_name,
+               {"model": "{{MODEL}}", "lora_rank": 32, "max_tokens": 12288, "reasoning_effort": "{{REASONING}}",
+                "eval_problems": len(test_tasks)})
 base_pass, base_texts = await evaluate(sampling_client, test_tasks)
+tracking.log({"base_pass_rate": base_pass})
 print(f"base model: pass rate {base_pass:.1%} on {len(test_tasks)} held-out problems, 2 attempts each ({time.time() - t0:.0f}s)")
 """)
 
@@ -419,6 +435,9 @@ for step in range(STEPS):
         await asyncio.to_thread(opt.result)
         # Snapshot the updated weights and get a sampler for them, so the next step samples from the new model.
         sampling_client = await asyncio.to_thread(training_client.save_weights_and_get_sampling_client)
+    # Log this step's metrics to MLflow (does nothing if tracking is off).
+    tracking.log({"train_reward": float(np.mean(rewards_all)), "skipped_groups": skipped, "datums": len(datums),
+                  "step_seconds": time.time() - t0}, step=step)
     print(f"step {step}  train reward {np.mean(rewards_all):.3f}  skipped groups {skipped}/{PROBLEMS_PER_STEP}  "
           f"datums {len(datums)}  {time.time() - t0:.0f}s")
 """)
@@ -485,6 +504,7 @@ pretrained_sampler = pretrained_client.save_weights_and_get_sampling_client()
 
 t0 = time.time()
 pretrained_pass, pretrained_texts = await evaluate(pretrained_sampler, test_tasks)
+tracking.log({"pretrained_pass_rate": pretrained_pass})
 print(f"pass rate: base {base_pass:.1%} -> pre-trained adapter {pretrained_pass:.1%} "
       f"({len(test_tasks)} held-out problems, 2 attempts each, {time.time() - t0:.0f}s)")
 """)
@@ -492,6 +512,8 @@ code("""
 # Stop the session and close the Code Interpreter sessions. The code interpreter and the model package are kept.
 pretrained_client.stop()
 sandbox.close()
+# End the MLflow run.
+tracking.end()
 """)
 
 md("""

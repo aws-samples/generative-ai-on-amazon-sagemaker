@@ -132,6 +132,17 @@ except sm.exceptions.ClientError:
 svc = ServiceClient(region=REGION, role_arn=ROLE_ARN, model_package_group_arn=MPG_ARN, s3_output_path=S3_OUTPUT)
 print(REGION, ROLE_ARN, MPG_ARN, sep="\\n")
 """)
+md("""
+### MLflow tracking
+
+The notebook logs its settings, the metrics of each training step and the evaluation results to the workshop's
+[SageMaker AI MLflow App](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow.html), in the experiment `lab5-gsm-hard-grpo`.
+`tracking.py` finds the app the same way as the other labs (`workshop_mlflow.py`). If no MLflow App is available,
+tracking is turned off with a message and the notebook runs as before.
+""")
+code("""
+import tracking
+""")
 
 md("""
 ## 2. Data, prompt and reward
@@ -217,6 +228,9 @@ tokenizer = training_client.get_tokenizer()
 # A sampler for the current weights. Before any update these are the base model's weights.
 sampling_client = training_client.create_sampling_client()
 print("session:", training_client.training_session_name)
+# Start an MLflow run named after the session and log the main settings.
+tracking.start("lab5-gsm-hard-grpo", training_client.training_session_name,
+               {"model": "{{MODEL}}", "lora_rank": 32, "max_tokens": 512, "reasoning_effort": "{{EFFORT}}"})
 """)
 md("""
 ### One example: tokenizer and sampler
@@ -301,6 +315,7 @@ def evaluate(problems, samples_per_problem=2):
 # Score the base model on the 100 held-out problems, 2 responses each.
 t0 = time.time()
 base_accuracy, base_cut, base_tokens = evaluate(eval_problems)
+tracking.log({"eval_accuracy": base_accuracy, "eval_cut": base_cut, "eval_tokens": base_tokens}, step=0)
 print(f"base model: accuracy {base_accuracy:.1%}, answers cut at {MAX_TOKENS} tokens {base_cut:.1%}, "
       f"mean length {base_tokens:.0f} tokens ({time.time() - t0:.0f}s)")
 """)
@@ -404,6 +419,9 @@ for step in range(STEPS):
         sampling_client = training_client.save_weights_and_get_sampling_client()
     # Mean reward over all sampled responses of this step (the training accuracy at temperature 1.0).
     history.append(float(np.mean(rewards_all)))
+    # Log this step's metrics to MLflow (does nothing if tracking is off).
+    tracking.log({"train_accuracy": history[-1], "skipped_groups": skipped, "datums": len(datums),
+                  "step_seconds": time.time() - t0}, step=step)
     print(f"step {step:2d}  train accuracy {history[-1]:.1%}  skipped groups {skipped}/{PROMPTS_PER_STEP}  "
           f"datums {len(datums):3d}  {time.time() - t0:.0f}s")
 """)
@@ -422,6 +440,8 @@ code("""
 # now samples from the weights after the last update.
 t0 = time.time()
 trained_accuracy, trained_cut, trained_tokens = evaluate(eval_problems)
+# Logged at step STEPS, so the base (step 0) and trained values appear on one chart in MLflow.
+tracking.log({"eval_accuracy": trained_accuracy, "eval_cut": trained_cut, "eval_tokens": trained_tokens}, step=STEPS)
 print(f"accuracy      {base_accuracy:.1%} -> {trained_accuracy:.1%}")
 print(f"cut answers   {base_cut:.1%} -> {trained_cut:.1%}")
 print(f"mean length   {base_tokens:.0f} -> {trained_tokens:.0f} tokens   ({time.time() - t0:.0f}s)")
@@ -441,6 +461,8 @@ md("Stop the session. It counts against your concurrent-session quota until it i
 code("""
 # Stop the session and release its resources. The saved model package is kept.
 training_client.stop()
+# End the MLflow run.
+tracking.end()
 """)
 md("""
 ## Try your own reward or algorithm

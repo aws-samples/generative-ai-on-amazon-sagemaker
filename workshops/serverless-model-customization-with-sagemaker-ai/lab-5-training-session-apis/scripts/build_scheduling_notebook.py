@@ -122,6 +122,17 @@ except sm.exceptions.ClientError:
     MPG_ARN = sm.describe_model_package_group(ModelPackageGroupName="scheduling-agent")["ModelPackageGroupArn"]
 print(REGION, ROLE_ARN, MPG_ARN, sep="\\n")
 """)
+md("""
+### MLflow tracking
+
+The notebook logs its settings, the metrics of each training step and the evaluation results to the workshop's
+[SageMaker AI MLflow App](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow.html), in the experiment `lab5-scheduling-agent`.
+`tracking.py` finds the app the same way as the other labs (`workshop_mlflow.py`). If no MLflow App is available,
+tracking is turned off with a message and the notebook runs as before.
+""")
+code("""
+import tracking
+""")
 
 md("""
 ## 2. The calendars and the agent
@@ -387,6 +398,10 @@ cfg = RunConfig(region=REGION, base_model_arn=BASE_MODEL_ARN, role_arn=ROLE_ARN,
 # open() starts the training session (returns when it is running) and the rollout gateway on 127.0.0.1.
 run = TrainingRun(cfg).open()
 print("training session:", run.session_name)
+# Start an MLflow run named after the session and log the run settings (all RunConfig fields except the ARNs).
+from dataclasses import asdict
+tracking.start("lab5-scheduling-agent", run.session_name,
+               {k: v for k, v in asdict(cfg).items() if not k.endswith(("_arn", "_path"))})
 """)
 md("""
 The base model runs once on each of the 128 test requests at temperature 0.
@@ -414,6 +429,7 @@ async def evaluate(tasks):
 t0 = time.time()
 # Notebooks allow await at the top level of a cell.
 base_score, base_rollouts = await evaluate(test_tasks)
+tracking.log({"eval_reward": base_score}, step=0)
 print(f"base model: mean reward {base_score:.3f} on {len(test_tasks)} held-out requests ({time.time() - t0:.0f}s)")
 """)
 
@@ -505,6 +521,8 @@ for step in range(STEPS):
     # refreshes the sampler to the updated weights. It returns the step's metrics and the rollouts per group.
     metrics, groups = await run.train_step(run_agent, rng.sample(train_tasks, GROUPS))
     history.append(metrics["reward_mean"])
+    # Log all numeric step metrics to MLflow (does nothing if tracking is off).
+    tracking.log(metrics, step=step)
     print(f"step {step:2d}  train reward {metrics['reward_mean']:.3f}  skipped groups {metrics['groups_skipped']}/{GROUPS}  "
           f"datums {metrics['datums']:3d}  {metrics['time_step']:.0f}s")
 """)
@@ -520,6 +538,8 @@ md("## 5. Evaluate and save\n\n**Run time:** about 3 to 7 minutes for the evalua
 code("""
 t0 = time.time()
 trained_score, trained_rollouts = await evaluate(test_tasks)
+# Logged at step STEPS, so the base (step 0) and trained values appear on one chart in MLflow.
+tracking.log({"eval_reward": trained_score}, step=STEPS)
 print(f"base {base_score:.3f} -> trained {trained_score:.3f} on {len(test_tasks)} held-out requests ({time.time() - t0:.0f}s)")
 """)
 md("Requests the base model got wrong and the trained model got right:")
@@ -547,6 +567,8 @@ md("## Clean up\n\nStop the training session. It counts against your concurrent-
 code("""
 # Stop the training session and the rollout gateway. The saved model package is kept.
 run.close()
+# End the MLflow run.
+tracking.end()
 """)
 md("""
 ## Use this for your own agent

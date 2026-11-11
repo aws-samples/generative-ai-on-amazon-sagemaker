@@ -51,6 +51,7 @@ Requirements in the account (`us-west-2`):
 | `lab/agents.py` | Strands helpers: gateway or Amazon Bedrock model, transcripts |
 | `usecases/scheduling_hard.py` | Scheduling environment: people, calendars, requests, correct answers, tools, reward |
 | `coderl/` | Code Interpreter sandbox (`code_interpreter.py`), local `/run_code` endpoint (`sandbox_proxy.py`), progress helper, adapter evaluation (`eval_adapter.py`) |
+| `tracking.py`, `workshop_mlflow.py` | MLflow tracking: finds the workshop's MLflow App (same helper as the other labs) and logs settings, step metrics and evaluation results; turns itself off if no app is available |
 | `images/` | Figures used in the notebooks |
 | `scripts/run.py`, `scripts/eval_package.py` | Train or evaluate the scheduling agent from the command line |
 | `scripts/register_adapter.py` | Register adapter files from S3 as a model package |
