@@ -105,10 +105,16 @@ from tqdm.auto import tqdm
 from sagemaker.train.training_session import AdamParams, ServiceClient
 
 from agentcore_rl_toolkit.backends.experimental.sagemaker.datum import trace_record_to_datum
-from agentcore_rl_toolkit.rollout_gateway import BaseTrace, HfTemplateRenderer
+from agentcore_rl_toolkit.rollout_gateway import BaseTrace, HfTemplateRenderer, response_schemas
 from agentcore_rl_toolkit.rollout_gateway.gateway import RolloutGateway
 from agentcore_rl_toolkit.rollout_gateway.sampling_backends.sagemaker_sdk import SageMakerSdkBackend
 from agentcore_rl_toolkit.rollout_gateway.server import ThreadedGatewayServer
+
+# The renderer picks the tool-call parser by the SHA-256 hash of the chat template. Register the hash of the current
+# Qwen3.8 template (Hugging Face commit 37561816) with the Qwen3.8 schema; agentcore-rl-toolkit 0.2.0 does not list it.
+response_schemas._TEMPLATE_HASHES.setdefault(
+    "af16f654968d47d09a6c604e00370b12dbc21f76456f59c9e98b82e84d9f6375", "qwen3_5"
+)
 
 
 logger = logging.getLogger("lab")
