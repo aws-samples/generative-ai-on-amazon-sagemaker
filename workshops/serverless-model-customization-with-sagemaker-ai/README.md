@@ -27,7 +27,7 @@ Train a model to answer a fixed 17-point legal checklist about a non-disclosure 
 | 1    | `1-prepare-data.ipynb`          | Load the ContractNLI NDA corpus, render the 17-point checklist prompt, upload to S3, and register in AI Registry                                                                                          |
 | 2    | `2-fine-tune-llm.ipynb`         | Run serverless SFT with LoRA using `SFTTrainer`, track metrics with MLflow                                                                                                                                |
 | 2b   | `2b-import-model-from-s3.ipynb` | _(Alternative to step 2)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package                                                                                         |
-| 3    | `3-evaluation.ipynb`            | Score with a custom reward function (label_correct, evidence_f1, contradiction_correct, json_valid), then judge with Claude Sonnet 4.5 (EvidenceSupportsVerdict, CarveOutHandling, ChecklistCompleteness) |
+| 3    | `3-evaluation.ipynb`            | Score with a custom reward function (label_correct, evidence_f1, contradiction_correct, json_valid), then judge with Claude Opus 4.5 (EvidenceSupportsVerdict, CarveOutHandling, ChecklistCompleteness) |
 | 4    | `4-deployment.ipynb`            | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                                                                                                                           |
 
 ---
@@ -43,7 +43,7 @@ Align model outputs to human preferences using chosen/rejected response pairs â€
 | 1    | `1-dpo-prepare-data.ipynb`          | Load the preference dataset, format as prompt/chosen/rejected triplets, upload to S3, and register in AI Registry                    |
 | 2    | `2-dpo-trainer.ipynb`               | Run serverless DPO training with LoRA using `DPOTrainer`, track metrics with MLflow                                                  |
 | 2b   | `2b-dpo-import-model-from-s3.ipynb` | _(Alternative to step 2)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package                    |
-| 3    | `3-dpo-evaluation.ipynb`            | Evaluate with LLM-as-a-Judge (Claude Sonnet 4.5) using custom metrics: HumanLikeTone, ConversationalEngagement, AvoidRoboticPatterns |
+| 3    | `3-dpo-evaluation.ipynb`            | Evaluate with LLM-as-a-Judge (Claude Opus 4.5) using custom metrics: HumanLikeTone, ConversationalEngagement, AvoidRoboticPatterns |
 | 4    | `4-dpo-deployment.ipynb`            | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                                                      |
 
 ---
@@ -102,7 +102,7 @@ Use an AI judge model to provide reward signals during training, enabling prefer
 - A SageMaker Studio domain with JupyterLab or Code Editor
 - IAM permissions for SageMaker Training, Endpoints, Model Registry, and S3
 - Service quota for `ml.g5.xlarge` (all labs) for inference
-- Access to Claude Sonnet 4.5 in Amazon Bedrock, the LLM-as-a-Judge evaluator model in labs 1, 2 and 4. Lab 1 also calls Claude Sonnet 4.6 for its frontier baseline
+- Access to Claude Opus 4.5 in Amazon Bedrock, the LLM-as-a-Judge evaluator model in labs 1, 2 and 4. Lab 1 also calls Claude Sonnet 4.6 for its frontier baseline
 
 ## MLflow automation in every lab
 
