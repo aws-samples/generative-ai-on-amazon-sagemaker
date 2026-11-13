@@ -6,29 +6,29 @@ Fine-tune a model for evidence-based NDA review using [ContractNLI](https://stan
 
 ## Primary: Nemotron 3.5 Bolt E4B with SageMaker Training jobs
 
-Open notebooks in `02-smtj-workshop/` and run them in this order:
+Open notebooks in `01-smtj-workshop/` and run them in this order:
 
 | Step | Notebook                                                     | Purpose                                                                                                |
 | ---- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| 1    | [Prepare data](02-smtj-workshop/1-prepare-data.ipynb)        | Build chat prompt/completion records, measure token lengths and upload train/validation data to S3.    |
-| 2    | [Fine-tune](02-smtj-workshop/2-fine-tune-llm.ipynb)          | Write the recipe, launch `ModelTrainer`, monitor the exact job and wait for `Completed`.               |
-| 3    | [Deploy](02-smtj-workshop/3-deployment.ipynb)                | Deploy the merged `model.tar.gz` with vLLM and leave the endpoint running for evaluation.              |
-| 4    | [Evaluate and clean up](02-smtj-workshop/4-evaluation.ipynb) | Score held-out contracts, compare baselines, optionally run the Bedrock judge and delete the endpoint. |
+| 1    | [Prepare data](01-smtj-workshop/1-prepare-data.ipynb)        | Build chat prompt/completion records, measure token lengths and upload train/validation data to S3.    |
+| 2    | [Fine-tune](01-smtj-workshop/2-fine-tune-llm.ipynb)          | Write the recipe, launch `ModelTrainer`, monitor the exact job and wait for `Completed`.               |
+| 3    | [Deploy](01-smtj-workshop/3-deployment.ipynb)                | Deploy the merged `model.tar.gz` with vLLM and leave the endpoint running for evaluation.              |
+| 4    | [Evaluate and clean up](01-smtj-workshop/4-evaluation.ipynb) | Score held-out contracts, compare baselines, optionally run the Bedrock judge and delete the endpoint. |
 
 The model is `nvidia/NVIDIA-Nemotron-3.5-Bolt-E4B-BF16`. Training runs on one single-GPU instance chosen from five instance preferences (`ml.g7.2xlarge`, `ml.g6e.2xlarge`, `ml.g5.2xlarge`, `ml.g6.2xlarge`, `ml.g6e.xlarge`), PyTorch 2.8.0, BF16 LoRA (4-bit QLoRA on 24 GB GPUs), one epoch, sequence length 8,192, LoRA rank 32 and learning rate `1e-4`. Batch size 1 with four accumulation steps gives an effective batch of 4. `KEEP_ALIVE_SECONDS = 0` disables the warm pool. Hosting uses one instance from five instance pools (`ml.g7.2xlarge`, `ml.g5.xlarge`, `ml.g6.xlarge`, `ml.g6.2xlarge`, `ml.g6e.xlarge`), vLLM 0.31.0 and no Inference Component.
 
-Deployment precedes evaluation because this track evaluates a real-time endpoint, not a Model Package. Notebook 3 can use an explicit `TRAINING_JOB_NAME`; otherwise it discovers the newest completed matching job. Prefer the exact name printed by notebook 2 when sharing an account. Notebook 4 defaults `RUN_ENDPOINT_EVAL` and `RUN_JUDGE_EVAL` to `False` and reads reference results from `02-smtj-workshop/baselines/`. Reference results are not measurements of your new run.
+Deployment precedes evaluation because this track evaluates a real-time endpoint, not a Model Package. Notebook 3 can use an explicit `TRAINING_JOB_NAME`; otherwise it discovers the newest completed matching job. Prefer the exact name printed by notebook 2 when sharing an account. Notebook 4 defaults `RUN_ENDPOINT_EVAL` and `RUN_JUDGE_EVAL` to `False` and reads reference results from `01-smtj-workshop/baselines/`. Reference results are not measurements of your new run.
 
 ## Optional: Nemotron 3 Nano 30B-A3B with serverless customization
 
-Open notebooks in `01-serverless-workshop/` and run them in this order:
+Open notebooks in `02-serverless-workshop/` and run them in this order:
 
 | Step | Notebook                                                         | Purpose                                                                                     |
 | ---- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 1    | [Prepare data](01-serverless-workshop/1-prepare-data.ipynb)      | Upload string prompt/completion records and register AI Registry datasets.                  |
-| 2    | [Fine-tune](01-serverless-workshop/2-fine-tune-llm.ipynb)        | Run serverless `SFTTrainer` and associate the result with a Model Package Group.            |
-| 3    | [Evaluate](01-serverless-workshop/3-evaluation.ipynb)            | Compare models with custom scoring, a frontier baseline and LLM-as-a-Judge.                 |
-| 4    | [Deploy and clean up](01-serverless-workshop/4-deployment.ipynb) | Deploy the model package with vLLM and an Inference Component, run a non-streaming smoke test and clean up. |
+| 1    | [Prepare data](02-serverless-workshop/1-prepare-data.ipynb)      | Upload string prompt/completion records and register AI Registry datasets.                  |
+| 2    | [Fine-tune](02-serverless-workshop/2-fine-tune-llm.ipynb)        | Run serverless `SFTTrainer` and associate the result with a Model Package Group.            |
+| 3    | [Evaluate](02-serverless-workshop/3-evaluation.ipynb)            | Compare models with custom scoring, a frontier baseline and LLM-as-a-Judge.                 |
+| 4    | [Deploy and clean up](02-serverless-workshop/4-deployment.ipynb) | Deploy the model package with vLLM and an Inference Component, run a non-streaming smoke test and clean up. |
 
 The JumpStart model ID is `huggingface-reasoning-nvidia-nemotron-3-nano-30b-a3b-bf16`. Training uses 10 epochs, global batch size 128, LoRA rank 32 and learning rate `1e-4`; SageMaker selects training compute. Hosting uses one `ml.g5.12xlarge` with four GPUs and vLLM 0.22.0. Evaluation comes before deployment in this track. Model support and regional capacity must be checked before launching.
 
@@ -43,7 +43,7 @@ The JumpStart model ID is `huggingface-reasoning-nvidia-nemotron-3-nano-30b-a3b-
 
 ### Notebook dependencies
 
-Run the chosen directory's `requirements.txt` install from notebook 1, then restart the kernel. Both requirements files load `../constraints-notebook.txt`, which pins the SageMaker SDK and its individual modules. The SDK metapackage alone permits newer module versions, so its version is not a sufficient API compatibility check. Training dependencies remain separate in `02-smtj-workshop/scripts/requirements.txt`; do not install those CUDA packages in JupyterLab.
+Run the chosen directory's `requirements.txt` install from notebook 1, then restart the kernel. Both requirements files load `../constraints-notebook.txt`, which pins the SageMaker SDK and its individual modules. The SDK metapackage alone permits newer module versions, so its version is not a sufficient API compatibility check. Training dependencies remain separate in `01-smtj-workshop/scripts/requirements.txt`; do not install those CUDA packages in JupyterLab.
 
 The [Distribution 4.5.0 CPU package manifest](https://github.com/aws/sagemaker-distribution/blob/main/build_artifacts/v4/v4.5/v4.5.0/cpu.env.out) uses Linux x86_64 and Python 3.12.14, with mixed SDK versions (metapackage 3.12.0, train 1.14.0, core 2.21.0). It is not the pinned workshop SDK. The constraints align the AWS dependency family and the `datasets`/`fsspec`/`s3fs` family to avoid broad resolver backtracking. All existing serverless dependencies are retained.
 
@@ -70,7 +70,7 @@ Notebook 2 captures the exact created Training job, prints SageMaker console and
 
 Open the configured app from Studio's **MLflow** page or the temporary app URL printed in notebook 2. Select `nemotron-3-5-bolt-e4b-contractnli-sft` for the primary track or `contractnli-serverless-sft` for serverless. Open signed links within five minutes; rerun the link cell if needed. Experiments and metrics may appear only after provisioning, dependency installation and model loading. Log and metric visibility is not instantaneous. The Bolt E4B recipe leaves `mlflow_log_model: false`, retaining metrics and parameters without uploading another merged checkpoint.
 
-Each evaluation notebook imports its own utility as `E`: [Bolt E4B endpoint evaluation utilities](https://github.com/aws-samples/generative-ai-on-amazon-sagemaker/blob/main/workshops/fine-tune-nvidia-nemotron-3-sagemaker-ai/02-smtj-workshop/evaluation_utils.py) or [serverless evaluation utilities](https://github.com/aws-samples/generative-ai-on-amazon-sagemaker/blob/main/workshops/fine-tune-nvidia-nemotron-3-sagemaker-ai/01-serverless-workshop/evaluation_utils.py). Their APIs differ. The notebooks retain core submissions, execution choices, and result-inspection calls; the primary track also retains streaming/cost controls backed by `inference_performance.py`. The standalone `contractnli_scorer.py` still owns per-contract parsing and metric equations. Copy the matching helper with the notebook when updating a checkout.
+Each evaluation notebook imports its own utility as `E`: [Bolt E4B endpoint evaluation utilities](https://github.com/aws-samples/generative-ai-on-amazon-sagemaker/blob/main/workshops/fine-tune-nvidia-nemotron-3-sagemaker-ai/01-smtj-workshop/evaluation_utils.py) or [serverless evaluation utilities](https://github.com/aws-samples/generative-ai-on-amazon-sagemaker/blob/main/workshops/fine-tune-nvidia-nemotron-3-sagemaker-ai/02-serverless-workshop/evaluation_utils.py). Their APIs differ. The notebooks retain core submissions, execution choices, and result-inspection calls; the primary track also retains streaming/cost controls backed by `inference_performance.py`. The standalone `contractnli_scorer.py` still owns per-contract parsing and metric equations. Copy the matching helper with the notebook when updating a checkout.
 
 Serverless evaluation writes seven JSON snapshots under `./eval_result`; primary-track evaluation keeps fresh quality/judge/performance variables in memory and writes judge inputs/results to S3 only when live judging runs. Neither utility computes confidence intervals or validates complete production schemas. The primary track's cleanup remains independent of all evaluation switches, including in saved-reference mode.
 
