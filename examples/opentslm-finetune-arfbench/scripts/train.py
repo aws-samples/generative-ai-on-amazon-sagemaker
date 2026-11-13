@@ -50,13 +50,19 @@ def main():
     def log_epoch(record):
         if mlflow:
             values = {k: v for k, v in record.items() if k != "epoch" and v is not None}
-            mlflow.log_metrics(values, step=record["epoch"])
+            try:  # a logging error does not stop the training
+                mlflow.log_metrics(values, step=record["epoch"])
+            except Exception as error:
+                print(f"MLflow logging failed: {error}", flush=True)
 
     try:
         run(args, mlflow, log_epoch)
     except Exception:
         if mlflow:
-            mlflow.end_run(status="FAILED")
+            try:
+                mlflow.end_run(status="FAILED")
+            except Exception as error:
+                print(f"MLflow logging failed: {error}", flush=True)
         raise
 
 
@@ -78,9 +84,14 @@ def run(args, mlflow, log_epoch):
         Bucket=bucket, Key=f"{prefix}/metrics.json", Body=json.dumps(results, indent=1)
     )
     if mlflow:
-        mlflow.log_metrics({**flat_metrics(before, "test_before"), **flat_metrics(after, "test")})
-        mlflow.log_dict(results, "metrics.json")
-        mlflow.end_run()
+        try:  # the model and metrics.json are saved already
+            mlflow.log_metrics(
+                {**flat_metrics(before, "test_before"), **flat_metrics(after, "test")}
+            )
+            mlflow.log_dict(results, "metrics.json")
+            mlflow.end_run()
+        except Exception as error:
+            print(f"MLflow logging failed: {error}", flush=True)
 
 
 if __name__ == "__main__":
