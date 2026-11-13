@@ -20,6 +20,7 @@ For the walkthrough, see the AWS blog post <!-- TODO: blog URL -->.
 |---|---|
 | `opentslm-finetune-arfbench.ipynb` | Set up, fine-tune on ARFBench, deploy the fine-tuned model, ask a question, clean up |
 | `utils.py` | The OpenTSLM model, its fine-tuning code and the endpoint's request handler. The training job and the endpoint both import it |
+| `arfbench-split.json` | The assignment of each ARFBench question to the training, validation or test set |
 
 ## What the notebook does
 
@@ -28,11 +29,13 @@ For the walkthrough, see the AWS blog post <!-- TODO: blog URL -->.
    `OpenTSLMSageMakerRole` once, with the AWS managed policy `AmazonSageMakerFullAccess`.
 2. **Fine-tune:** the `@remote` decorator runs the function `fine_tune` as a SageMaker training job on one
    `ml.g7e.2xlarge` instance, with the SageMaker PyTorch 2.9 training image. The job loads ARFBench through
-   [TimeNet](https://docs.timenet.ai/) and holds out 20% of the questions as a test set, split by incident so that
-   no incident appears in both sets. It trains the time-series encoder, the perceiver resampler and the
-   cross-attention layers for 3 epochs, while the Gemma 3 language model stays frozen. It saves the fine-tuned model
-   to Amazon S3 in the layout of a Hugging Face model repository and returns the test accuracy before and after
-   fine-tuning.
+   [TimeNet](https://docs.timenet.ai/) and splits the questions into training, validation and test sets (about 70%,
+   10% and 20%) as listed in `arfbench-split.json`. All questions about one incident are in the same set, and each
+   set has about the same mix of question categories and answers. The job trains the time-series encoder, the
+   perceiver resampler, the cross-attention layers and the language model's token embeddings for 3 epochs, uses the
+   validation set to choose the best epoch, and keeps the rest of the Gemma 3 language model frozen. It saves the
+   fine-tuned model to Amazon S3 in the layout of a Hugging Face model repository and returns the test accuracy
+   before and after fine-tuning, with the accuracy and balanced accuracy of each question category.
 3. **Deploy:** uploads `utils.py`, a one-line `inference.py` and a `requirements.txt` next to the fine-tuned model
    files, and deploys them to a real-time endpoint on one `ml.g6.2xlarge` instance with the SageMaker PyTorch 2.6
    inference image.
@@ -61,8 +64,9 @@ checkpoint that fits your use case.
 
 ## Request format
 
-A request holds up to 4 instances. Each instance has a question and up to 32 series. A series has its `values`
-(`None` marks a missing value), a short `name`, and a `text` that describes it. `max_new_tokens` accepts values
+A request holds up to 4 instances. Each instance has a question, up to 32 series, and optional `context` lines,
+which go between the series and the question. A series has its `values` (`None` marks a missing value), a short
+`name`, and a `text` that describes it. `max_new_tokens` accepts values
 from 1 to 512. The response holds one answer per instance in `generated_text`.
 
 ```json
@@ -71,7 +75,8 @@ from 1 to 512. The response holds one answer per instance in `generated_text`.
     "question": "Is there an anomaly in this series? If so, when does it start and end?",
     "series": [{"values": [21, 20, 22, 19, 78, 85, 82, 22, 20, 21],
                 "name": "CPU utilization (%)",
-                "text": "CPU utilization (%), 1 sample/minute:"}]
+                "text": "CPU utilization (%), 1 sample/minute:"}],
+    "context": ["The series covers 10:00 to 10:09 on a web server."]
   }],
   "parameters": {"max_new_tokens": 128}
 }

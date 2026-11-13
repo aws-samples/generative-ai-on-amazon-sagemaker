@@ -41,11 +41,13 @@ import copy
 import json
 import math
 import random
+import re
 import tempfile
 import time
+from collections import Counter
+from collections.abc import Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -54,7 +56,13 @@ import torch
 from safetensors import safe_open
 from safetensors.torch import load_file, save_file
 from torch import Tensor, nn
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    GenerationConfig,
+    get_wsd_schedule,
+)
 
 MEDIA_TOKEN = "<image>"  # tokenizer special token, not a credential  # nosec B105
 END_OF_CHUNK_TOKEN = "<|endofchunk|>"  # tokenizer special token, not a credential  # nosec B105
@@ -197,25 +205,29 @@ class MaskedCrossAttention(nn.Module):
         self.to_out = nn.Linear(dim_head * heads, dim, bias=False)
 
     def forward(self, x: Tensor, media: Tensor, media_locations: Tensor) -> Tensor:
-        batch, text_length, _ = x.shape
-        media_count, latents = media.shape[1:3]
-        query = self.to_q(self.norm(x))
-        key, value = self.to_kv(media.reshape(batch, media_count * latents, -1)).chunk(2, dim=-1)
-        query, key, value = (
-            item.reshape(batch, item.shape[1], self.heads, -1).transpose(1, 2)
-            for item in (query, key, value)
-        )
-        similarity = torch.einsum("bhid,bhjd->bhij", query * self.scale, key)
+        query = self.to_q(self.norm(x)) * self.scale
+        key, value = self.to_kv(media).chunk(2, dim=-1)
         text_time = media_locations.cumsum(dim=-1)
-        media_time = torch.arange(1, media_count + 1, device=x.device).repeat_interleave(latents)
-        text_to_media = text_time[:, None, :, None] == media_time[None, None, None, :]
-        similarity = similarity.masked_fill(~text_to_media, -torch.finfo(similarity.dtype).max)
-        similarity = similarity - similarity.amax(dim=-1, keepdim=True).detach()
-        attention = similarity.softmax(dim=-1)
-        # A text token before the first media token attends to nothing.
-        attention = attention.masked_fill((text_time == 0)[:, None, :, None], 0.0)
-        output = torch.einsum("bhij,bhjd->bhid", attention, value)
-        return self.to_out(output.transpose(1, 2).reshape(batch, text_length, -1))
+        if int(text_time.max()) > media.shape[1]:
+            raise ValueError("the text has more media tokens than there are media items")
+        # The tokens after one media token read only its latents. Scoring each run of tokens
+        # against those latents alone, not against all media, keeps the memory small.
+        rows = []
+        for index in range(len(x)):
+            items, counts = torch.unique_consecutive(text_time[index], return_counts=True)
+            parts = []
+            for item, segment in zip(items.tolist(), query[index].split(counts.tolist())):
+                if item == 0:  # a text token before the first media token attends to nothing
+                    parts.append(torch.zeros_like(segment))
+                    continue
+                q, k, v = (
+                    tensor.unflatten(-1, (self.heads, -1)).transpose(0, 1)
+                    for tensor in (segment, key[index, item - 1], value[index, item - 1])
+                )
+                attended = (q @ k.transpose(-1, -2)).softmax(dim=-1) @ v
+                parts.append(attended.transpose(0, 1).flatten(1))
+            rows.append(torch.cat(parts))
+        return self.to_out(torch.stack(rows))
 
 
 class GatedCrossAttentionBlock(nn.Module):
@@ -316,6 +328,7 @@ class OpenTSLMFlamingo(nn.Module):
         self.patch_size = int(encoder["patch_size"])
         self.max_values = int(encoder["max_patches"]) * self.patch_size
         self.max_media = int(resampler["max_media"])
+        self.compute_dtype = torch.float32  # from_file sets the dtype it loads in
         self.tokenizer = tokenizer
         self.files: dict[str, bytes] = {}  # the config files, which save() writes back
         language_model.resize_token_embeddings(len(tokenizer))
@@ -344,7 +357,11 @@ class OpenTSLMFlamingo(nn.Module):
     @classmethod
     def from_file(cls, path: str | Path, device: str, dtype: torch.dtype) -> OpenTSLMFlamingo:
         """Load a model directory: config.json, generation_config.json, the tokenizer files and
-        model.safetensors, as in the model's Hugging Face repository."""
+        model.safetensors, as in the model's Hugging Face repository.
+
+        Load in float32, then keep the series encoder, the perceiver, the cross-attention layers and the token embeddings in float32 and store the
+        rest of the language model in ``dtype``, as the checkpoint's training and its weights file do.
+        With a ``dtype`` other than float32 the forward passes run under autocast to ``dtype``."""
         root = Path(path)
         config = json.loads((root / "config.json").read_text())
         # Local directory.
@@ -368,8 +385,8 @@ class OpenTSLMFlamingo(nn.Module):
             *map(language_config.__getattribute__, language_config.sub_configs),
         ]:
             if part is not None:
-                part.dtype = dtype
-        with _default_dtype(dtype), torch.device(device):
+                part.dtype = torch.float32
+        with _default_dtype(torch.float32), torch.device(device):
             language_model = AutoModelForCausalLM.from_config(
                 language_config,
                 attn_implementation=config.get("attention_implementation", "eager"),
@@ -380,10 +397,26 @@ class OpenTSLMFlamingo(nn.Module):
             )
             model = cls(config, tokenizer, language_model)
         model.load_state_dict(weights, strict=True)
+        kept = {id(p) for module in model.trained_modules() for p in module.parameters()}
+        for parameter in model.parameters():
+            if id(parameter) not in kept:
+                parameter.data = parameter.data.to(dtype)
+        model.compute_dtype = dtype
         model.files = {
             name: (root / name).read_bytes() for name in CONFIG_FILES if (root / name).is_file()
         }
         return model.eval()
+
+    def trained_modules(self) -> list[nn.Module]:
+        """Give the modules that the checkpoint's training trains, and keeps in float32."""
+        lang = self.flamingo.lang_encoder
+        # Gemma 3 ties the output layer to the token embeddings.
+        return [
+            self.flamingo.vision_encoder,
+            self.flamingo.perceiver,
+            lang.gated_cross_attn_layers,
+            lang.get_input_embeddings(),
+        ]
 
     def save_pretrained(self, directory: str | Path) -> None:
         """Write the model directory; each tied weight is stored once."""
@@ -406,9 +439,17 @@ class OpenTSLMFlamingo(nn.Module):
         return next(self.parameters()).device
 
     @torch.inference_mode()
-    def generate(self, series: list[SeriesInput], question: str, max_new_tokens: int = 256) -> str:
-        """Answer a question about the series, with greedy decoding."""
-        prompt, values, observed = self.prepare(series, question)
+    def generate(
+        self,
+        series: list[SeriesInput],
+        question: str,
+        *,
+        context: Sequence[str] = (),
+        max_new_tokens: int = 256,
+    ) -> str:
+        """Answer a question about the series, with greedy decoding. Each ``context`` line goes
+        between the series and the question."""
+        prompt, values, observed = self.prepare(series, question, context)
         tokens = self.tokenizer([prompt], return_tensors="pt")
         input_ids = tokens["input_ids"].to(self.device)
         with self.conditioned_on(values, observed):
@@ -422,9 +463,11 @@ class OpenTSLMFlamingo(nn.Module):
         answer = generated[0, input_ids.shape[1] :]
         return self.tokenizer.decode(answer, skip_special_tokens=True).strip()
 
-    def loss(self, series: list[SeriesInput], question: str, answer: str) -> Tensor:
-        """Give the mean cross-entropy of the answer tokens and the end-of-sequence token, which
-        follow the prompt as in training."""
+    def loss(
+        self, series: list[SeriesInput], question: str, answer: str, reduction: str = "mean"
+    ) -> Tensor:
+        """Give the cross-entropy of the answer tokens and the end-of-sequence token, which
+        follow the prompt as in training: their mean, or one per token with ``"none"``."""
         prompt, values, observed = self.prepare(series, question)
         # As the training collator: a space before the answer unless the prompt ends in one.
         target = answer if prompt.endswith((" ", "\n")) else f" {answer}"
@@ -441,9 +484,11 @@ class OpenTSLMFlamingo(nn.Module):
                 logits_to_keep=len(target_ids) + 1,
             ).logits
         labels = torch.tensor(target_ids, device=logits.device)
-        return nn.functional.cross_entropy(logits[0, :-1].float(), labels)
+        return nn.functional.cross_entropy(logits[0, :-1].float(), labels, reduction=reduction)
 
-    def prepare(self, series: list[SeriesInput], question: str) -> tuple[str, Tensor, Tensor]:
+    def prepare(
+        self, series: list[SeriesInput], question: str, context: Sequence[str] = ()
+    ) -> tuple[str, Tensor, Tensor]:
         """Give the prompt and the padded series ``[series, time]`` with their observed flags,
         in the layout that the model trained on.
 
@@ -474,7 +519,7 @@ class OpenTSLMFlamingo(nn.Module):
                 END_OF_CHUNK_TOKEN,
             ]
             rows.append((scaled, observed))
-        words.append(question)
+        words += [*context, question]
         length = max(len(scaled) for scaled, _ in rows)
         length += -length % self.patch_size
         values = torch.zeros((len(rows), length), dtype=torch.float32)
@@ -486,17 +531,20 @@ class OpenTSLMFlamingo(nn.Module):
 
     @contextmanager
     def conditioned_on(self, values: Tensor, observed: Tensor):
-        """Let the language model attend to the encoded series while the block runs."""
-        dtype = next(self.parameters()).dtype
-        values, observed = values.to(self.device, dtype), observed.to(self.device)
-        encoded = self.flamingo.vision_encoder(values, observed)
-        steps = observed.reshape(len(observed), -1, self.patch_size).any(dim=-1)
-        latents = self.flamingo.perceiver(encoded, steps)
+        """Let the language model attend to the encoded series while the block runs, under
+        autocast to the model's compute dtype."""
+        dtype = self.compute_dtype
+        autocast = torch.autocast(self.device.type, dtype, enabled=dtype != torch.float32)
+        values, observed = values.to(self.device, torch.float32), observed.to(self.device)
         layers = self.flamingo.lang_encoder.language_model.layers
-        for layer in layers:
-            layer.vis_x = latents
         try:
-            yield
+            with autocast:
+                encoded = self.flamingo.vision_encoder(values, observed)
+                steps = observed.reshape(len(observed), -1, self.patch_size).any(dim=-1)
+                latents = self.flamingo.perceiver(encoded, steps)
+                for layer in layers:
+                    layer.vis_x = latents
+                yield
         finally:
             for layer in layers:
                 layer.vis_x = layer.media_locations = None
@@ -548,50 +596,139 @@ class Example:
     prompt: str
     options: list[str]
     answer: str
+    category: str
 
     def question(self, rng: random.Random | None = None) -> str:
-        """Give the question with its options, shuffled when ``rng`` is given."""
+        """Give the options, shuffled when ``rng`` is given, then the prompt. The checkpoint's
+        training shows a list annotation of a task this way: its key, then numbered lines."""
         if not self.options:
             return self.prompt  # the prompt lists the choices
         options = list(self.options)
         if rng is not None:
             rng.shuffle(options)
-        lines = "\n".join(f"- {option}" for option in options)
-        return (
-            f"{self.prompt}\nOptions:\n{lines}\nAnswer with one of the options, exactly as written."
-        )
+        lines = "\n".join(f"{number}. {option}" for number, option in enumerate(options, start=1))
+        return f"answer_options:\n{lines} {self.prompt}"
+
+    def evaluated_question(self) -> str:
+        """Give the question with its options in a fixed order that depends on the question
+        only. In ARFBench the answer is often the first released option."""
+        return self.question(random.Random(self.prompt))  # shuffling, not security  # nosec B311
 
 
-def split_by_incident(tasks: list[Any], test_fraction: float, seed: int) -> tuple[list, list]:
-    """Hold out random incidents, with all their questions, until they hold ``test_fraction`` of
-    the questions. A question without an incident or with incidents on both sides is left out."""
+SPLIT = {"train": 0.7, "validation": 0.1, "test": 0.2}
+
+
+def split_by_incident(tasks: list[Any], seed: int = 0, restarts: int = 20) -> dict[str, list]:
+    """Split the questions into training, validation and test sets, with ``SPLIT`` of them each.
+
+    All questions of an incident go to one set, so no set sees an incident of another. A question
+    about two incidents in different sets is left out, as are questions without an incident.
+    Answers cluster by incident, so a random split can put most questions with one answer in one
+    set. A local search moves single incidents between the sets while that lowers the sum of the
+    gaps in each set's mix of categories and answers, the gaps from its target size, and the share
+    of questions left out. It starts from ``restarts`` random splits and keeps the best result.
+    """
     from timenet.types import read_value
 
-    def incidents(task: Any) -> frozenset[str]:
-        return frozenset(
+    incidents = {
+        task.id: frozenset(
             str(read_value(item.value))
             for record in task.inputs
             for item in record.annotations
             if item.key == "incident_id"
         )
+        for task in tasks
+    }
+    tasks = sorted((task for task in tasks if incidents[task.id]), key=lambda task: int(task.id))
+    labels = _labels(tasks)
+    every = [labels[task.id] for task in tasks]
+    names = sorted(set().union(*incidents.values()))
 
-    groups = {task.id: incidents(task) for task in tasks}
-    ordered = sorted((task for task in tasks if groups[task.id]), key=lambda task: int(task.id))
-    names = sorted(set().union(*groups.values()))
-    random.Random(seed).shuffle(names)  # shuffling, not security  # nosec B311
-    held: set[str] = set()
-    target = round(test_fraction * len(ordered))
-    for name in names:
-        if sum(groups[task.id] <= held for task in ordered) >= target:
-            break
-        held.add(name)
-    train = [task for task in ordered if not groups[task.id] & held]
-    test = [task for task in ordered if groups[task.id] <= held]
-    return train, test
+    def sets(side: dict[str, str]) -> tuple[dict[str, list], int]:
+        parts: dict[str, list] = {name: [] for name in SPLIT}
+        left_out = 0
+        for task in tasks:
+            chosen = {side[incident] for incident in incidents[task.id]}
+            if len(chosen) == 1:
+                parts[chosen.pop()].append(task)
+            else:
+                left_out += 1
+        return parts, left_out
+
+    def cost(side: dict[str, str]) -> float:
+        parts, left_out = sets(side)
+        kept = len(tasks) - left_out
+        total = left_out / len(tasks)
+        for name, part in parts.items():
+            if not part:
+                return math.inf
+            total += _mix_distance([labels[task.id] for task in part], every) * SPLIT[name] ** 0.5
+            total += 2 * abs(len(part) / kept - SPLIT[name])
+        return total
+
+    rng = random.Random(seed)  # shuffling, not security  # nosec B311
+    best: tuple[float, dict[str, str]] = (math.inf, {})
+    for _ in range(restarts):
+        side = {name: rng.choices(list(SPLIT), weights=list(SPLIT.values()))[0] for name in names}
+        current, moved = cost(side), True
+        while moved:
+            moved = False
+            for name in rng.sample(names, len(names)):
+                for target in SPLIT:
+                    previous, side[name] = side[name], target
+                    if (value := cost(side)) < current - 1e-9:
+                        current, moved = value, True
+                    else:
+                        side[name] = previous
+        if current < best[0]:
+            best = (current, dict(side))
+    return sets(best[1])[0]
 
 
-def examples_from_tasks(tasks: list[Any], max_values: int) -> list[Example]:
-    """Give one example per TimeNet question task that shows time series only."""
+def save_split(split: dict[str, list], path: str | Path) -> None:
+    """Write the task IDs of each set to a JSON file, so every run trains and tests on the same
+    questions."""
+    ids = {name: sorted(int(task.id) for task in part) for name, part in split.items()}
+    lines = ",\n".join(f" {json.dumps(name)}: {json.dumps(part)}" for name, part in ids.items())
+    Path(path).write_text("{\n" + lines + "\n}\n")
+
+
+def load_split(tasks: list[Any], ids: dict[str, list[int]]) -> dict[str, list]:
+    """Give the tasks of each set from the task IDs of a ``save_split`` file.
+
+    Raises:
+        ValueError: If a task ID is not in ``tasks``, such as for another dataset version.
+    """
+    by_id = {int(task.id): task for task in tasks}
+    missing = sorted(i for part in ids.values() for i in part if i not in by_id)
+    if missing:
+        raise ValueError(f"{len(missing)} task IDs of the split are not in the dataset")
+    return {name: [by_id[i] for i in part] for name, part in ids.items()}
+
+
+def _labels(tasks: list[Any]) -> dict[Any, tuple[str, str]]:
+    """Give each task its category and answer; an answer that fewer than 3 tasks share, such as
+    a timestamp, counts as "other"."""
+    from timenet.types import read_value
+
+    def raw(task: Any) -> tuple[str, str]:
+        notes = {item.key: read_value(item.value) for item in task.annotations}
+        return str(notes.get("task_category", "")), str(read_value(task.targets[0]))
+
+    pairs = {task.id: raw(task) for task in tasks}
+    counts = Counter(answer for _, answer in pairs.values())
+    return {key: (c, a if counts[a] >= 3 else "other") for key, (c, a) in pairs.items()}
+
+
+def _mix_distance(first: list, second: list) -> float:
+    """Give the total variation distance between the label shares of two lists."""
+    a, b = Counter(first), Counter(second)
+    return sum(abs(a[k] / len(first) - b[k] / len(second)) for k in a | b) / 2
+
+
+def examples_from_tasks(tasks: list[Any], max_values: int, max_series: int = 32) -> list[Example]:
+    """Give one example per TimeNet question task that shows time series only, with at most
+    ``max_series`` series, shared evenly by the records of the task."""
     from timenet.types import read_value
 
     examples = []
@@ -599,12 +736,6 @@ def examples_from_tasks(tasks: list[Any], max_values: int) -> list[Example]:
         signals = [signal for record in task.inputs for signal in record.signals]
         if not signals or any(signal.spec.modality == "image" for signal in signals):
             continue
-        series = []
-        for position, record in enumerate(task.inputs, start=1):
-            label = "Time-series" if len(task.inputs) == 1 else f"Time-series {position}"
-            series += _record_series(record, label, max_values)
-        if not series:
-            continue  # no series fits the encoder, or every series is empty
         notes = {item.key: read_value(item.value) for item in task.annotations}
         # A classification task offers its label set; an answer task lists its own options.
         label_set = getattr(task, "label_set", None)
@@ -613,21 +744,35 @@ def examples_from_tasks(tasks: list[Any], max_values: int) -> list[Example]:
             if label_set is not None
             else [str(option) for option in notes.get("answer_options", [])]
         )
-        # Some prompts mark the place of the series with <ts><ts/>; the model shows them first.
-        prompt = str(read_value(task.prompt)).replace("<ts><ts/>", "the time series above")
+        prompt = str(read_value(task.prompt))
+        mentioned = "\n".join([prompt, *options])
+        limit = max_series // len(task.inputs)
+        if not limit:
+            continue  # more records than series the model takes
+        series = []
+        for record in task.inputs:
+            series += _record_series(record, max_values, limit, mentioned)
+        if not series:
+            continue  # no series fits the encoder, or every series is empty
         examples.append(
             Example(
                 series=series,
                 prompt=prompt,
                 options=options,
                 answer=str(read_value(task.targets[0])),
+                category=str(notes.get("task_category", "")),
             )
         )
     return examples
 
 
-def _record_series(record: Any, label: str, max_values: int) -> list[SeriesInput]:
-    """Give the 16 sources of a record that vary most, at the finest resolution that fits."""
+def _record_series(
+    record: Any, max_values: int, max_series: int, mentioned: str
+) -> list[SeriesInput]:
+    """Give at most ``max_series`` sources of a record, in record order, at the finest resolution
+    that fits: first those that ``mentioned`` names, such as the channels in the options of an
+    identification question, then those that vary most. As in the checkpoint's training, a series
+    has no text besides the sentence that names it and gives its statistics."""
     lengths: dict[str, int] = {}
     for source in record.sources:
         for signal in source.signals:
@@ -643,56 +788,58 @@ def _record_series(record: Any, label: str, max_values: int) -> list[SeriesInput
                 continue
             values = signal.to_arrow().to_numpy(zero_copy_only=False).astype(np.float64)
             if not np.isnan(values).all():
-                groups.append((float(np.nanstd(values)), source.name, signal, values))
-    groups.sort(key=lambda group: group[0], reverse=True)
+                groups.append((float(np.nanstd(values)), source.name, values))
+
+    def named(name: str) -> bool:  # "method:1" is not named by "method:12"
+        return re.search(rf"(?<![\w:]){re.escape(name)}(?!\w)", mentioned) is not None
+
+    ranked = sorted(range(len(groups)), key=lambda i: (not named(groups[i][1]), -groups[i][0]))
     return [
-        SeriesInput(values=values.tolist(), text=_series_text(record, signal, label), name=name)
-        for _, name, signal, values in groups[:16]
+        SeriesInput(values=values.tolist(), name=name)
+        for _, name, values in (groups[i] for i in sorted(ranked[:max_series]))
     ]
 
 
-def _series_text(record: Any, signal: Any, label: str) -> str:
-    """Describe a series: its start time and spacing when the record has a time origin."""
-    axis = signal.time_axis
-    origin = getattr(record.start_time, "timestamp", None)
-    if origin is None:
-        return f"{label}:"
-    regular = hasattr(axis, "period_us")
-    offset_us = (
-        axis.offset_us + axis.start_index * axis.period_us
-        if regular
-        else signal.time_offsets_us()[0]
-    )
-    start = datetime.fromtimestamp(float(origin + offset_us) / 1e6, tz=timezone.utc)
-    spacing = f", one value every {float(axis.period_us) / 1e6:g}s" if regular else ""
-    return f"{label}, from {start:%Y-%m-%d %H:%M:%S} UTC{spacing}:"
-
-
 def chosen_option(output: str, options: list[str]) -> str | None:
-    """Give the option that the whole answer or its first line names, ignoring case, surrounding
-    space and a final period. "None of the above" does not name the option "No"."""
-    first_line = (output.strip().splitlines() or [""])[0]
-    for text in (output, first_line):
-        for option in options:
-            if _normalized(option) == _normalized(text):
-                return option
-    return None
+    """Give the option that the answer names, after the normalization of the checkpoint's
+    evaluation. "None of the above" does not name the option "No"."""
+    wanted = _normalized(output)
+    return next((option for option in options if _normalized(option) == wanted), None)
 
 
 def _normalized(text: str) -> str:
-    return text.strip().rstrip(".").strip().casefold()
+    """Keep the text after the last "answer:", lowercase it, strip periods and collapse spaces."""
+    text = text.strip()
+    if "answer:" in text.lower():
+        text = text[text.lower().rfind("answer:") + len("answer:") :]
+    return " ".join(text.strip().strip(".\n\t ").lower().split())
 
 
-def accuracy(model: OpenTSLMFlamingo, examples: list[Example]) -> float:
-    """Give the share of questions answered with the right option."""
+def accuracy(model: OpenTSLMFlamingo, examples: list[Example]) -> dict[str, Any]:
+    """Give the share of questions answered with the right option, overall and per category.
+
+    Per category it also gives the balanced accuracy, the mean share right per correct answer:
+    a model that always answers "yes" to presence questions, most of which have an anomaly,
+    scores high accuracy but only 50% balanced accuracy."""
     model.eval()
-    right = 0
+    right: dict[tuple[str, str], list[bool]] = {}
     for example in examples:
         with _autocast(model):
-            output = model.generate(example.series, example.question(), max_new_tokens=64)
+            output = model.generate(example.series, example.evaluated_question(), max_new_tokens=64)
         # A question without options counts the output that states the answer.
-        right += chosen_option(output, example.options or [example.answer]) == example.answer
-    return right / max(len(examples), 1)
+        chosen = chosen_option(output, example.options or [example.answer])
+        right.setdefault((example.category, example.answer), []).append(chosen == example.answer)
+    per_category = {}
+    for category in sorted({category for category, _ in right}):
+        results = [hits for (c, _), hits in right.items() if c == category]
+        per_category[category] = {
+            "questions": sum(len(hits) for hits in results),
+            "accuracy": sum(map(sum, results)) / sum(len(hits) for hits in results),
+            "balanced_accuracy": sum(sum(hits) / len(hits) for hits in results) / len(results),
+        }
+    total = sum(len(hits) for hits in right.values())
+    overall = sum(map(sum, right.values())) / max(total, 1)
+    return {"accuracy": overall, "per_category": per_category}
 
 
 @torch.no_grad()
@@ -701,8 +848,15 @@ def mean_loss(model: OpenTSLMFlamingo, examples: list[Example]) -> float:
     losses = []
     for example in examples:
         with _autocast(model):
-            losses.append(float(model.loss(example.series, example.question(), example.answer)))
+            loss = model.loss(example.series, example.evaluated_question(), example.answer)
+            losses.append(float(loss))
     return sum(losses) / max(len(losses), 1)
+
+
+# The checkpoint's ARFBench fine-tuning recipe: a learning rate per parameter group, 3% warmup,
+# a flat phase and a linear decay to 0 over the last 20% of the steps, no gradient clipping.
+LEARNING_RATES = {"encoder": 4e-4, "adapter": 2e-4, "base": 4e-4}
+WARMUP_FRACTION, DECAY_FRACTION = 0.03, 0.2
 
 
 def train(
@@ -711,30 +865,37 @@ def train(
     val_examples: list[Example],
     *,
     epochs: int,
-    learning_rate: float,
     accumulation: int,
     seed: int,
+    learning_rates: dict[str, float] = LEARNING_RATES,
 ) -> None:
-    """Train the series layers with AdamW and linear warmup and decay; the language model stays
+    """Train the series encoder, the perceiver, the cross-attention layers and the token
+    embeddings with AdamW, as the checkpoint was trained; the rest of the language model stays
     frozen. Keep the epoch with the lowest validation loss, or the last one without validation
-    examples. Each step averages ``accumulation`` questions, with their options shuffled."""
+    examples. Each step averages the loss of the answer tokens of ``accumulation`` questions,
+    with their options shuffled."""
     if not train_examples:
         raise ValueError("there are no training examples")
     model.requires_grad_(False)
-    parameters = []
-    for module in (
-        model.flamingo.vision_encoder,
-        model.flamingo.perceiver,
-        model.flamingo.lang_encoder.gated_cross_attn_layers,
-    ):
-        module.float().requires_grad_(True)  # trained in float32, under bfloat16 autocast
-        parameters += list(module.parameters())
-    optimizer = torch.optim.AdamW(parameters, lr=learning_rate, weight_decay=0.01)
+    encoder, perceiver, cross_attention, embeddings = model.trained_modules()
+    groups = {"encoder": [encoder], "adapter": [perceiver, cross_attention], "base": [embeddings]}
+    parameter_groups = []
+    for name, modules in groups.items():
+        for module in modules:
+            module.float().requires_grad_(True)  # trained in float32, under bfloat16 autocast
+        params = [p for module in modules for p in module.parameters()]
+        parameter_groups.append({"params": params, "lr": learning_rates[name]})
+    parameters = [p for group in parameter_groups for p in group["params"]]
+    optimizer = torch.optim.AdamW(
+        parameter_groups, weight_decay=0.01, fused=model.device.type == "cuda"
+    )
     steps = max(epochs * math.ceil(len(train_examples) / accumulation), 1)
-    warmup = max(steps // 10, 1)
-    decay = max(steps - warmup, 1)
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer, lambda step: min((step + 1) / warmup, max((steps - step) / decay, 0.0))
+    scheduler = get_wsd_schedule(
+        optimizer,
+        num_warmup_steps=max(1, int(steps * WARMUP_FRACTION)),
+        num_decay_steps=max(1, int(steps * DECAY_FRACTION)),
+        num_training_steps=steps,
+        decay_type="linear",
     )
     rng = random.Random(seed)  # shuffling, not security  # nosec B311
     best_loss, best_weights = float("inf"), {}
@@ -744,13 +905,20 @@ def train(
         model.train()
         started, total = time.time(), 0.0
         for start in range(0, len(order), accumulation):
-            batch = order[start : start + accumulation]
-            for example in batch:
+            tokens = 0
+            for example in order[start : start + accumulation]:
                 with _autocast(model):
-                    loss = model.loss(example.series, example.question(rng), example.answer)
-                (loss / len(batch)).backward()
-                total += float(loss.detach())
-            nn.utils.clip_grad_norm_(parameters, 1.0)
+                    losses = model.loss(
+                        example.series, example.question(rng), example.answer, reduction="none"
+                    )
+                if not torch.isfinite(losses).all():
+                    raise ValueError(f"the training loss is not finite: {losses.tolist()}")
+                losses.sum().backward()
+                tokens += len(losses)
+                total += float(losses.detach().mean())
+            for p in parameters:  # one mean over the answer tokens of the batch
+                if p.grad is not None:
+                    p.grad /= tokens
             optimizer.step()
             scheduler.step()
             optimizer.zero_grad(set_to_none=True)
@@ -803,34 +971,32 @@ class OpenTSLM:
     def fine_tune(
         self,
         tasks: list[Any],
+        validation: list[Any] | None = None,
         *,
         epochs: int = 3,
-        learning_rate: float = 1e-4,
         accumulation: int = 8,
-        validation_fraction: float = 0.1,
         seed: int = 0,
     ) -> OpenTSLM:
-        """Fine-tune on TimeNet tasks. ``validation_fraction`` of the questions, held out by
-        incident, pick the best epoch."""
+        """Fine-tune on TimeNet tasks and keep the epoch with the lowest loss on the
+        ``validation`` tasks, or the last epoch without them."""
         torch.manual_seed(seed)
-        train_tasks, val_tasks = split_by_incident(tasks, validation_fraction, seed + 1)
         train(
             self.model,
-            examples_from_tasks(train_tasks, self.model.max_values),
-            examples_from_tasks(val_tasks, self.model.max_values),
+            examples_from_tasks(tasks, self.model.max_values),
+            examples_from_tasks(validation or [], self.model.max_values),
             epochs=epochs,
-            learning_rate=learning_rate,
             accumulation=accumulation,
             seed=seed,
         )
         return self
 
-    def eval(self, tasks: list[Any], metrics: list[str] = ("accuracy",)) -> dict[str, float]:
-        """Answer each TimeNet task and give the share that names the right option."""
+    def eval(self, tasks: list[Any], metrics: list[str] = ("accuracy",)) -> dict[str, Any]:
+        """Answer each TimeNet task and give the share that names the right option, overall and,
+        under ``per_category``, per category with its balanced accuracy."""
         if set(metrics) != {"accuracy"}:
             raise ValueError("the only metric is accuracy")
         examples = examples_from_tasks(tasks, self.model.max_values)
-        return {"accuracy": accuracy(self.model, examples)}
+        return accuracy(self.model, examples)
 
     def save(self, path: str) -> None:
         """Write the model directory to a local path or to ``s3://BUCKET/PREFIX``."""
@@ -858,7 +1024,8 @@ def _load(path: str | Path) -> OpenTSLMFlamingo:
 # ---- The SageMaker endpoint handler
 #
 # Request: {"instances": [{"series": [{"values": [...], "text": "...", "name": "..."}],
-#                          "question": "..."}], "parameters": {"max_new_tokens": 128}}
+#                          "context": ["..."], "question": "..."}],
+#           "parameters": {"max_new_tokens": 128}}
 # A null value is a missing value. Response: {"generated_text": ["...", ...]}.
 
 MAX_INSTANCES = 4
@@ -901,7 +1068,11 @@ def input_fn(request_body: str | bytes, content_type: str = "application/json") 
         f'the request needs an "instances" list of 1 to {MAX_INSTANCES} items',
     )
     parameters = payload.get("parameters") or {}
-    max_new_tokens = parameters.get("max_new_tokens", 256) if isinstance(parameters, dict) else 0
+    _check(
+        isinstance(parameters, dict) and set(parameters) <= {"max_new_tokens"},
+        '"parameters" can only hold "max_new_tokens"',
+    )
+    max_new_tokens = parameters.get("max_new_tokens", 256)
     _check(
         type(max_new_tokens) is int and 1 <= max_new_tokens <= MAX_NEW_TOKENS_LIMIT,
         f'"max_new_tokens" must be an integer from 1 to {MAX_NEW_TOKENS_LIMIT}',
@@ -934,14 +1105,26 @@ def _instance(item: Any) -> dict[str, Any]:
         )
         floats = [math.nan if value is None else float(value) for value in values]
         parsed.append(SeriesInput(values=floats, text=one.get("text"), name=one.get("name")))
-    return {"series": parsed, "question": item["question"]}
+    context = item.get("context", [])
+    _check(
+        isinstance(context, list) and all(isinstance(line, str) for line in context),
+        '"context" must be a list of strings',
+    )
+    return {"series": parsed, "question": item["question"], "context": context}
 
 
 def predict_fn(data: dict[str, Any], model: OpenTSLMFlamingo) -> list[str]:
     answers = []
     for index, item in enumerate(data["instances"]):
         try:
-            answers.append(model.generate(item["series"], item["question"], data["max_new_tokens"]))
+            answers.append(
+                model.generate(
+                    item["series"],
+                    item["question"],
+                    context=item["context"],
+                    max_new_tokens=data["max_new_tokens"],
+                )
+            )
         except ValueError as error:  # the model rejects a series with ValueError
             raise _bad_request(f"instances[{index}]: {error}") from None
     return answers
