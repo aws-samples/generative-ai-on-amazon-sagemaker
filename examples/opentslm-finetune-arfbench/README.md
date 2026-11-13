@@ -19,24 +19,28 @@ For the walkthrough, see the AWS blog post <!-- TODO: blog URL -->.
 | File | Contents |
 |---|---|
 | `opentslm-finetune-arfbench.ipynb` | Set up, fine-tune on ARFBench, deploy the fine-tuned model, ask a question, clean up |
-| `utils.py` | The OpenTSLM model, its fine-tuning code and the endpoint's request handler. The training job and the endpoint both import it |
-| `arfbench-split.json` | The assignment of each ARFBench question to the training, validation or test set |
+| `scripts/train.py` | The training job's entry point |
+| `scripts/utils.py` | The OpenTSLM model, its fine-tuning code and the endpoint's request handler. The training job and the endpoint both import it |
+| `scripts/arfbench-split.json` | The assignment of each ARFBench question to the training, validation or test set |
+| `scripts/requirements.txt` | The packages that the training job installs |
 
 ## What the notebook does
 
 1. **Set up:** finds or creates the SageMaker default bucket (`sagemaker-<region>-<account ID>`) and an execution
    role. In SageMaker Studio, it uses the Studio execution role. Elsewhere, it creates the role
    `OpenTSLMSageMakerRole` once, with the AWS managed policy `AmazonSageMakerFullAccess`.
-2. **Fine-tune:** the `@remote` decorator runs the function `fine_tune` as a SageMaker training job on one
-   `ml.g7e.2xlarge` instance, with the SageMaker PyTorch 2.9 training image. The job loads ARFBench through
+2. **Fine-tune:** `ModelTrainer` runs `scripts/train.py` as a SageMaker training job on one `ml.g7e.2xlarge`
+   instance, with the SageMaker PyTorch 2.9 training image. The job loads ARFBench through
    [TimeNet](https://docs.timenet.ai/) and splits the questions into training, validation and test sets (about 70%,
-   10% and 20%) as listed in `arfbench-split.json`. All questions about one incident are in the same set, and each
+   10% and 20%) as listed in `scripts/arfbench-split.json`. All questions about one incident are in the same set, and each
    set has about the same mix of question categories and answers. The job trains the time-series encoder, the
    perceiver resampler, the cross-attention layers and the language model's token embeddings for 3 epochs, uses the
    validation set to choose the best epoch, and keeps the rest of the Gemma 3 language model frozen. It saves the
-   fine-tuned model to Amazon S3 in the layout of a Hugging Face model repository and returns the test accuracy
-   before and after fine-tuning, with the accuracy and balanced accuracy of each question category.
-3. **Deploy:** uploads `utils.py`, a one-line `inference.py` and a `requirements.txt` next to the fine-tuned model
+   fine-tuned model to Amazon S3 in the layout of a Hugging Face model repository, with `metrics.json`: the test
+   accuracy before and after fine-tuning, and the accuracy and balanced accuracy of each question category.
+   Optionally, it logs the parameters, the loss of each epoch and the test results to an MLflow App (see
+   [Track the training with MLflow](#track-the-training-with-mlflow)).
+3. **Deploy:** uploads `scripts/utils.py`, a one-line `inference.py` and a `requirements.txt` next to the fine-tuned model
    files, and deploys them to a real-time endpoint on one `ml.g6.2xlarge` instance with the SageMaker PyTorch 2.6
    inference image.
 4. **Ask a question:** sends one hour of synthetic CPU utilization data with a question to the endpoint.
@@ -51,8 +55,7 @@ checkpoint that fits your use case.
 - An AWS account and AWS credentials for the account and Region to use, for example in SageMaker Studio or on your
   machine after `aws sso login`, with `AWS_PROFILE` and `AWS_DEFAULT_REGION` set. Outside SageMaker Studio, your
   credentials need permission to create IAM roles the first time you run the notebook.
-- A Jupyter environment with a Python 3.12 kernel. The training job runs your function in the SageMaker PyTorch 2.9
-  image, which uses Python 3.12. The notebook itself does not need a GPU.
+- A Jupyter environment. The notebook itself does not need a GPU.
 - A Region that offers both `ml.g7e.2xlarge` for training and `ml.g6.2xlarge` for endpoints.
 - Service quotas of at least 1 for "ml.g7e.2xlarge for training job usage" and "ml.g6.2xlarge for endpoint usage".
   New accounts often have a quota of 0 for both. Request an increase in
@@ -61,6 +64,20 @@ checkpoint that fits your use case.
   waits for capacity.
 - Internet access from the training job and the endpoint. The training job downloads the pretrained model from
   Hugging Face and ARFBench from TimeNet, and the endpoint installs Transformers from PyPI when it starts.
+
+## Track the training with MLflow
+
+The training job can log to an [MLflow App](https://docs.aws.amazon.com/sagemaker/latest/dg/mlflow-app-setup.html)
+of Amazon SageMaker AI. `MLFLOW_APP` in the notebook chooses the app:
+
+- `"default"` (the default): the default MLflow App of your SageMaker Studio domain, or else the default MLflow App
+  of your account. Without one, the job trains without MLflow.
+- An MLflow App ARN: that app.
+- `None`: no MLflow.
+
+The job logs to the experiment `opentslm-arfbench`, with one run per training job. The execution role needs
+permission to call the app (`sagemaker:CallMlflowAppApi`, which `AmazonSageMakerFullAccess` includes). Set the
+`mlflow-skinny` version in `scripts/requirements.txt` to the MLflow version of your app.
 
 ## Request format
 
@@ -85,15 +102,15 @@ from 1 to 512. The response holds one answer per instance in `generated_text`.
 ## Clean up
 
 The last cell deletes the endpoint, its configuration and the SageMaker model, also after a failed deployment. The
-fine-tuned model files stay under `FINETUNED_PREFIX` in your bucket, the training job's files stay under the
-`opentslm-remote` prefix, and the role `OpenTSLMSageMakerRole` stays for the next run. Delete them when you no
+fine-tuned model files and `metrics.json` stay under `FINETUNED_PREFIX` in your bucket, the training job's files
+stay in your bucket under the job name, MLflow runs stay in your MLflow App, and the role `OpenTSLMSageMakerRole` stays for the next run. Delete them when you no
 longer need them.
 
 ## License
 
 This example is licensed under the MIT-0 License. See the [LICENSE](../../LICENSE) file of this repository.
-`utils.py` contains Flamingo layers adapted from [OpenFlamingo](https://github.com/mlfoundations/open_flamingo)
+`scripts/utils.py` contains Flamingo layers adapted from [OpenFlamingo](https://github.com/mlfoundations/open_flamingo)
 and [flamingo-pytorch](https://github.com/lucidrains/flamingo-pytorch), both under the MIT License. Their notices
-are in the docstring of `utils.py`.
+are in its docstring.
 
 The pretrained model weights have their own license. See the model card of the checkpoint you use.

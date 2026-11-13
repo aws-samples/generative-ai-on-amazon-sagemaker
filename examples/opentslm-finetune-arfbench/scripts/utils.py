@@ -45,7 +45,7 @@ import re
 import tempfile
 import time
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -868,6 +868,7 @@ def train(
     accumulation: int,
     seed: int,
     learning_rates: dict[str, float] = LEARNING_RATES,
+    log: Callable[[dict[str, Any]], None] | None = None,
 ) -> None:
     """Train the series encoder, the perceiver, the cross-attention layers and the token
     embeddings with AdamW, as the checkpoint was trained; the rest of the language model stays
@@ -923,17 +924,15 @@ def train(
             scheduler.step()
             optimizer.zero_grad(set_to_none=True)
         val_loss = mean_loss(model, val_examples) if val_examples else None
-        print(
-            json.dumps(
-                {
-                    "epoch": epoch,
-                    "train_loss": total / len(order),
-                    "val_loss": val_loss,
-                    "seconds": round(time.time() - started),
-                }
-            ),
-            flush=True,
-        )
+        record = {
+            "epoch": epoch,
+            "train_loss": total / len(order),
+            "val_loss": val_loss,
+            "seconds": round(time.time() - started),
+        }
+        print(json.dumps(record), flush=True)
+        if log is not None:  # for example, to log each epoch to MLflow
+            log(record)
         # The first epoch always counts, so a run whose loss is NaN still saves a model.
         if val_loss is None or not best_weights or val_loss < best_loss:
             if val_loss is not None:
@@ -976,6 +975,7 @@ class OpenTSLM:
         epochs: int = 3,
         accumulation: int = 8,
         seed: int = 0,
+        log: Callable[[dict[str, Any]], None] | None = None,
     ) -> OpenTSLM:
         """Fine-tune on TimeNet tasks and keep the epoch with the lowest loss on the
         ``validation`` tasks, or the last epoch without them."""
@@ -987,6 +987,7 @@ class OpenTSLM:
             epochs=epochs,
             accumulation=accumulation,
             seed=seed,
+            log=log,
         )
         return self
 
