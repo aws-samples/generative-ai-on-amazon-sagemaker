@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8a8a"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="620" fill="#ffffff"/>
+
+  <!-- local -->
+  <rect x="20" y="20" width="580" height="580" rx="16" fill="#fbfaff" stroke="#6b5bd2" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="310" y="56" text-anchor="middle" font-size="20" font-weight="bold" fill="#1d1d1f">Your notebook kernel</text>
+  <text x="310" y="80" text-anchor="middle" font-size="15" fill="#555">training loop and grading run here</text>
+
+  <rect x="50" y="110" width="520" height="160" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="310" y="146" text-anchor="middle" font-size="17" font-weight="bold" fill="#3f2fa6">Training loop (your code)</text>
+  <text x="310" y="178" text-anchor="middle" font-size="14" fill="#3f2fa6">sample 8 attempts per problem</text>
+  <text x="310" y="204" text-anchor="middle" font-size="14" fill="#3f2fa6">advantage = (reward − mean) / std</text>
+  <text x="310" y="230" text-anchor="middle" font-size="14" fill="#3f2fa6">update, then refresh the sampler</text>
+
+  <rect x="50" y="390" width="230" height="180" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="165" y="426" text-anchor="middle" font-size="17" font-weight="bold" fill="#3f2fa6">Grading</text>
+  <text x="165" y="448" text-anchor="middle" font-size="13" font-style="italic" fill="#3f2fa6">training sessions cookbook</text>
+  <text x="165" y="480" text-anchor="middle" font-size="14" fill="#3f2fa6">extract the code block</text>
+  <text x="165" y="504" text-anchor="middle" font-size="14" fill="#3f2fa6">run LiveCodeBench tests</text>
+  <text x="165" y="528" text-anchor="middle" font-size="14" fill="#3f2fa6">reward 1.0 if all pass</text>
+
+  <rect x="340" y="390" width="230" height="180" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="455" y="426" text-anchor="middle" font-size="17" font-weight="bold" fill="#3f2fa6">Local sandbox</text>
+  <text x="455" y="448" text-anchor="middle" font-size="13" font-style="italic" fill="#3f2fa6">SandboxFusion-style API</text>
+  <text x="455" y="480" text-anchor="middle" font-size="13" font-family="Menlo, monospace" fill="#3f2fa6">127.0.0.1/run_code</text>
+  <text x="455" y="504" text-anchor="middle" font-size="13" font-family="Menlo, monospace" fill="#3f2fa6">LocalSandbox</text>
+  <text x="455" y="528" text-anchor="middle" font-size="13" font-family="Menlo, monospace" fill="#3f2fa6">CodeInterpreterSandbox</text>
+
+  <!-- training session -->
+  <rect x="760" y="20" width="300" height="300" rx="16" fill="#fafdfb" stroke="#2e7d55" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="910" y="56" text-anchor="middle" font-size="20" font-weight="bold" fill="#1d1d1f">Training session</text>
+  <text x="910" y="80" text-anchor="middle" font-size="15" fill="#555">on SageMaker AI</text>
+  <rect x="790" y="110" width="240" height="180" rx="10" fill="#e3f4ea" stroke="#7fc29b"/>
+  <text x="910" y="146" text-anchor="middle" font-size="17" font-weight="bold" fill="#1e6b45">Managed GPUs</text>
+  <text x="910" y="174" text-anchor="middle" font-size="14" fill="#1e6b45">gpt-oss-20b or</text>
+  <text x="910" y="194" text-anchor="middle" font-size="14" fill="#1e6b45">Qwen3.8-27B + LoRA</text>
+  <text x="910" y="230" text-anchor="middle" font-size="14" fill="#1e6b45">starts from the base model</text>
+  <text x="910" y="250" text-anchor="middle" font-size="14" fill="#1e6b45">or a pre-trained adapter</text>
+  <text x="910" y="270" text-anchor="middle" font-size="14" fill="#1e6b45">(model package)</text>
+
+  <!-- code interpreter -->
+  <rect x="760" y="350" width="300" height="250" rx="16" fill="#fafdfb" stroke="#2e7d55" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="910" y="386" text-anchor="middle" font-size="20" font-weight="bold" fill="#1d1d1f">Code Interpreter</text>
+  <text x="910" y="410" text-anchor="middle" font-size="15" fill="#555">Amazon Bedrock AgentCore</text>
+  <rect x="790" y="430" width="240" height="140" rx="10" fill="#e3f4ea" stroke="#7fc29b"/>
+  <text x="910" y="462" text-anchor="middle" font-size="17" font-weight="bold" fill="#1e6b45">16 sessions</text>
+  <text x="910" y="490" text-anchor="middle" font-size="14" fill="#1e6b45">runs the model's code</text>
+  <text x="910" y="514" text-anchor="middle" font-size="14" fill="#1e6b45">no network access</text>
+  <text x="910" y="538" text-anchor="middle" font-size="14" fill="#1e6b45">no AWS credentials</text>
+
+  <!-- loop <-> session -->
+  <line x1="572" y1="150" x2="786" y2="150" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="680" y="140" text-anchor="middle" font-size="13" font-family="Menlo, monospace" fill="#444">sample()</text>
+  <line x1="786" y1="190" x2="574" y2="190" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="680" y="210" text-anchor="middle" font-size="13" fill="#444">responses</text>
+  <line x1="572" y1="262" x2="786" y2="262" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="680" y="236" text-anchor="middle" font-size="12" font-family="Menlo, monospace" fill="#444">forward_backward</text>
+  <text x="680" y="252" text-anchor="middle" font-size="12" font-family="Menlo, monospace" fill="#444">optim_step</text>
+
+  <!-- loop <-> grading -->
+  <line x1="130" y1="272" x2="130" y2="386" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="122" y="326" text-anchor="end" font-size="13" fill="#444">response</text>
+  <text x="122" y="343" text-anchor="end" font-size="13" fill="#444">text</text>
+  <line x1="200" y1="388" x2="200" y2="274" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="210" y="334" font-size="13" fill="#444">reward</text>
+
+  <!-- grading <-> local sandbox -->
+  <line x1="282" y1="460" x2="336" y2="460" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="309" y="450" text-anchor="middle" font-size="12" fill="#444">code</text>
+  <line x1="338" y1="510" x2="284" y2="510" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="311" y="530" text-anchor="middle" font-size="12" fill="#444">result</text>
+
+  <!-- local sandbox <-> code interpreter -->
+  <line x1="572" y1="470" x2="786" y2="470" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="680" y="460" text-anchor="middle" font-size="13" fill="#444">program, test input</text>
+  <line x1="786" y1="520" x2="574" y2="520" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="680" y="540" text-anchor="middle" font-size="13" fill="#444">stdout, exit code</text>
+</svg>
