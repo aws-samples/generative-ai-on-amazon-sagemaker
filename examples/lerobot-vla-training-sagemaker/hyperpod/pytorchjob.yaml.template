@@ -1,0 +1,100 @@
+# Kubeflow PyTorchJob for LeRobot VLA training on SageMaker HyperPod EKS.
+# Rendered by hyperpod/launch.sh with envsubst. One pod per node; each pod runs
+# /opt/ml/code/train.sh, which reads MASTER_ADDR / RANK / WORLD_SIZE (injected by the
+# Kubeflow Training Operator at pod level) and launches accelerate for all GPUs in the pod.
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: ${JOB_NAME}
+  namespace: ${NAMESPACE}
+spec:
+  runPolicy:
+    cleanPodPolicy: None
+    backoffLimit: 0
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: Never
+      template:
+        metadata:
+          labels: {app: lerobot-vla, job: ${JOB_NAME}}
+        spec:
+          nodeSelector:
+            node.kubernetes.io/instance-type: ${INSTANCE_TYPE}
+          tolerations:
+            - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+          containers:
+            - name: pytorch
+              image: ${IMAGE}
+              imagePullPolicy: Always
+              command: ["/bin/bash", "-lc", "bash /opt/ml/code/train.sh --model ${MODEL} ${EXTRA_ARGS}"]
+              env:
+                - {name: JOB_NAME, value: "${JOB_NAME}"}
+                - {name: CKPT_ROOT, value: "/fsx/lerobot-vla/checkpoints"}
+                - {name: DATASET_REPO_ID, value: "${DATASET_REPO_ID}"}
+                - {name: DATASET_ROOT, value: "${DATASET_ROOT}"}
+                - {name: HF_HOME, value: "/fsx/lerobot-vla/hf-cache"}
+                - {name: HF_LEROBOT_HOME, value: "/fsx/lerobot-vla/hf-cache/lerobot"}
+                - {name: STEPS, value: "${STEPS}"}
+                - {name: SAVE_FREQ, value: "${SAVE_FREQ}"}
+                - {name: BATCH_SIZE, value: "${BATCH_SIZE}"}
+                - {name: PEFT, value: "${PEFT}"}
+                - {name: DISTRIBUTED, value: "${DISTRIBUTED}"}
+                - {name: WANDB_ENABLE, value: "false"}
+                - {name: NCCL_DEBUG, value: "INFO"}
+                - {name: HF_TOKEN, value: "${HF_TOKEN}"}
+              resources:
+                limits:
+                  nvidia.com/gpu: ${GPUS_PER_NODE}
+                  ${EFA_LIMIT}
+              volumeMounts:
+                - {name: fsx, mountPath: /fsx}
+                - {name: shm, mountPath: /dev/shm}
+          volumes:
+            - name: fsx
+              persistentVolumeClaim: {claimName: ${PVC}}
+            - name: shm
+              emptyDir: {medium: Memory, sizeLimit: ${SHM_SIZE}}
+    Worker:
+      replicas: ${WORKER_REPLICAS}
+      restartPolicy: Never
+      template:
+        metadata:
+          labels: {app: lerobot-vla, job: ${JOB_NAME}}
+        spec:
+          nodeSelector:
+            node.kubernetes.io/instance-type: ${INSTANCE_TYPE}
+          tolerations:
+            - {key: nvidia.com/gpu, operator: Exists, effect: NoSchedule}
+          containers:
+            - name: pytorch
+              image: ${IMAGE}
+              imagePullPolicy: Always
+              command: ["/bin/bash", "-lc", "bash /opt/ml/code/train.sh --model ${MODEL} ${EXTRA_ARGS}"]
+              env:
+                - {name: JOB_NAME, value: "${JOB_NAME}"}
+                - {name: CKPT_ROOT, value: "/fsx/lerobot-vla/checkpoints"}
+                - {name: DATASET_REPO_ID, value: "${DATASET_REPO_ID}"}
+                - {name: DATASET_ROOT, value: "${DATASET_ROOT}"}
+                - {name: HF_HOME, value: "/fsx/lerobot-vla/hf-cache"}
+                - {name: HF_LEROBOT_HOME, value: "/fsx/lerobot-vla/hf-cache/lerobot"}
+                - {name: STEPS, value: "${STEPS}"}
+                - {name: SAVE_FREQ, value: "${SAVE_FREQ}"}
+                - {name: BATCH_SIZE, value: "${BATCH_SIZE}"}
+                - {name: PEFT, value: "${PEFT}"}
+                - {name: DISTRIBUTED, value: "${DISTRIBUTED}"}
+                - {name: WANDB_ENABLE, value: "false"}
+                - {name: NCCL_DEBUG, value: "INFO"}
+                - {name: HF_TOKEN, value: "${HF_TOKEN}"}
+              resources:
+                limits:
+                  nvidia.com/gpu: ${GPUS_PER_NODE}
+                  ${EFA_LIMIT}
+              volumeMounts:
+                - {name: fsx, mountPath: /fsx}
+                - {name: shm, mountPath: /dev/shm}
+          volumes:
+            - name: fsx
+              persistentVolumeClaim: {claimName: ${PVC}}
+            - name: shm
+              emptyDir: {medium: Memory, sizeLimit: ${SHM_SIZE}}
