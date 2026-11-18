@@ -1,5 +1,7 @@
 # Fine-tune NVIDIA Nemotron 3 Nano 30B-A3B with SageMaker AI serverless model customization
 
+> **Important:** Region `us-east-2` does not support serverless model customization.
+
 Fine-tune `huggingface-reasoning-nvidia-nemotron-3-nano-30b-a3b-bf16` with LoRA to review
 non-disclosure agreements: for each of 17 checklist items, return a verdict and the contract
 clauses that support it. The data is [ContractNLI](https://stanfordnlp.github.io/contract-nli/).
