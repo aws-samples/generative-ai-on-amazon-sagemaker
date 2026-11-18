@@ -93,6 +93,11 @@ def gold_for(doc):
 # checklist and can be cut off before the JSON. Both formats append this switch.
 NO_THINK = "/no_think"
 
+# Nemotron 3 Nano's chat template opens <think> for the assistant turn and ignores
+# /no_think, so the model reasons before the JSON. Training completions start with this
+# empty block instead: the model learns to close the block the template opened and answer.
+EMPTY_REASONING = "<think>\n</think>\n"
+
 
 # -------------------------------------------------------------- Chat completion format
 
@@ -116,7 +121,7 @@ Respond with JSON only, no other text:
 Include an entry for every hypothesis key listed above."""
 
 
-def build_prompt(doc, labels, no_think=True):
+def build_prompt(doc, labels, no_think=False):
     """Render the single-string prompt for one contract.
 
     The only prompt notebook 1 stores, for all three splits, so what the model trains on
@@ -162,13 +167,13 @@ def build_system(labels):
     return SYSTEM.format(n=len(labels), checklist=checklist)
 
 
-def build_user(doc, no_think=True):
+def build_user(doc, no_think=False):
     """The one contract under review, as numbered spans."""
     body = USER.format(spans="\n".join(f"[{i}] {t}" for i, t in doc_spans(doc)))
     return f"{body}\n\n{NO_THINK}" if no_think else body
 
 
-def build_messages(doc, labels, completion=None, no_think=True):
+def build_messages(doc, labels, completion=None, no_think=False):
     """The chat turns for one contract, for callers that take roles rather than a string.
 
     Pass `completion` to get a full training record (system + user + assistant); omit it
