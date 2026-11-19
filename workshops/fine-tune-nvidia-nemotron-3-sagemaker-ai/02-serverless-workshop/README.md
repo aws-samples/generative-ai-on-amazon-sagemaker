@@ -1,5 +1,7 @@
 # Fine-tune NVIDIA Nemotron 3 Nano 30B-A3B with SageMaker AI serverless model customization
 
+> **Important:** Region `us-east-2` does not support serverless model customization.
+
 Fine-tune `huggingface-reasoning-nvidia-nemotron-3-nano-30b-a3b-bf16` with LoRA to review
 non-disclosure agreements: for each of 17 checklist items, return a verdict and the contract
 clauses that support it. The data is [ContractNLI](https://stanfordnlp.github.io/contract-nli/).
@@ -22,9 +24,9 @@ Wait for each training and evaluation job to finish before running the next note
 
 ## Evaluation notebook structure
 
-The evaluation notebook imports [evaluation_utils.py](https://github.com/aws-samples/generative-ai-on-amazon-sagemaker/blob/main/workshops/fine-tune-nvidia-nemotron-3-sagemaker-ai/02-serverless-workshop/evaluation_utils.py) as `E`. It delegates frontier Converse requests/retries, local parsing/scoring, sanity checks, judge rubrics, polling, charts, and the `EvaluationResults` S3 readers/exports. The managed evaluator constructors and `.evaluate()` submissions remain in the notebook. `contractnli_scorer.py` remains the separate self-contained scorer upload. Keep the helper and notebook together; importing the helper creates no clients or jobs, but this notebook has no reference-only run switch.
+The evaluation notebook imports [evaluation_utils.py](https://github.com/aws-samples/generative-ai-on-amazon-sagemaker/blob/main/workshops/fine-tune-nvidia-nemotron-3-sagemaker-ai/02-serverless-workshop/evaluation_utils.py) as `E`. It delegates frontier Converse requests/retries, local parsing/scoring, sanity checks, judge rubrics, polling, charts, and the `EvaluationResults` S3 readers/exports. The managed evaluator constructors and `.evaluate()` submissions are in the notebook. `contractnli_scorer.py` is the self-contained scorer that the pipeline uploads. Keep the helper and notebook together; importing the helper creates no clients or jobs, but this notebook has no reference-only run switch.
 
-Local frontier evidence F1 pools spans across contracts; managed evidence F1 averages per-contract scores. Local `contradiction_f1` is not managed `contradiction_correct`. Parseability does not validate checklist completeness. Inspect the actual configured identities and generated results, not the helper's historical comparison printout. Verify execution provenance because result lookup can fall back to other matching runs, and review the carve-out rubric's conflicting wording before live judging.
+Local frontier evidence F1 pools spans across contracts; managed evidence F1 averages per-contract scores. Local `contradiction_f1` is not managed `contradiction_correct`. Parseability does not validate checklist completeness. Check the configured model identities against the generated results. Verify execution provenance because result lookup can fall back to other matching runs, and review the carve-out rubric's conflicting wording before live judging.
 
 Local exports overwrite `./eval_result/frontier_metrics.json`, `frontier_rows.json`, `scorer_base.json`, `scorer_tuned.json`, `summary.json`, `judge_base.json`, and `judge_tuned.json`. Preserve package/execution ARNs and raw S3 records separately; the snapshots are not a complete provenance manifest.
 
@@ -35,10 +37,10 @@ Local exports overwrite `./eval_result/frontier_metrics.json`, `frontier_rows.js
 - Access to serverless model customization and evaluation in your Region, and quota for one
   `ml.g5.12xlarge` endpoint.
 - Bedrock access to `global.anthropic.claude-sonnet-4-6` for the baseline and
-  `amazon.nova-pro-v1:0` for the judge.
+  `anthropic.claude-opus-4-5-20251101-v1:0` (Claude Opus 4.5) for the judge.
 - An execution role that trusts `bedrock.amazonaws.com` and allows `bedrock:CreateEvaluationJob`,
   `GetEvaluationJob`, `ListEvaluationJobs`, `StopEvaluationJob` and `bedrock:InvokeModel` on the
-  judge model.
+  judge's inference profile and its foundation model in each Region the profile routes to.
 
 ## Files
 

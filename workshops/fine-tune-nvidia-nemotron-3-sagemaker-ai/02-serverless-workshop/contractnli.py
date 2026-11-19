@@ -1,20 +1,20 @@
 """
 ContractNLI data access and prompt construction.
 
-This module deliberately contains only the boring parts: downloading the dataset,
+This module contains data access and prompt construction: downloading the dataset,
 loading the splits, turning a document into numbered spans, and rendering the prompt.
 
-Everything that constitutes the *lesson* — calling a model, parsing its answer and
-scoring it — lives in the notebooks, where you can read it.
+Calling models, parsing answers and scoring them is handled in notebook 3,
+`evaluation_utils.py` and `contractnli_scorer.py`.
 
   1. the data       ensure_dataset, load, doc_spans, gold_for
   2. one string     INSTRUCTION, build_prompt
   3. chat turns     SYSTEM, USER, build_system, build_user, build_messages
 
-Plus NO_THINK, the switch both formats append.
+Plus EMPTY_REASONING, the block every training completion starts with.
 
 The prompt is rendered two ways because the callers need two shapes, and they are
-deliberately not interchangeable:
+not interchangeable:
 
   build_prompt    one string, contract then checklist. Notebook 1 writes it into every
                   training record (`prompt`/`completion`) and every test record
@@ -24,7 +24,7 @@ deliberately not interchangeable:
                   the user turn. For APIs that take roles rather than a single string:
                   the Bedrock Converse baseline in notebook 3, and serving in notebook 4.
 
-Same instruction, same checklist, same `/no_think` — but a different order, so the two
+Same instruction and checklist, but a different order, so the two
 are not byte-identical and neither is a drop-in for the other. Change the wording in
 both or in neither.
 """
@@ -89,9 +89,10 @@ def gold_for(doc):
     return doc["annotation_sets"][0]["annotations"]
 
 
-# Reasoning models spend their whole generation budget inside <think> on a 17-item
-# checklist and can be cut off before the JSON. Both formats append this switch.
-NO_THINK = "/no_think"
+# Nemotron 3 Nano's chat template opens a <think> block for every answer. Every training
+# completion starts with this empty block, so the fine-tuned model closes it and answers
+# with the JSON.
+EMPTY_REASONING = "<think>\n</think>\n"
 
 
 # -------------------------------------------------------------- Chat completion format
@@ -116,7 +117,7 @@ Respond with JSON only, no other text:
 Include an entry for every hypothesis key listed above."""
 
 
-def build_prompt(doc, labels, no_think=True):
+def build_prompt(doc, labels):
     """Render the single-string prompt for one contract.
 
     The only prompt notebook 1 stores, for all three splits, so what the model trains on
@@ -128,8 +129,7 @@ def build_prompt(doc, labels, no_think=True):
     checklist = "\n".join(
         f'{k}: {v["hypothesis"]} ({v["short_description"]})' for k, v in labels.items()
     )
-    body = INSTRUCTION.format(n=len(labels), spans=spans, checklist=checklist)
-    return f"{body}\n\n{NO_THINK}" if no_think else body
+    return INSTRUCTION.format(n=len(labels), spans=spans, checklist=checklist)
 
 
 # -------------------------------------------------------------- Messages format
@@ -162,13 +162,12 @@ def build_system(labels):
     return SYSTEM.format(n=len(labels), checklist=checklist)
 
 
-def build_user(doc, no_think=True):
+def build_user(doc):
     """The one contract under review, as numbered spans."""
-    body = USER.format(spans="\n".join(f"[{i}] {t}" for i, t in doc_spans(doc)))
-    return f"{body}\n\n{NO_THINK}" if no_think else body
+    return USER.format(spans="\n".join(f"[{i}] {t}" for i, t in doc_spans(doc)))
 
 
-def build_messages(doc, labels, completion=None, no_think=True):
+def build_messages(doc, labels, completion=None):
     """The chat turns for one contract, for callers that take roles rather than a string.
 
     Pass `completion` to get a full training record (system + user + assistant); omit it
@@ -177,13 +176,13 @@ def build_messages(doc, labels, completion=None, no_think=True):
 
     Not the same string as `build_prompt`: the checklist goes in the system turn, ahead
     of the contract. Notebook 1 trains on `build_prompt`, so a model served through here
-    is being asked in a different order than it was trained in — which is fine for an
-    instruction this explicit, and is what the serving check in notebook 4 verifies
-    rather than assumes.
+    is being asked in a different order than it was trained in. The instruction is explicit
+    enough to work in either order. Notebook 4 checks that the served reply parses as JSON and
+    covers the checklist keys.
     """
     messages = [
         {"role": "system", "content": build_system(labels)},
-        {"role": "user", "content": build_user(doc, no_think=no_think)},
+        {"role": "user", "content": build_user(doc)},
     ]
     if completion is not None:
         messages.append({"role": "assistant", "content": completion})

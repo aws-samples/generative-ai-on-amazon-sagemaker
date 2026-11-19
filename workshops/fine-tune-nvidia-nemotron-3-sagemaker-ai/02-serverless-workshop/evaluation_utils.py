@@ -1,8 +1,8 @@
-"""Support code extracted from the serverless evaluation notebook.
+"""Support code for notebook 3.
 
-Core SageMaker evaluator construction and submission stay in the notebook.
-Parsing, scoring, retries, S3 readers, charts, diagnostics and exports are preserved
-here. Importing this module creates no AWS clients and submits no jobs.
+The notebook builds and submits the SageMaker evaluators. This module holds parsing,
+scoring, retries, S3 readers, charts, diagnostics and exports. Importing this module
+creates no AWS clients and submits no jobs.
 """
 import ast
 import hashlib
@@ -135,8 +135,7 @@ def plot_scorer_spread(base_details, tuned_details):
         data = [base_details[name].to_numpy(), tuned_details[name].to_numpy()]
         box = ax.boxplot(data, patch_artist=True, widths=0.6,
                          medianprops=dict(color="black"))
-        # Labels are set here rather than through boxplot's own keyword, which was
-        # renamed in matplotlib 3.9 and would tie this cell to one version.
+        # Set tick labels directly so the code works across matplotlib versions.
         ax.set_xticks([1, 2])
         ax.set_xticklabels(["base", "fine-tuned"])
         for patch, colour in zip(box["boxes"], [BASE_COLOUR, TUNED_COLOUR]):
@@ -274,7 +273,7 @@ def ask_bedrock(doc, model_id=None, *, client, labels, max_tokens=4000, attempts
                 modelId=model_id,
                 system=[{"text": C.build_system(labels)}],
                 messages=[{"role": "user",
-                    "content": [{"text": C.build_user(doc, no_think=False)}]}],
+                    "content": [{"text": C.build_user(doc)}]}],
                 inferenceConfig=config)
             return "".join(part.get("text", "")
                            for part in response["output"]["message"]["content"])
@@ -350,9 +349,8 @@ def plot_statistical_comparison(base, frontier, tuned, frontier_name, *, num_con
         "score")
     ax.set_title(f"Statistical scoring, {num_contracts} held-out contracts")
 
-    # This is the figure that gets screenshotted, so the caveat belongs on it rather
-    # than in prose above it. A bar is a capability score only to the extent the model
-    # returned parseable JSON at all; a bare grey bar reads as a verdict on contract
+    # Annotate the chart when base json_valid is low. A bar is a capability score only to
+    # the extent the model returned parseable JSON at all; a bare grey bar reads as a verdict on contract
     # reading even when much of it is format failure.
     if base.get("json_valid", 1) < 0.95:
         valid = base["json_valid"]
@@ -368,21 +366,20 @@ def plot_statistical_comparison(base, frontier, tuned, frontier_name, *, num_con
     plt.show()
 
 def check_scorer(doc):
-    """Retain the gold-versus-lazy-answer correctness check."""
+    """Check that the scorer gives the gold answer 1.0 and an all-NotMentioned answer less."""
     from contractnli_scorer import score_record
 
     gold = {k: {"label": v["choice"], "evidence": list(v["spans"])}
             for k, v in C.gold_for(doc).items()}
     reference = json.dumps(gold)
 
-    # The guard: a deliberately poor answer must score *below the gold answer* on the same
-    # contract. Comparing the two is what makes this robust — an absolute threshold is not.
+    # A poor answer must score below the gold answer on the same contract. Compare against
+    # the gold score, not a fixed threshold.
     # `aggregate_reward_score` is 0.6*label_correct + 0.4*evidence_f1, and an all-NotMentioned
     # answer earns nothing on evidence, so its ceiling is 0.6 x the share of items that really
-    # are NotMentioned. On the contracts where that share is high it clears 0.5 honestly —
-    # true for 5 of the 123 test contracts — so a `< 0.5` assertion would fail on a scorer
-    # that is working perfectly. Gold scoring 1.0 while the lazy answer scores less cannot be
-    # satisfied by a scorer reading the wrong field, whichever contract you land on.
+    # are NotMentioned. On the contracts where that share is high it clears 0.5
+    # (5 of the 123 test contracts), so a `< 0.5` assertion would fail on a working
+    # scorer. A scorer reading the wrong field cannot give gold 1.0 and the lazy answer less.
     lazy = json.dumps({k: {"label": "NotMentioned", "evidence": []} for k in gold})
     lazy_score = score_record({"id": "lazy", "model_response": lazy,
                                "reference_answer": reference})["aggregate_reward_score"]
@@ -407,7 +404,7 @@ def show_scorer_source():
 
 
 def build_judge_metrics():
-    """Return the original prompts and rating scales, without shared mutable state."""
+    """Return the three judge metric definitions as a new list on each call."""
     return [
         {
             "customMetricDefinition": {
@@ -649,9 +646,9 @@ class EvaluationResults:
         for step, raw_prompt in prompts.items():
             step_turns = ast.literal_eval(raw_prompt) if isinstance(raw_prompt, str) else raw_prompt
             assert "CHECKLIST:" in " ".join(t["content"] for t in step_turns), (
-                f"{step}: the evaluation container did not pass the dataset's `system` field "
-                "through: the model never saw the checklist. Fold the instruction into `query` "
-                "in notebook 1 and re-register the test dataset.")
+                f"{step}: the prompt sent to the model has no CHECKLIST block. Check that "
+                "each test record's `query` is `C.build_prompt()` output, then re-register the "
+                "test dataset.")
         print("the standing instruction reached both models ✓")
 
 
@@ -693,9 +690,9 @@ class EvaluationResults:
               f"{tuned_scored['evidence_f1']*100 if tuned_scored else float('nan'):12.1f}   managed scorer")
 
         # An answer that does not parse scores zero on every item of its contract, so
-        # json_valid has to be read before the two columns above mean anything. With `/no_think`
-        # in the prompt both models parse almost everything, but print it rather than assume it:
-        # if it ever drops, the rows above are part formatting failure and not comparable.
+        # json_valid has to be read before the two columns above mean anything. The base model
+        # reasons before the JSON and can be cut off before it, so print it rather than assume it:
+        # below 100%, the rows above are part formatting failure and not comparable.
         if base_scored:
             valid = base_scored["json_valid"]
             print(f"\nbase json_valid: {valid:.1%} — {valid * len(self.documents):.0f} of "
@@ -706,10 +703,9 @@ class EvaluationResults:
                 print("  failure. On the contracts it did answer, base is roughly "
                       f"{base_scored['label_correct'] / valid * 100:.1f} / "
                       f"{base_scored['evidence_f1'] / valid * 100:.1f}.")
-                print("  That is a prompting bug, not a reading one: check that `/no_think` "
-                      "survived into the")
-                print("  test records, since a reasoning trace that never closes cannot reach "
-                      "the JSON.")
+                print("  The base model reasons before the JSON, and a reasoning trace that "
+                      "is cut off")
+                print("  before </think> never reaches it.")
 
         self.save_json("summary", {
             "eval_contracts": len(self.documents),

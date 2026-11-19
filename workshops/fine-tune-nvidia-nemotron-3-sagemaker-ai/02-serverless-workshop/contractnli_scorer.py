@@ -74,7 +74,10 @@ def _reference(record: Dict[str, Any]) -> str:
 
 def parse_answer(text: str):
     """Extract the JSON verdict object. Returns (obj_or_None, ok)."""
-    body = re.sub(r"<think>.*?</think>", " ", text or "", flags=re.DOTALL)
+    # The chat template opens <think> in the prompt, so a reasoning reply carries only the
+    # closing tag: keep what follows the last </think>.
+    body = (text or "").rsplit("</think>", 1)[-1]
+    body = re.sub(r"<think>.*?</think>", " ", body, flags=re.DOTALL)
     fence = re.search(r"```(?:json)?\s*(.*?)```", body, re.DOTALL)
     if fence:
         body = fence.group(1)
