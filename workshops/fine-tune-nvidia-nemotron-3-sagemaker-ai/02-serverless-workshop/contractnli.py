@@ -11,7 +11,7 @@ scoring it — lives in the notebooks, where you can read it.
   2. one string     INSTRUCTION, build_prompt
   3. chat turns     SYSTEM, USER, build_system, build_user, build_messages
 
-Plus NO_THINK, the switch both formats append.
+Plus EMPTY_REASONING, the block every training completion starts with.
 
 The prompt is rendered two ways because the callers need two shapes, and they are
 deliberately not interchangeable:
@@ -24,7 +24,7 @@ deliberately not interchangeable:
                   the user turn. For APIs that take roles rather than a single string:
                   the Bedrock Converse baseline in notebook 3, and serving in notebook 4.
 
-Same instruction, same checklist, same `/no_think` — but a different order, so the two
+Same instruction and checklist, but a different order, so the two
 are not byte-identical and neither is a drop-in for the other. Change the wording in
 both or in neither.
 """
@@ -89,13 +89,9 @@ def gold_for(doc):
     return doc["annotation_sets"][0]["annotations"]
 
 
-# Reasoning models spend their whole generation budget inside <think> on a 17-item
-# checklist and can be cut off before the JSON. Both formats append this switch.
-NO_THINK = "/no_think"
-
-# Nemotron 3 Nano's chat template opens <think> for the assistant turn and ignores
-# /no_think, so the model reasons before the JSON. Training completions start with this
-# empty block instead: the model learns to close the block the template opened and answer.
+# Nemotron 3 Nano's chat template opens a <think> block for every answer. Every training
+# completion starts with this empty block, so the fine-tuned model closes it and answers
+# with the JSON.
 EMPTY_REASONING = "<think>\n</think>\n"
 
 
@@ -121,7 +117,7 @@ Respond with JSON only, no other text:
 Include an entry for every hypothesis key listed above."""
 
 
-def build_prompt(doc, labels, no_think=False):
+def build_prompt(doc, labels):
     """Render the single-string prompt for one contract.
 
     The only prompt notebook 1 stores, for all three splits, so what the model trains on
@@ -133,8 +129,7 @@ def build_prompt(doc, labels, no_think=False):
     checklist = "\n".join(
         f'{k}: {v["hypothesis"]} ({v["short_description"]})' for k, v in labels.items()
     )
-    body = INSTRUCTION.format(n=len(labels), spans=spans, checklist=checklist)
-    return f"{body}\n\n{NO_THINK}" if no_think else body
+    return INSTRUCTION.format(n=len(labels), spans=spans, checklist=checklist)
 
 
 # -------------------------------------------------------------- Messages format
@@ -167,13 +162,12 @@ def build_system(labels):
     return SYSTEM.format(n=len(labels), checklist=checklist)
 
 
-def build_user(doc, no_think=False):
+def build_user(doc):
     """The one contract under review, as numbered spans."""
-    body = USER.format(spans="\n".join(f"[{i}] {t}" for i, t in doc_spans(doc)))
-    return f"{body}\n\n{NO_THINK}" if no_think else body
+    return USER.format(spans="\n".join(f"[{i}] {t}" for i, t in doc_spans(doc)))
 
 
-def build_messages(doc, labels, completion=None, no_think=False):
+def build_messages(doc, labels, completion=None):
     """The chat turns for one contract, for callers that take roles rather than a string.
 
     Pass `completion` to get a full training record (system + user + assistant); omit it
@@ -188,7 +182,7 @@ def build_messages(doc, labels, completion=None, no_think=False):
     """
     messages = [
         {"role": "system", "content": build_system(labels)},
-        {"role": "user", "content": build_user(doc, no_think=no_think)},
+        {"role": "user", "content": build_user(doc)},
     ]
     if completion is not None:
         messages.append({"role": "assistant", "content": completion})

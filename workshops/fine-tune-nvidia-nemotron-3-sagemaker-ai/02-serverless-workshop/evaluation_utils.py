@@ -274,7 +274,7 @@ def ask_bedrock(doc, model_id=None, *, client, labels, max_tokens=4000, attempts
                 modelId=model_id,
                 system=[{"text": C.build_system(labels)}],
                 messages=[{"role": "user",
-                    "content": [{"text": C.build_user(doc, no_think=False)}]}],
+                    "content": [{"text": C.build_user(doc)}]}],
                 inferenceConfig=config)
             return "".join(part.get("text", "")
                            for part in response["output"]["message"]["content"])
@@ -693,9 +693,9 @@ class EvaluationResults:
               f"{tuned_scored['evidence_f1']*100 if tuned_scored else float('nan'):12.1f}   managed scorer")
 
         # An answer that does not parse scores zero on every item of its contract, so
-        # json_valid has to be read before the two columns above mean anything. With `/no_think`
-        # in the prompt both models parse almost everything, but print it rather than assume it:
-        # if it ever drops, the rows above are part formatting failure and not comparable.
+        # json_valid has to be read before the two columns above mean anything. The base model
+        # reasons before the JSON and can be cut off before it, so print it rather than assume it:
+        # below 100%, the rows above are part formatting failure and not comparable.
         if base_scored:
             valid = base_scored["json_valid"]
             print(f"\nbase json_valid: {valid:.1%} — {valid * len(self.documents):.0f} of "
@@ -706,10 +706,9 @@ class EvaluationResults:
                 print("  failure. On the contracts it did answer, base is roughly "
                       f"{base_scored['label_correct'] / valid * 100:.1f} / "
                       f"{base_scored['evidence_f1'] / valid * 100:.1f}.")
-                print("  That is a prompting bug, not a reading one: check that `/no_think` "
-                      "survived into the")
-                print("  test records, since a reasoning trace that never closes cannot reach "
-                      "the JSON.")
+                print("  The base model reasons before the JSON, and a reasoning trace that "
+                      "is cut off")
+                print("  before </think> never reaches it.")
 
         self.save_json("summary", {
             "eval_contracts": len(self.documents),

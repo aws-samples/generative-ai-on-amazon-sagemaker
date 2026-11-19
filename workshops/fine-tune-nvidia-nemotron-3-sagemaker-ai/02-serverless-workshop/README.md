@@ -37,7 +37,7 @@ Local exports overwrite `./eval_result/frontier_metrics.json`, `frontier_rows.js
 - Access to serverless model customization and evaluation in your Region, and quota for one
   `ml.g5.12xlarge` endpoint.
 - Bedrock access to `global.anthropic.claude-sonnet-4-6` for the baseline and
-  `amazon.nova-pro-v1:0` for the judge.
+  `anthropic.claude-opus-4-5-20251101-v1:0` (Claude Opus 4.5) for the judge.
 - An execution role that trusts `bedrock.amazonaws.com` and allows `bedrock:CreateEvaluationJob`,
   `GetEvaluationJob`, `ListEvaluationJobs`, `StopEvaluationJob` and `bedrock:InvokeModel` on the
   judge model.
