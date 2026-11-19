@@ -11,7 +11,7 @@ joblib==1.5.1
 requests>=2.32.4
 scikit-learn==1.7.0
 uv==0.9.6
-mem0ai==0.1.114
+mem0ai==2.0.0b2
 opensearch-py
 ddgs==9.3.1
 faiss-cpu==1.11.0
