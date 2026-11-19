@@ -1,11 +1,11 @@
 """
 ContractNLI data access and prompt construction.
 
-This module deliberately contains only the boring parts: downloading the dataset,
+This module contains data access and prompt construction: downloading the dataset,
 loading the splits, turning a document into numbered spans, and rendering the prompt.
 
-Everything that constitutes the *lesson* — calling a model, parsing its answer and
-scoring it — lives in the notebooks, where you can read it.
+Calling models, parsing answers and scoring them is handled in notebook 3,
+`evaluation_utils.py` and `contractnli_scorer.py`.
 
   1. the data       ensure_dataset, load, doc_spans, gold_for
   2. one string     INSTRUCTION, build_prompt
@@ -14,7 +14,7 @@ scoring it — lives in the notebooks, where you can read it.
 Plus EMPTY_REASONING, the block every training completion starts with.
 
 The prompt is rendered two ways because the callers need two shapes, and they are
-deliberately not interchangeable:
+not interchangeable:
 
   build_prompt    one string, contract then checklist. Notebook 1 writes it into every
                   training record (`prompt`/`completion`) and every test record
@@ -176,9 +176,9 @@ def build_messages(doc, labels, completion=None):
 
     Not the same string as `build_prompt`: the checklist goes in the system turn, ahead
     of the contract. Notebook 1 trains on `build_prompt`, so a model served through here
-    is being asked in a different order than it was trained in — which is fine for an
-    instruction this explicit, and is what the serving check in notebook 4 verifies
-    rather than assumes.
+    is being asked in a different order than it was trained in. The instruction is explicit
+    enough to work in either order. Notebook 4 checks that the served reply parses as JSON and
+    covers the checklist keys.
     """
     messages = [
         {"role": "system", "content": build_system(labels)},
