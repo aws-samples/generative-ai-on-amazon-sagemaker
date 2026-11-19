@@ -40,7 +40,7 @@ Local exports overwrite `./eval_result/frontier_metrics.json`, `frontier_rows.js
   `anthropic.claude-opus-4-5-20251101-v1:0` (Claude Opus 4.5) for the judge.
 - An execution role that trusts `bedrock.amazonaws.com` and allows `bedrock:CreateEvaluationJob`,
   `GetEvaluationJob`, `ListEvaluationJobs`, `StopEvaluationJob` and `bedrock:InvokeModel` on the
-  judge model.
+  judge's inference profile and its foundation model in each Region the profile routes to.
 
 ## Files
 

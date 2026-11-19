@@ -1,7 +1,8 @@
 """Support code for notebook 3.
 
 The notebook builds and submits the SageMaker evaluators. This module holds parsing,
-scoring, retries, S3 readers, charts, diagnostics and exports. Importing this module creates no AWS clients and submits no jobs.
+scoring, retries, S3 readers, charts, diagnostics and exports. Importing this module
+creates no AWS clients and submits no jobs.
 """
 import ast
 import hashlib
@@ -348,8 +349,8 @@ def plot_statistical_comparison(base, frontier, tuned, frontier_name, *, num_con
         "score")
     ax.set_title(f"Statistical scoring, {num_contracts} held-out contracts")
 
-    # Annotate the chart when base json_valid is low. A bar is a capability score only to the extent the model
-    # returned parseable JSON at all; a bare grey bar reads as a verdict on contract
+    # Annotate the chart when base json_valid is low. A bar is a capability score only to
+    # the extent the model returned parseable JSON at all; a bare grey bar reads as a verdict on contract
     # reading even when much of it is format failure.
     if base.get("json_valid", 1) < 0.95:
         valid = base["json_valid"]
