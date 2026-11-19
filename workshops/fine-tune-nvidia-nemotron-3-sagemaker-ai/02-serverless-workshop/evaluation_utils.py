@@ -23,7 +23,7 @@ import contractnli as C
 BASE_COLOUR, FRONTIER_COLOUR, TUNED_COLOUR = "#b0b0b0", "#ff7f0e", "steelblue"
 JUDGE_COLOURS = {"base": BASE_COLOUR, "fine-tuned": TUNED_COLOUR}
 SHOW = ["label_correct", "evidence_f1", "contradiction_correct", "json_valid"]
-DEFAULT_FRONTIER = "global.anthropic.claude-sonnet-4-6"
+DEFAULT_FRONTIER = "global.anthropic.claude-sonnet-5"
 
 
 def model_package_group_name(base_model_id):
@@ -108,6 +108,12 @@ def _jsonable(value):
     if isinstance(value, (np.integer, np.floating)):
         return value.item()
     raise TypeError(f"not JSON serialisable: {type(value).__name__}")
+
+
+def load_baseline(filename, directory="baselines"):
+    """Read one pre-computed result file that ships with the lab."""
+    with open(pathlib.Path(directory) / filename) as stream:
+        return json.load(stream)
 
 def grouped_bars(ax, labels, series, colours, ylabel):
     """Grouped bar chart: one group per label, one bar per named series."""
@@ -652,9 +658,13 @@ class EvaluationResults:
         print("the standing instruction reached both models ✓")
 
 
-    def scorer_results(self, execution_arn=None):
-        base_scored = self.read_results(self.scorer_prefix, "EvaluateBaseModel", execution_arn)
-        tuned_scored = self.read_results(self.scorer_prefix, "EvaluateCustomModel", execution_arn)
+    def scorer_results(self, execution_arn=None, baselines=None):
+        if baselines:
+            base_scored = load_baseline("scorer_base.json", baselines)
+            tuned_scored = load_baseline("scorer_tuned.json", baselines)
+        else:
+            base_scored = self.read_results(self.scorer_prefix, "EvaluateBaseModel", execution_arn)
+            tuned_scored = self.read_results(self.scorer_prefix, "EvaluateCustomModel", execution_arn)
 
         SHOW = ["label_correct", "evidence_f1", "contradiction_correct", "json_valid"]
 
@@ -724,9 +734,16 @@ class EvaluationResults:
         })
 
 
-    def scorer_distributions(self, base_scored, tuned_scored, execution_arn=None):
-        base_details = self.load_scorer_details("EvaluateBaseModel", execution_arn)
-        tuned_details = self.load_scorer_details("EvaluateCustomModel", execution_arn)
+    def scorer_distributions(self, base_scored, tuned_scored, execution_arn=None, baselines=None):
+        if baselines:
+            base_details = pd.DataFrame(load_baseline("scorer_details_base.json", baselines))
+            tuned_details = pd.DataFrame(load_baseline("scorer_details_tuned.json", baselines))
+        else:
+            base_details = self.load_scorer_details("EvaluateBaseModel", execution_arn)
+            tuned_details = self.load_scorer_details("EvaluateCustomModel", execution_arn)
+            for tag, details in (("scorer_details_base", base_details),
+                                 ("scorer_details_tuned", tuned_details)):
+                self.save_json(tag, json.loads(details[SHOW].to_json(orient="records")))
 
         # If the per-record rows do not average to the aggregates, we are reading a different
         # run's file and every chart below it would be mislabelled.
@@ -740,9 +757,13 @@ class EvaluationResults:
         return base_details, tuned_details
 
 
-    def judge_results(self, execution_arn=None):
-        judge_base = self.load_judge_scores("base-llmaj-eval", execution_arn)
-        judge_tuned = self.load_judge_scores("custom-llmaj-eval", execution_arn)
+    def judge_results(self, execution_arn=None, baselines=None):
+        if baselines:
+            judge_base = pd.DataFrame(load_baseline("judge_base.json", baselines))
+            judge_tuned = pd.DataFrame(load_baseline("judge_tuned.json", baselines))
+        else:
+            judge_base = self.load_judge_scores("base-llmaj-eval", execution_arn)
+            judge_tuned = self.load_judge_scores("custom-llmaj-eval", execution_arn)
         judged = {"base": judge_base, "fine-tuned": judge_tuned}
 
         plot_judge_bars(judged)
