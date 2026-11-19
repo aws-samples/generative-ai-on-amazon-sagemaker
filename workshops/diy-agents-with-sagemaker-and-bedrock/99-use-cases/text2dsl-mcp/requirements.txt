@@ -3,7 +3,7 @@ mcp[cli]
 retry==0.9.2
 langchain_mcp_adapters==0.1.7
 langchain==0.3.27
-langgraph==0.6.1
+langgraph==1.0.10rc1
 opensearch-py==2.8.0
 strands-agents==0.1.8
 strands-agents-tools==0.1.6
