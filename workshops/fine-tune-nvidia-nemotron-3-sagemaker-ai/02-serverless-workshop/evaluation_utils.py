@@ -134,7 +134,7 @@ def grouped_bars(ax, labels, series, colours, ylabel):
     ax.grid(axis="y", alpha=0.3)
     ax.set_axisbelow(True)
 
-def plot_scorer_spread(base_details, tuned_details):
+def plot_scorer_spread(base_details, tuned_details, source=""):
     """Per-contract distributions behind the base/fine-tuned aggregates."""
     fig, axes = plt.subplots(1, len(SHOW), figsize=(13, 4), sharey=True)
     for ax, name in zip(axes, SHOW):
@@ -156,11 +156,11 @@ def plot_scorer_spread(base_details, tuned_details):
         ax.set_axisbelow(True)
     axes[0].set_ylim(-0.05, 1.05)
     axes[0].set_ylabel("per-contract score")
-    fig.suptitle("Every contract, not just the mean", y=1.02)
+    fig.suptitle(f"Every contract, not just the mean{source}", y=1.02)
     plt.tight_layout()
     plt.show()
 
-def plot_judge_bars(judged):
+def plot_judge_bars(judged, source=""):
     """Judge metrics per model, annotated with the judge's own coverage.
 
     `judged` maps a model label to its score frame, so this draws one model or two.
@@ -188,11 +188,11 @@ def plot_judge_bars(judged):
             parts.append(f"{tag} scored {group.count()}/{group.size}")
         labels.append("\n".join(parts))
     ax.set_xticklabels(labels, size=8)
-    ax.set_title(f"LLM-as-a-Judge, {' vs '.join(judged)}")
+    ax.set_title(f"LLM-as-a-Judge, {' vs '.join(judged)}{source}")
     plt.tight_layout()
     plt.show()
 
-def plot_judge_radar(judged):
+def plot_judge_radar(judged, source=""):
     """The same means as a shape: a regression on any one axis shows at a glance."""
     means = {tag: f.groupby("metric")["score"].mean() for tag, f in judged.items()}
     metrics_shown = sorted(set.intersection(*(set(m.index) for m in means.values())))
@@ -209,7 +209,7 @@ def plot_judge_radar(judged):
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(metrics_shown, size=8)
     ax.set_ylim(0, 1)
-    ax.set_title("Judge metrics overview")
+    ax.set_title(f"Judge metrics overview{source}")
     ax.legend(loc="lower right", bbox_to_anchor=(1.15, -0.05), fontsize=9)
     plt.tight_layout()
     plt.show()
@@ -338,7 +338,8 @@ def evaluate_with_bedrock(docs, model_id, *, client, labels, workers=6):
         print(f"{unanswered} contract(s) never returned a reply after retries")
     return metrics(rows, failures), rows
 
-def plot_statistical_comparison(base, frontier, tuned, frontier_name, *, num_contracts, checklist_items):
+def plot_statistical_comparison(base, frontier, tuned, frontier_name, *, num_contracts, checklist_items,
+                                source=""):
     """Three models on the two metrics all three report.
 
     `base` and `tuned` come from the managed scorer on a 0-1 scale; `frontier` comes
@@ -353,7 +354,7 @@ def plot_statistical_comparison(base, frontier, tuned, frontier_name, *, num_con
          "fine-tuned": [tuned["label_correct"], tuned["evidence_f1"]]},
         [BASE_COLOUR, FRONTIER_COLOUR, TUNED_COLOUR],
         "score")
-    ax.set_title(f"Statistical scoring, {num_contracts} held-out contracts")
+    ax.set_title(f"Statistical scoring, {num_contracts} held-out contracts{source}")
 
     # Annotate the chart when base json_valid is low. A bar is a capability score only to
     # the extent the model returned parseable JSON at all; a bare grey bar reads as a verdict on contract
@@ -519,6 +520,7 @@ class EvaluationResults:
         self.scorer_prefix = scorer_output.split(f"{bucket}/", 1)[1]
         self.judge_output = judge_output
         self.output_dir = pathlib.Path(output_dir)
+        self.scorer_source = "managed scorer"
 
     def resolve_execution(self, execution, kind):
         return execution.arn if execution is not None else self.last_successful_execution(kind)
@@ -660,9 +662,14 @@ class EvaluationResults:
 
     def scorer_results(self, execution_arn=None, baselines=None):
         if baselines:
+            # The reference run's fine-tune, not this one: say so, and do not write it into
+            # ./eval_result next to this run's own results.
+            print(f"scorer results: reference run from {baselines}/")
             base_scored = load_baseline("scorer_base.json", baselines)
             tuned_scored = load_baseline("scorer_tuned.json", baselines)
+            self.scorer_source = f"reference run ({baselines}/)"
         else:
+            self.scorer_source = "managed scorer"
             base_scored = self.read_results(self.scorer_prefix, "EvaluateBaseModel", execution_arn)
             tuned_scored = self.read_results(self.scorer_prefix, "EvaluateCustomModel", execution_arn)
 
@@ -682,8 +689,9 @@ class EvaluationResults:
             t = f"{tuned_scored[name]*100:11.1f}" if tuned_scored and name in tuned_scored else f"{'-':>11s}"
             print(f"{name:24s} {b} {t}")
 
-        self.save_json("scorer_base", base_scored)
-        self.save_json("scorer_tuned", tuned_scored)
+        if not baselines:
+            self.save_json("scorer_base", base_scored)
+            self.save_json("scorer_tuned", tuned_scored)
         return base_scored, tuned_scored
 
 
@@ -692,12 +700,12 @@ class EvaluationResults:
         print("-" * 62)
         print(f"{'base NVIDIA-Nemotron-3-Nano-30B':22s} "
               f"{base_scored['label_correct']*100 if base_scored else float('nan'):9.1f} "
-              f"{base_scored['evidence_f1']*100 if base_scored else float('nan'):12.1f}   managed scorer")
+              f"{base_scored['evidence_f1']*100 if base_scored else float('nan'):12.1f}   {self.scorer_source}")
         print(f"{self.frontier_model.split('.')[-1]:22s} "
               f"{frontier_metrics['accuracy']:9.1f} {frontier_metrics['evidence_f1']:12.1f}   local pass")
         print(f"{'fine-tuned NVIDIA-Nemotron-3-Nano-30B':22s} "
               f"{tuned_scored['label_correct']*100 if tuned_scored else float('nan'):9.1f} "
-              f"{tuned_scored['evidence_f1']*100 if tuned_scored else float('nan'):12.1f}   managed scorer")
+              f"{tuned_scored['evidence_f1']*100 if tuned_scored else float('nan'):12.1f}   {self.scorer_source}")
 
         # An answer that does not parse scores zero on every item of its contract, so
         # json_valid has to be read before the two columns above mean anything. The base model
@@ -721,13 +729,13 @@ class EvaluationResults:
             "eval_contracts": len(self.documents),
             "checklist_items": len(self.checklist),
             "models": {
-                "base": {"model": self.base_model_id, "how": "managed scorer",
+                "base": {"model": self.base_model_id, "how": self.scorer_source,
                          "accuracy": base_scored["label_correct"] * 100 if base_scored else None,
                          "evidence_f1": base_scored["evidence_f1"] * 100 if base_scored else None},
                 "frontier": {"model": self.frontier_model, "how": "local pass",
                              "accuracy": frontier_metrics["accuracy"],
                              "evidence_f1": frontier_metrics["evidence_f1"]},
-                "fine_tuned": {"model": self.base_model_id, "how": "managed scorer",
+                "fine_tuned": {"model": self.base_model_id, "how": self.scorer_source,
                                "accuracy": tuned_scored["label_correct"] * 100 if tuned_scored else None,
                                "evidence_f1": tuned_scored["evidence_f1"] * 100 if tuned_scored else None},
             },
@@ -735,7 +743,9 @@ class EvaluationResults:
 
 
     def scorer_distributions(self, base_scored, tuned_scored, execution_arn=None, baselines=None):
+        source = ""
         if baselines:
+            source = f"\n(base and fine-tuned: reference run from {baselines}/)"
             base_details = pd.DataFrame(load_baseline("scorer_details_base.json", baselines))
             tuned_details = pd.DataFrame(load_baseline("scorer_details_tuned.json", baselines))
         else:
@@ -753,21 +763,28 @@ class EvaluationResults:
         print(f"{len(base_details)} per-contract rows per model, "
               f"reproducing every aggregate ✓")
 
-        plot_scorer_spread(base_details, tuned_details)
+        plot_scorer_spread(base_details, tuned_details, source)
         return base_details, tuned_details
 
 
     def judge_results(self, execution_arn=None, baselines=None):
         if baselines:
+            # The reference run's fine-tune, not this one: say so, and do not write it into
+            # ./eval_result next to this run's own results.
+            print(f"judge results: reference run from {baselines}/")
             judge_base = pd.DataFrame(load_baseline("judge_base.json", baselines))
             judge_tuned = pd.DataFrame(load_baseline("judge_tuned.json", baselines))
+            source = f"\n(reference run from {baselines}/)"
         else:
             judge_base = self.load_judge_scores("base-llmaj-eval", execution_arn)
             judge_tuned = self.load_judge_scores("custom-llmaj-eval", execution_arn)
+            source = ""
         judged = {"base": judge_base, "fine-tuned": judge_tuned}
 
-        plot_judge_bars(judged)
-        plot_judge_radar(judged)
+        plot_judge_bars(judged, source)
+        plot_judge_radar(judged, source)
+        if baselines:
+            return judged
 
         # `to_json` renders missing scores as null; a plain dict would emit invalid `NaN`.
         for tag, scores in (("judge_base", judge_base), ("judge_tuned", judge_tuned)):
