@@ -1,0 +1,1478 @@
+[
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 1.0
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.3333
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 1.0
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 1.0
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.3333
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 1.0
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 1.0
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  },
+  {
+    "metric": "EvidenceSupportsVerdict",
+    "score": 0.6667
+  },
+  {
+    "metric": "CarveOutHandling",
+    "score": 0.6667
+  },
+  {
+    "metric": "ChecklistCompleteness",
+    "score": 1.0
+  }
+]
