@@ -1,0 +1,17 @@
+datasets==5.1.0
+ipywidgets==8.1.7
+matplotlib
+numpy
+tqdm
+sagemaker==3.27.0
+s3fs==2026.7.0
+aiobotocore==3.10.0
+boto3==1.43.117
+transformers==5.5.4
+strands-agents[openai]==1.62.0
+agentcore-rl-toolkit[core,gateway]==0.2.0
+training-sessions-cookbook[code-rl] @ git+https://github.com/aws/sagemaker-training-sessions-cookbook@7f2d3e0
+
+# MLflow tracking (same as the other labs)
+mlflow
+sagemaker-mlflow==0.5.0

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="640" viewBox="0 0 1080 640" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8a8a"/>
+    </marker>
+  </defs>
+  <rect width="1080" height="640" fill="#ffffff"/>
+  <text x="540" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#1d1d1f">One episode of the scheduling agent (multi-turn)</text>
+
+  <!-- lane headers -->
+  <text x="150" y="70" text-anchor="middle" font-size="16" font-weight="bold" fill="#1d1d1f">Request</text>
+  <text x="470" y="70" text-anchor="middle" font-size="16" font-weight="bold" fill="#3f2fa6">Model (Qwen3.8-27B)</text>
+  <text x="850" y="70" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e6b45">Tools (Python)</text>
+  <line x1="470" y1="80" x2="470" y2="560" stroke="#d5d0f2" stroke-width="2" stroke-dasharray="4 4"/>
+  <line x1="850" y1="80" x2="850" y2="560" stroke="#cfe8d9" stroke-width="2" stroke-dasharray="4 4"/>
+
+  <!-- request -->
+  <rect x="30" y="90" width="240" height="96" rx="10" fill="#f5f5f7" stroke="#b8b8bd"/>
+  <text x="150" y="116" text-anchor="middle" font-size="13" fill="#1d1d1f">Please book a 90-minute meeting</text>
+  <text x="150" y="136" text-anchor="middle" font-size="13" fill="#1d1d1f">with Ines, Quinn and Chen on</text>
+  <text x="150" y="156" text-anchor="middle" font-size="13" fill="#1d1d1f">Thursday 2026-11-12,</text>
+  <text x="150" y="176" text-anchor="middle" font-size="13" fill="#1d1d1f">as early as possible.</text>
+  <line x1="272" y1="138" x2="356" y2="138" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- model call: get calendars -->
+  <rect x="360" y="100" width="220" height="76" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="352" y="96" text-anchor="end" font-size="12" font-weight="bold" fill="#6b5bd2">model call 1</text>
+  <text x="470" y="126" text-anchor="middle" font-size="13" font-family="Menlo, monospace" fill="#3f2fa6">get_calendar("Ines")</text>
+  <text x="470" y="146" text-anchor="middle" font-size="13" font-family="Menlo, monospace" fill="#3f2fa6">get_calendar("Quinn")</text>
+  <text x="470" y="166" text-anchor="middle" font-size="13" font-family="Menlo, monospace" fill="#3f2fa6">get_calendar("Chen")</text>
+  <line x1="582" y1="138" x2="676" y2="138" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- tool results -->
+  <rect x="680" y="90" width="370" height="200" rx="10" fill="#e3f4ea" stroke="#7fc29b"/>
+  <text x="696" y="116" font-size="13" font-weight="bold" fill="#1e6b45">Ines</text>
+  <text x="746" y="116" font-size="13" fill="#1e6b45">Chicago, UTC−6, works 10:00−18:00</text>
+  <text x="746" y="136" font-size="13" fill="#1e6b45">busy 16:00−16:30 (local)</text>
+  <text x="696" y="168" font-size="13" font-weight="bold" fill="#1e6b45">Quinn</text>
+  <text x="746" y="168" font-size="13" fill="#1e6b45">Chicago, UTC−6, works 08:00−16:00</text>
+  <text x="746" y="188" font-size="13" fill="#1e6b45">busy 12:00−14:00, 12:45−13:15 (local)</text>
+  <text x="696" y="220" font-size="13" font-weight="bold" fill="#1e6b45">Chen</text>
+  <text x="746" y="220" font-size="13" fill="#1e6b45">Chicago, UTC−6, works 08:00−16:00</text>
+  <text x="746" y="240" font-size="13" fill="#b3261e">busy 16:15−16:45 (in UTC)</text>
+  <text x="696" y="272" font-size="12" font-style="italic" fill="#555">working hours are local; one calendar is in UTC</text>
+  <line x1="676" y1="250" x2="584" y2="320" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- model call: reason and book -->
+  <rect x="360" y="320" width="220" height="110" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="352" y="316" text-anchor="end" font-size="12" font-weight="bold" fill="#6b5bd2">model call 2</text>
+  <text x="470" y="346" text-anchor="middle" font-size="13" fill="#3f2fa6">converts to UTC, finds the</text>
+  <text x="470" y="366" text-anchor="middle" font-size="13" fill="#3f2fa6">earliest 90-minute gap</text>
+  <text x="470" y="398" text-anchor="middle" font-size="12" font-family="Menlo, monospace" fill="#3f2fa6">book_meeting(attendees,</text>
+  <text x="470" y="416" text-anchor="middle" font-size="12" font-family="Menlo, monospace" fill="#3f2fa6">  "20:00", 90)</text>
+  <line x1="582" y1="400" x2="676" y2="400" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+
+  <rect x="680" y="372" width="370" height="56" rx="10" fill="#e3f4ea" stroke="#7fc29b"/>
+  <text x="696" y="398" font-size="13" fill="#1e6b45">records the booking, returns</text>
+  <text x="696" y="416" font-size="13" font-family="Menlo, monospace" fill="#1e6b45">"booked"</text>
+  <line x1="676" y1="420" x2="584" y2="470" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+
+  <rect x="360" y="460" width="220" height="44" rx="10" fill="#eeeafc" stroke="#9a8fe3"/>
+  <text x="352" y="456" text-anchor="end" font-size="12" font-weight="bold" fill="#6b5bd2">model call 3</text>
+  <text x="470" y="487" text-anchor="middle" font-size="13" fill="#3f2fa6">"Booked for 20:00 UTC."</text>
+
+  <!-- reward -->
+  <rect x="30" y="360" width="240" height="150" rx="10" fill="#fff6e5" stroke="#e0a83c"/>
+  <text x="150" y="388" text-anchor="middle" font-size="15" font-weight="bold" fill="#8a5a00">Reward (after the episode)</text>
+  <text x="150" y="414" text-anchor="middle" font-size="13" fill="#8a5a00">earliest valid slot: 20:00 UTC</text>
+  <text x="150" y="434" text-anchor="middle" font-size="13" fill="#8a5a00">booked 20:00 → 1.0</text>
+  <text x="150" y="458" text-anchor="middle" font-size="12" fill="#8a5a00">valid but later slot → 0.5</text>
+  <text x="150" y="476" text-anchor="middle" font-size="12" fill="#8a5a00">invalid, none, or booked twice → 0</text>
+  <line x1="356" y1="440" x2="274" y2="440" stroke="#8a8a8a" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- footer -->
+  <text x="540" y="594" text-anchor="middle" font-size="14" fill="#444">The tool results go back to the model as the next turn. The gateway records all model calls as one token sequence, which becomes</text>
+  <text x="540" y="614" text-anchor="middle" font-size="14" fill="#444">a training datum with the episode's advantage.</text>
+</svg>

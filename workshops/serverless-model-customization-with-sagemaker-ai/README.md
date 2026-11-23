@@ -2,7 +2,7 @@
 
 Welcome to the **Serverless Model Customization with SageMaker AI** workshop! This hands-on, self-paced workshop is designed for ML practitioners who want to customize Large Language Models (LLMs) using different fine-tuning techniques — without managing any training infrastructure — and deploy them on AWS.
 
-You will explore the full model customization lifecycle — from dataset preparation and serverless training, to evaluation and real-time deployment — across four progressively advanced labs using the SageMaker AI serverless customization APIs.
+You will explore the full model customization lifecycle — from dataset preparation and serverless training, to evaluation and real-time deployment — across four progressively advanced labs using the SageMaker AI serverless customization APIs. A fifth lab writes its own training loop on the training session APIs.
 
 ## Learning Objectives
 
@@ -95,6 +95,20 @@ Use an AI judge model to provide reward signals during training, enabling prefer
 | 3b   | `3b-import-model-from-s3.ipynb` | _(Alternative to step 3)_ Skip training: copy the published checkpoint from S3 and register it as a Model Package |
 | 4    | `4-evaluation.ipynb`            | Run dual LLM-as-a-Judge evaluation (base vs. fine-tuned) with a custom human-like-alignment metric                |
 | 5    | `5-deployment.ipynb`            | Deploy with DJL LMI + vLLM on a SageMaker Endpoint and test streaming inference                                   |
+
+---
+
+### Lab 5: Training Session APIs
+
+Write your own reinforcement learning loop on a training session: a LoRA training client on a hosted model that you drive from the notebook with `sample`, `forward_backward` and `optim_step`. The three notebooks are independent and run in `us-west-2`.
+
+**Model:** Qwen3.8 27B | **Technique:** GRPO (Group Relative Policy Optimization) on training sessions
+
+| Notebook                    | Use case                                                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `5a_gsm_hard_grpo.ipynb`    | GSM-Hard math with a 512-token budget: the full GRPO loop in notebook cells, as a base for new rewards or algorithms |
+| `5b_code_rl.ipynb`          | Competitive programming graded in AgentCore Code Interpreter; load a pre-trained adapter into a new session      |
+| `5c_scheduling_agent.ipynb` | Train the model behind a multi-turn Strands agent with tools, through the AgentCore RL Toolkit rollout gateway   |
 
 ## Prerequisites
 
@@ -211,14 +225,25 @@ Each notebook contains:
 │   ├── config.py
 │   ├── workshop_mlflow.py
 │   └── requirements.txt
-└── lab-4-reinforcement-learning-from-ai-feedback/
-    ├── 1-prepare-data.ipynb
-    ├── 2-prepare-reward-model.ipynb
-    ├── 3-fine-tune-model.ipynb
-    ├── 3b-import-model-from-s3.ipynb
-    ├── 4-evaluation.ipynb
-    ├── 5-deployment.ipynb
-    ├── config.py
-    ├── workshop_mlflow.py
-    └── requirements.txt
+├── lab-4-reinforcement-learning-from-ai-feedback/
+│   ├── 1-prepare-data.ipynb
+│   ├── 2-prepare-reward-model.ipynb
+│   ├── 3-fine-tune-model.ipynb
+│   ├── 3b-import-model-from-s3.ipynb
+│   ├── 4-evaluation.ipynb
+│   ├── 5-deployment.ipynb
+│   ├── config.py
+│   ├── workshop_mlflow.py
+│   └── requirements.txt
+└── lab-5-training-session-apis/
+    ├── 5a_gsm_hard_grpo.ipynb
+    ├── 5b_code_rl.ipynb
+    ├── 5c_scheduling_agent.ipynb
+    ├── lab/              # training run and rollout gateway helpers (5c)
+    ├── usecases/         # scheduling environment (5c)
+    ├── coderl/           # Code Interpreter sandbox and adapter evaluation (5b)
+    ├── images/
+    ├── scripts/          # notebook builders and command-line tools
+    ├── requirements.txt
+    └── README.md
 ```
