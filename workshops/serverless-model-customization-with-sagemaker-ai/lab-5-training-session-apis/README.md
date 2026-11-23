@@ -39,9 +39,11 @@ Requirements in the account (`us-west-2`):
 - 5b: `bedrock-agentcore:CreateCodeInterpreter`, `ListCodeInterpreters`, `GetCodeInterpreter`,
   `StartCodeInterpreterSession`, `InvokeCodeInterpreter` and `StopCodeInterpreterSession` (the notebook creates a code
   interpreter named `code_rl_sandbox` with network mode `SANDBOX` if it does not exist), `sagemaker:CreateModelPackage`,
-  and the pre-trained adapter in S3 (`PRETRAINED_ADAPTER_S3`, a prefix that contains
-  `checkpoints/hf/adapter_config.json` and `checkpoints/hf/adapter_model.safetensors`, 0.9 GB).
-- 5c: Amazon Bedrock access to `openai.gpt-oss-120b-1:0` for the demo request in section 2.
+  and `s3:GetObject` on the pre-trained adapter (0.9 GB). The notebook reads a public copy in the workshop's assets
+  bucket by default; set `PRETRAINED_ADAPTER_S3` to a prefix that contains `checkpoints/hf/adapter_config.json` and
+  `checkpoints/hf/adapter_model.safetensors` to use another copy.
+- 5c: Amazon Bedrock access to `openai.gpt-oss-120b-1:0` for the demo request in section 2. Without it the demo is
+  skipped and the rest of the notebook runs.
 
 ## Layout
 
