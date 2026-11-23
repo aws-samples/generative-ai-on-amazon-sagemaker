@@ -1,0 +1,2668 @@
+from accelerate import Accelerator
+import base64
+from dataclasses import dataclass, field
+from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
+import datetime
+from functools import lru_cache
+from huggingface_hub import snapshot_download
+import io
+import json
+import logging
+import mlflow
+from mlflow.models import infer_signature
+import os
+import shutil
+from peft import (
+    AutoPeftModelForCausalLM,
+    LoraConfig,
+    get_peft_model,
+)
+from PIL import Image
+import subprocess
+import sys
+import textwrap
+import torch
+import torch.distributed as dist
+from transformers import (
+    AutoModelForCausalLM,
+    AutoProcessor,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    EarlyStoppingCallback,
+    GenerationConfig,
+    Mxfp4Config,
+    Trainer,
+    TrainingArguments,
+    set_seed,
+)
+
+try:
+    from transformers import AutoModelForImageTextToText
+except ImportError:
+    try:
+        from transformers import AutoModelForVision2Seq as AutoModelForImageTextToText
+    except ImportError:
+        AutoModelForImageTextToText = None
+from trl import SFTConfig, SFTTrainer, TrlParser
+import transformers
+from transformers.trainer_utils import get_last_checkpoint
+from transformers.integrations import WandbCallback
+import contextlib
+from typing import Any, Dict, List, Optional, Tuple
+import wandb
+
+try:
+    from distutils.util import strtobool
+except ImportError:  # distutils was removed from the stdlib in Python 3.12
+
+    def strtobool(val):
+        """String truthy/falsey -> 1/0 (distutils.util.strtobool replacement)."""
+        val = str(val).strip().lower()
+        if val in ("y", "yes", "t", "true", "on", "1"):
+            return 1
+        if val in ("n", "no", "f", "false", "off", "0"):
+            return 0
+        raise ValueError(f"invalid truth value {val!r}")
+
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=None)
+def resolve_trust_remote_code(
+    model_id: str, token: Optional[str] = None
+) -> Optional[bool]:
+    """Whether the repo's custom modeling code must be executed for `model_id`.
+
+    Returns `True` when the architecture has no native implementation, and `None`
+    when the argument should not be passed at all - either because a native
+    implementation exists or because `config.json` could not be read.
+
+    Transformers gives the remote `modeling_*.py` precedence over its own
+    implementation whenever `trust_remote_code=True` and the repo ships an
+    `auto_map`. That pins the model to the Transformers snapshot it was uploaded
+    with, which typically predates the AttentionInterface: no
+    `_supports_flash_attn` / `_supports_sdpa` flags (so `attn_implementation` is
+    rejected and only `eager` works), and legacy attention masks. So only opt in
+    when there is no native implementation for the architecture.
+    """
+    try:
+        from transformers import PreTrainedConfig
+    except ImportError:  # transformers < 5.0
+        from transformers import PretrainedConfig as PreTrainedConfig
+    from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+
+    try:
+        from transformers.models.auto.modeling_auto import (
+            MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES,
+        )
+    except ImportError:
+        MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES = {}
+
+    try:
+        # Reads config.json only - executes no repository code.
+        config_dict, _ = PreTrainedConfig.get_config_dict(model_id, token=token)
+    except Exception as e:
+        logger.warning(
+            f"Could not inspect config.json for {model_id} ({e}); leaving "
+            "trust_remote_code unset so Transformers resolves it"
+        )
+        return None
+
+    model_type = config_dict.get("model_type")
+    if (
+        model_type in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+        or model_type in MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES
+    ):
+        return None
+    return True if config_dict.get("auto_map") else None
+
+
+def trust_remote_code_kwargs(
+    model_id: str,
+    token: Optional[str] = None,
+    override: Optional[bool] = None,
+) -> Dict[str, Any]:
+    """`{"trust_remote_code": ...}` only when the argument needs to be passed.
+
+    Omitting it is not the same as passing `False`: unset lets Transformers use
+    its own resolution (native class when available, and an actionable
+    "Please pass the argument `trust_remote_code=True`" when custom code is
+    genuinely required), while an explicit `False` refuses custom code outright
+    and reports the vaguer "Unrecognized configuration class". Loaders that do
+    not accept the argument also stay unaffected when it is left out.
+    """
+    value = (
+        override if override is not None else resolve_trust_remote_code(model_id, token)
+    )
+    return {} if value is None else {"trust_remote_code": bool(value)}
+
+
+@dataclass
+class ScriptArguments:
+    """Arguments for the script execution."""
+
+    apply_truncation: Optional[bool] = field(
+        default=False, metadata={"help": "Whether to apply truncation"}
+    )
+    auto_calculate_lengths: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Auto-calculate SFTConfig.max_length from the dataset's "
+                "95th-percentile token length (text/messages formats only, "
+                "SFTTrainer path). Ignored for image modality and pretokenized "
+                "datasets. NOTE: for backward compatibility, apply_truncation=True "
+                "with max_length left at the SFTConfig default also triggers this."
+            )
+        },
+    )
+    deserialize_messages: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Lazily parse JSON-encoded 'messages' into native lists via "
+                "set_transform before handing the dataset to SFTTrainer (mirrors "
+                "the DPO script). Leave False when messages are already native lists."
+            )
+        },
+    )
+    attn_implementation: Optional[str] = field(
+        default="flash_attention_2", metadata={"help": "Attention implementation"}
+    )
+    checkpoint_dir: str = field(default=None, metadata={"help": "Checkpoint directory"})
+    use_checkpoints: bool = field(
+        default=False, metadata={"help": "Whether to use checkpointing"}
+    )
+    early_stopping: bool = field(
+        default=False, metadata={"help": "Whether to use early stopping"}
+    )
+    load_in_4bit: bool = field(
+        default=True, metadata={"help": "Load model in 4-bit quantization"}
+    )
+    auto_4bit_below_gpu_gib: Optional[float] = field(
+        default=None,
+        metadata={
+            "help": "Enable load_in_4bit automatically when GPU 0 has less memory "
+            "than this (GiB). Lets one recipe serve a mixed instance preference list."
+        },
+    )
+    lora_r: Optional[int] = field(default=8, metadata={"help": "lora_r"})
+    lora_alpha: Optional[int] = field(default=16, metadata={"help": "lora_alpha"})
+    lora_dropout: Optional[float] = field(
+        default=0.1, metadata={"help": "lora_dropout"}
+    )
+    merge_weights: Optional[bool] = field(
+        default=False, metadata={"help": "Merge adapter with base model"}
+    )
+    mlflow_uri: Optional[str] = field(
+        default=None, metadata={"help": "MLflow tracking ARN"}
+    )
+    mlflow_experiment_name: Optional[str] = field(
+        default=None, metadata={"help": "MLflow experiment name"}
+    )
+    mlflow_log_model: bool = field(
+        default=False,
+        metadata={
+            "help": "Also log the merged model to MLflow and register it. Off by default: "
+            "it uploads the full checkpoint a second time, and a failure there fails a job "
+            "whose training already succeeded."
+        },
+    )
+    modality_type: str = field(
+        default="text",
+        metadata={
+            "help": (
+                "Input modality: 'text' (text-only, default), "
+                "'image' (image+text multi-modal). "
+                "When set to 'image', the script uses a vision-aware data collator "
+                "and loads the model with AutoModelForVision2Seq."
+            )
+        },
+    )
+    model_id: str = field(
+        default=None, metadata={"help": "Model ID to use for SFT training"}
+    )
+    vlm_base_model_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": (
+                "Original full VLM used to restore vision weights when model_id or "
+                "the adapter base is a text-only intermediate checkpoint."
+            )
+        },
+    )
+    dataset_format: str = field(
+        default="auto",
+        metadata={
+            "help": (
+                "Dataset format: 'auto' (detect from columns), 'text' (pre-rendered text column), "
+                "'messages' (conversational format - applies chat template), "
+                "'prompt_completion' (prompt + completion columns; TRL masks the prompt), "
+                "'pretokenized' (input_ids column)"
+            )
+        },
+    )
+    messages_field: str = field(
+        default="messages",
+        metadata={
+            "help": "Name of the messages field for conversational datasets (e.g., 'messages', 'conversation')"
+        },
+    )
+    text_field: str = field(
+        default="text",
+        metadata={
+            "help": "Name of the text field in dataset (e.g., 'text', 'content', 'message')"
+        },
+    )
+    token: str = field(default=None, metadata={"help": "Hugging Face API token"})
+    # NOTE: `trust_remote_code` deliberately does NOT live here. TRL 1.10.0 added
+    # the same field to its configs (SFTConfig/DPOConfig/GRPOConfig), and TrlParser
+    # builds one argparse namespace from both dataclasses, so defining it in both
+    # aborts at startup with:
+    #   argparse.ArgumentError: argument --trust_remote_code/--trust-remote-code:
+    #   conflicting option strings
+    # The YAML key still works - it binds to the trainer config instead - and
+    # `trust_remote_code_for()` reads the value back off `script_args` after
+    # `main()` copies it across. Same fix as `max_length` in the SFT script.
+    train_dataset_path: Optional[str] = field(
+        default=None, metadata={"help": "Path to the training dataset"}
+    )
+    use_mxfp4: bool = field(
+        default=False,
+        metadata={"help": "Use MXFP4 quantization instead of BitsAndBytes"},
+    )
+    use_peft: bool = field(default=True, metadata={"help": "Use PEFT for training"})
+    use_snapshot_download: bool = field(
+        default=False,
+        metadata={"help": "Use snapshot download instead of Hugging Face Hub"},
+    )
+    val_dataset_path: Optional[str] = field(
+        default=None, metadata={"help": "Path to the val dataset"}
+    )
+    wandb_token: str = field(default="", metadata={"help": "Wandb API token"})
+    wandb_project: str = field(
+        default="project", metadata={"help": "Wandb project name"}
+    )
+    target_modules: Optional[List[str]] = field(
+        default=None, metadata={"help": "Target modules for LoRA"}
+    )
+    torch_dtype: Optional[str] = field(
+        default="auto",
+        metadata={"help": "Torch dtype (auto, bfloat16, float16, float32)"},
+    )
+    patch_peft_fsdp_auto_wrap_policy: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Patch PEFT's FSDP auto-wrap policy for architectures PEFT doesn't "
+                "recognize. FSDP + LoRA only."
+            )
+        },
+    )
+    cast_parameters_to_uniform_dtype: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Cast all model parameters to uniform dtype. Required for models "
+                "with mixed float32/bfloat16 parameters. "
+                "Needed for both FSDP and DeepSpeed."
+            )
+        },
+    )
+
+
+def trust_remote_code_for(
+    script_args: ScriptArguments, training_args: Optional["SFTConfig"] = None
+) -> Dict[str, Any]:
+    """`trust_remote_code` kwargs for the run's model: explicit config value wins.
+
+    The flag lives on the trainer config rather than ScriptArguments, because TRL
+    1.10.0 defines it too and TrlParser rejects the duplicate (see the note in
+    ScriptArguments). TRL types it as a plain `bool` defaulting to False, so False
+    is indistinguishable from "not set": only an explicit true is honoured as an
+    override, and everything else falls through to auto-detection. That is the only
+    useful direction anyway - auto-detect already omits the argument when it is not
+    needed, which lets Transformers raise its own actionable "Please pass the
+    argument `trust_remote_code=True`" instead of failing opaquely.
+
+    `training_args` is optional so this stays callable from a test, or from another
+    module importing this script, without constructing a trainer config.
+    """
+    override = True if getattr(training_args, "trust_remote_code", False) else None
+    return trust_remote_code_kwargs(
+        script_args.model_id, script_args.token, override=override
+    )
+
+
+class ModelConfigBuilder:
+    """Centralized model configuration builder to eliminate duplicate logic."""
+
+    def __init__(self, script_args: ScriptArguments, training_args: TrainingArguments):
+        self.script_args = script_args
+        self.training_args = training_args
+        self._torch_dtype = None
+        self._quantization_config = None
+        self._use_deepspeed = None
+        self._use_fsdp = None
+        self._trust_remote_code = None
+
+    @property
+    def torch_dtype(self) -> torch.dtype:
+        """Get torch dtype with single source of truth."""
+        if self._torch_dtype is None:
+            if self.script_args.torch_dtype in ["auto", None]:
+                self._torch_dtype = (
+                    torch.bfloat16 if self.training_args.bf16 else torch.float32
+                )
+            else:
+                self._torch_dtype = getattr(torch, self.script_args.torch_dtype)
+        return self._torch_dtype
+
+    @property
+    def trust_remote_code(self) -> Dict[str, Any]:
+        """Resolve the `trust_remote_code` kwargs once per run (may be empty)."""
+        if self._trust_remote_code is None:
+            self._trust_remote_code = trust_remote_code_for(
+                self.script_args, self.training_args
+            )
+            logger.info(
+                f"Model loading kwargs {self._trust_remote_code or '{}'} for "
+                f"{self.script_args.model_id}"
+            )
+        return self._trust_remote_code
+
+    @property
+    def use_deepspeed(self) -> bool:
+        """Check if DeepSpeed is enabled."""
+        if self._use_deepspeed is None:
+            self._use_deepspeed = strtobool(
+                os.environ.get("ACCELERATE_USE_DEEPSPEED", "false")
+            )
+        return self._use_deepspeed
+
+    @property
+    def use_fsdp(self) -> bool:
+        """Check if FSDP is enabled."""
+        if self._use_fsdp is None:
+            self._use_fsdp = strtobool(os.environ.get("ACCELERATE_USE_FSDP", "false"))
+        return self._use_fsdp
+
+    @property
+    def quantization_config(self) -> Optional[Any]:
+        """Get quantization configuration."""
+        if self._quantization_config is None and self.script_args.load_in_4bit:
+            if self.script_args.use_mxfp4:
+                self._quantization_config = Mxfp4Config(dequantize=True)
+                logger.info("Using MXFP4 quantization")
+            else:
+                self._quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_compute_dtype=self.torch_dtype,
+                    bnb_4bit_quant_storage=self.torch_dtype,
+                )
+                logger.info("Using BitsAndBytes quantization")
+        return self._quantization_config
+
+    def build_model_kwargs(self) -> Dict[str, Any]:
+        """Build complete model loading arguments."""
+        if (
+            self.script_args.attn_implementation is not None
+            and self.script_args.attn_implementation != ""
+        ):
+            model_kwargs = {
+                "attn_implementation": self.script_args.attn_implementation,
+                "torch_dtype": self.torch_dtype,
+                "cache_dir": "/tmp/.cache",
+                **self.trust_remote_code,
+            }
+        else:
+            model_kwargs = {
+                "torch_dtype": self.torch_dtype,
+                "cache_dir": "/tmp/.cache",
+                **self.trust_remote_code,
+            }
+
+        # Set low_cpu_mem_usage based on DeepSpeed usage
+        if not self.use_deepspeed:
+            model_kwargs["low_cpu_mem_usage"] = True
+
+        # Add quantization config if enabled
+        if self.quantization_config is not None:
+            model_kwargs["quantization_config"] = self.quantization_config
+
+        return model_kwargs
+
+    def build_trainer_kwargs(self) -> Dict[str, Any]:
+        """Build trainer-specific configuration."""
+        trainer_kwargs = {}
+
+        if self.use_fsdp or (self.training_args.fsdp and self.training_args.fsdp != ""):
+            logger.info("Using FSDP configuration")
+            if self.training_args.gradient_checkpointing_kwargs is None:
+                trainer_kwargs["gradient_checkpointing_kwargs"] = {
+                    "use_reentrant": False
+                }
+        elif self.use_deepspeed:
+            logger.info("Using DeepSpeed configuration")
+        else:
+            logger.info("Using DDP configuration")
+            if self.training_args.gradient_checkpointing_kwargs is None:
+                trainer_kwargs["gradient_checkpointing_kwargs"] = {
+                    "use_reentrant": False
+                }
+
+        return trainer_kwargs
+
+
+class CustomWandbCallback(WandbCallback):
+    """Custom Wandb callback that logs metrics for all GPUs."""
+
+    def on_log(self, args, state, control, model=None, logs=None, **kwargs):
+        if state.is_world_process_zero and logs:
+            logs = {f"gpu_{i}_{k}": v for i in range(8) for k, v in logs.items()}
+            super().on_log(args, state, control, model, logs, **kwargs)
+
+
+@contextlib.contextmanager
+def gpu_memory_manager():
+    """Context manager for GPU memory cleanup."""
+    try:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        yield
+    finally:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            logger.info(
+                f"GPU memory freed: {torch.cuda.memory_allocated() / 1e9:.2f}GB allocated"
+            )
+
+
+@contextlib.contextmanager
+def model_lifecycle(model_name: str):
+    """Context manager for model loading/cleanup lifecycle."""
+    model = None
+    try:
+        logger.info(f"Loading model: {model_name}")
+        yield model
+    except Exception as e:
+        logger.error(f"Error in model lifecycle for {model_name}: {e}")
+        raise
+    finally:
+        if model is not None:
+            logger.info(f"Cleaning up model: {model_name}")
+            del model
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+
+def download_model(model_name):
+    print("Downloading model ", model_name)
+    os.makedirs("/tmp/tmp_folder", exist_ok=True)
+    snapshot_download(repo_id=model_name, local_dir="/tmp/tmp_folder")
+    print(f"Model {model_name} downloaded under /tmp/tmp_folder")
+
+
+def set_custom_env(env_vars: Dict[str, str]) -> None:
+    """Set custom environment variables."""
+    if not isinstance(env_vars, dict):
+        raise TypeError("env_vars must be a dictionary")
+
+    for key, value in env_vars.items():
+        if not isinstance(key, str) or not isinstance(value, str):
+            raise ValueError("All keys and values in env_vars must be strings")
+
+    os.environ.update(env_vars)
+    print("Updated environment variables:")
+    for key, value in env_vars.items():
+        print(f"  {key}: {value}")
+
+
+def is_mlflow_enabled(script_args: ScriptArguments) -> bool:
+    """Check if MLflow is enabled based on script arguments."""
+    return (
+        script_args.mlflow_uri is not None
+        and script_args.mlflow_experiment_name is not None
+        and script_args.mlflow_uri != ""
+        and script_args.mlflow_experiment_name != ""
+    )
+
+
+def setup_mlflow(script_args: ScriptArguments) -> None:
+    """Set up MLflow tracking."""
+    if not is_mlflow_enabled(script_args):
+        return
+
+    logger.info("Initializing MLflow")
+    mlflow.set_tracking_uri(script_args.mlflow_uri)
+    mlflow.set_experiment(script_args.mlflow_experiment_name)
+    mlflow.enable_system_metrics_logging()
+    mlflow.autolog(log_models=script_args.mlflow_log_model)
+
+    current_datetime = datetime.datetime.now()
+    formatted_datetime = current_datetime.strftime("%Y-%m-%d-%H-%M")
+    set_custom_env(
+        {
+            "MLFLOW_RUN_NAME": f"Fine-tuning-{formatted_datetime}",
+            "MLFLOW_EXPERIMENT_NAME": script_args.mlflow_experiment_name,
+        }
+    )
+
+
+def setup_wandb(script_args: ScriptArguments) -> None:
+    """Set up Weights & Biases tracking."""
+    if script_args.wandb_token and script_args.wandb_token != "":
+        logger.info("Initializing Wandb")
+        set_custom_env({"WANDB_API_KEY": script_args.wandb_token})
+        wandb.init(project=script_args.wandb_project)
+        return [CustomWandbCallback()]
+    else:
+        set_custom_env({"WANDB_DISABLED": "true"})
+        return None
+
+
+def load_model(config_builder: ModelConfigBuilder, script_args: ScriptArguments):
+    """Load model using centralized configuration.
+
+    When modality_type is 'image', loads with AutoModelForImageTextToText.
+    Otherwise loads with AutoModelForCausalLM.
+    """
+    model_kwargs = config_builder.build_model_kwargs()
+
+    try:
+        if (
+            script_args.modality_type == "image"
+            and AutoModelForImageTextToText is not None
+        ):
+            model = AutoModelForImageTextToText.from_pretrained(
+                script_args.model_id, **model_kwargs
+            )
+            logger.info(f"Loaded model with {AutoModelForImageTextToText.__name__}")
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
+                script_args.model_id, **model_kwargs
+            )
+
+        # Apply gradient checkpointing configuration.
+        # User-provided gradient_checkpointing_kwargs in the YAML wins. If the user
+        # didn't pin use_reentrant, fall back to the strategy-appropriate default:
+        # FSDP/DDP -> non-reentrant, DeepSpeed ZeRO-3 -> reentrant (non-reentrant's
+        # saved_tensors_hooks see partitioned weights on backward and raise CheckpointError).
+        if config_builder.training_args.gradient_checkpointing:
+            gc_kwargs = dict(
+                config_builder.training_args.gradient_checkpointing_kwargs or {}
+            )
+            if "use_reentrant" not in gc_kwargs:
+                gc_kwargs["use_reentrant"] = bool(config_builder.use_deepspeed)
+            model.gradient_checkpointing_enable(gradient_checkpointing_kwargs=gc_kwargs)
+
+        return model
+    except Exception as e:
+        logger.error(f"Error loading model {script_args.model_id}: {e}")
+        raise
+
+
+def _expose_text_config_loss_attrs(model) -> None:
+    """Mirror the loss-relevant `text_config` fields onto a multimodal top-level config.
+
+    Gemma 4 checkpoints (e.g. NVIDIA Nemotron-3.5-Bolt-E4B) load through
+    AutoModelForCausalLM as `Gemma4ForConditionalGeneration`, whose
+    `final_logit_softcapping` (30.0) lives only on `config.text_config`. TRL's default
+    `chunked_nll` loss reads it from `text_config` only when the processing class is a
+    processor; this script passes the tokenizer on the text path, so TRL reads the
+    top-level config, finds nothing, and computes the loss on uncapped logits while
+    inference applies the cap. Copying the value up fixes the training loss without
+    changing the model's own forward, which reads `text_config`. Only attributes the
+    top-level config does not already define are filled; text-only models, whose config
+    has no `text_config`, are left untouched. The merge reloads the base config from the
+    hub, so the copied attribute never reaches the exported `config.json`.
+    """
+    config = getattr(model, "config", None)
+    text_config = getattr(config, "text_config", None) if config is not None else None
+    if text_config is None or text_config is config:
+        return
+    for attr in ("final_logit_softcapping", "logit_scale"):
+        value = getattr(text_config, attr, None)
+        if value is not None and getattr(config, attr, None) is None:
+            setattr(config, attr, value)
+            logger.info(
+                f"config.{attr} <- text_config.{attr} = {value} "
+                f"(read by TRL's chunked loss)"
+            )
+
+
+def load_tokenizer(
+    script_args: ScriptArguments, training_args: "SFTConfig"
+) -> AutoTokenizer:
+    """Load tokenizer."""
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(
+            script_args.model_id,
+            **trust_remote_code_for(script_args, training_args),
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        return tokenizer
+    except Exception as e:
+        logger.error(f"Error loading tokenizer {script_args.model_id}: {e}")
+        raise
+
+
+def load_processor(script_args: ScriptArguments, training_args: "SFTConfig"):
+    """Load processor for multimodal models. Returns None if unavailable."""
+    try:
+        processor = AutoProcessor.from_pretrained(
+            script_args.model_id,
+            **trust_remote_code_for(script_args, training_args),
+        )
+        tokenizer = getattr(processor, "tokenizer", None)
+        if tokenizer is not None and tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        logger.info(f"Loaded processor for {script_args.model_id}")
+        return processor
+    except Exception as e:
+        logger.warning(f"No processor found for {script_args.model_id}: {e}")
+        return None
+
+
+def process_vision_info(messages: List[Dict]) -> List[Image.Image]:
+    """Extract images from message content blocks.
+
+    Supports:
+    - base64 data URIs: {"type": "image_url", "image_url": {"url": "data:image/...;base64,..."}}
+    - Local file paths: {"type": "image_url", "image_url": {"url": "file:///path/to/image.png"}}
+    - Plain image type markers: {"type": "image"} (image data must come from dataset column)
+    """
+    images = []
+    for msg in messages:
+        content = msg.get("content", [])
+        if not isinstance(content, list):
+            continue
+        for element in content:
+            if not isinstance(element, dict):
+                continue
+            if element.get("type") == "image_url":
+                url = (element.get("image_url") or {}).get("url", "")
+                if url.startswith("data:image"):
+                    b64_data = url.split(",", 1)[1]
+                    img = Image.open(io.BytesIO(base64.b64decode(b64_data))).convert(
+                        "RGB"
+                    )
+                    images.append(img)
+                elif url.startswith("file://"):
+                    path = url.replace("file://", "")
+                    images.append(Image.open(path).convert("RGB"))
+    return images
+
+
+def collect_images(sample: Dict, messages: List[Dict]) -> Optional[List[Image.Image]]:
+    """Collect images from HF dataset columns or inline base64 in messages.
+
+    Priority: 'images' column > 'image' column > inline base64 in messages.
+    Returns None if no images are found (text-only sample).
+    """
+    if "images" in sample and sample["images"]:
+        imgs = sample["images"]
+        return imgs if isinstance(imgs, list) else [imgs]
+    if "image" in sample and sample["image"]:
+        img = sample["image"]
+        return [img] if not isinstance(img, list) else img
+    inline = process_vision_info(messages)
+    return inline if inline else None
+
+
+def get_vision_special_token_ids(processor) -> List[int]:
+    """Get token IDs for vision special tokens that should be masked in labels.
+
+    Scans the tokenizer's special tokens for vision-related markers
+    (e.g., <image>, <|vision_start|>, <|image_pad|>) and returns their IDs.
+    """
+    tokenizer = processor.tokenizer if hasattr(processor, "tokenizer") else processor
+    substrings = (
+        "image",
+        "vision",
+        "video",
+        "boi",
+        "eoi",
+        "<image>",
+        "<video>",
+        "image_pad",
+    )
+
+    special_vals = []
+    for v in (tokenizer.special_tokens_map or {}).values():
+        if isinstance(v, str):
+            special_vals.append(v)
+        elif isinstance(v, (list, tuple)):
+            special_vals.extend(s for s in v if isinstance(s, str))
+
+    addl = getattr(tokenizer, "additional_special_tokens", None)
+    if isinstance(addl, (list, tuple)):
+        special_vals.extend(s for s in addl if isinstance(s, str))
+
+    token_ids = []
+    for tok in special_vals:
+        if any(s in tok.lower() for s in substrings):
+            tid = tokenizer.convert_tokens_to_ids(tok)
+            if isinstance(tid, int) and tid >= 0:
+                token_ids.append(tid)
+
+    return list(set(token_ids))
+
+
+def patch_peft_fsdp_auto_wrap_policy():
+    """Patch PEFT's fsdp_auto_wrap_policy for model architectures that PEFT doesn't recognize.
+
+    PEFT's implementation inspects the model to find the transformer layer class but fails
+    on newer architectures. This patch catches the exception and auto-detects
+    the decoder layer class by scanning for modules with 'DecoderLayer' in their class name.
+
+    This is safe to call unconditionally — if PEFT's original function works, the patch
+    is a no-op pass-through.
+    """
+    import functools
+    from torch.distributed.fsdp.wrap import (
+        transformer_auto_wrap_policy,
+        _or_policy,
+        lambda_auto_wrap_policy,
+    )
+    import peft.utils.other
+
+    _original_fsdp_auto_wrap_policy = peft.utils.other.fsdp_auto_wrap_policy
+
+    def _patched_fsdp_auto_wrap_policy(model):
+        try:
+            return _original_fsdp_auto_wrap_policy(model)
+        except Exception:
+            base = model.base_model.model if hasattr(model, "base_model") else model
+            decoder_layer_cls = None
+            for _, module in base.named_modules():
+                cls_name = type(module).__name__
+                if "DecoderLayer" in cls_name:
+                    decoder_layer_cls = type(module)
+                    break
+            if decoder_layer_cls is None:
+                raise
+            logger.info(
+                f"Patched FSDP auto-wrap policy to use {decoder_layer_cls.__name__}"
+            )
+            from peft.tuners import PrefixEncoder, PromptEmbedding, PromptEncoder
+
+            peft_prompt_learning_cls = [PrefixEncoder, PromptEmbedding, PromptEncoder]
+            try:
+                from peft.tuners import CartridgeEncoder
+
+                peft_prompt_learning_cls.append(CartridgeEncoder)
+            except ImportError:
+                pass
+
+            def _leaf_with_trainable_weight(module):
+                # Matches PEFT's real lambda_policy_fn: wrap any leaf module that
+                # owns a trainable weight (e.g. LoRA's lora_A/lora_B) as its own
+                # FSDP unit, separate from the frozen decoder layer around it.
+                return (
+                    len(list(module.named_children())) == 0
+                    and getattr(module, "weight", None) is not None
+                    and module.weight.requires_grad
+                )
+
+            lambda_policy = functools.partial(
+                lambda_auto_wrap_policy, lambda_fn=_leaf_with_trainable_weight
+            )
+            transformer_policy = functools.partial(
+                transformer_auto_wrap_policy,
+                transformer_layer_cls={decoder_layer_cls, *peft_prompt_learning_cls},
+            )
+            return functools.partial(
+                _or_policy, policies=[lambda_policy, transformer_policy]
+            )
+
+    peft.utils.other.fsdp_auto_wrap_policy = _patched_fsdp_auto_wrap_policy
+    logger.info("PEFT FSDP auto-wrap policy patch applied")
+
+
+def cast_parameters_to_uniform_dtype(
+    model,
+    target_dtype: torch.dtype,
+    cast_buffers: bool = True,
+    exclude_buffer_pattern: Optional[str] = None,
+) -> int:
+    """Cast ordinary floating-point base-model params (and optionally buffers) to a
+    uniform dtype so FSDP1 can flatten them into a single FlatParameter.
+
+    FSDP1 needs a uniform dtype only among parameters flattened into the same FSDP
+    unit. In HF/Accelerate that unit is a whole layer class, so an fp32 island inside
+    an otherwise-bf16 layer -- a module transformers keeps in fp32
+    (`_keep_in_fp32_modules`), or an fp32 rotary `inv_freq` buffer / Mamba-MoE router
+    param -- triggers `Must flatten tensors with uniform dtype ... float32 and
+    bfloat16`. Mixed dtypes also cause gradient-checkpointing recomputation
+    mismatches (PyTorch issue #159359), which is why floating-point buffers are cast
+    too (they are checked via named_buffers(), e.g. non-persistent rotary inv_freq).
+
+    Call this BEFORE apply_lora_config(): PEFT's get_peft_model() upcasts LoRA adapter
+    weights to float32 (autocast_adapter_dtype=True, the default) for training
+    stability; casting afterwards would silently undo that and train LoRA in bf16.
+
+    Safety:
+      * Only floating-point tensors are cast; quantized/packed params (bitsandbytes
+        Params4bit/Int8Params, etc.) and meta/DTensor tensors are skipped so their
+        packed storage is never corrupted.
+      * When target_dtype != float32, modules transformers deliberately keeps in fp32
+        (`_keep_in_fp32_modules`) are downcast and warned about -- fine for a frozen
+        LoRA base, riskier for full fine-tuning (prefer FSDP2 / MixedPrecision there).
+      * Pass exclude_buffer_pattern=r"inv_freq|rotary" on long-context runs to keep
+        rotary frequencies in fp32 (RoPE phase error grows with position).
+      * Tied weights are re-tied after casting, since .to() allocates new tensors.
+
+    Returns the number of parameters/buffers that were cast.
+    """
+    quantized_param_types = {
+        "Params4bit",
+        "Int8Params",
+        "Params8bit",
+        "FP8Parameter",
+    }
+    keep_fp32 = set(getattr(model, "_keep_in_fp32_modules", None) or [])
+    buf_exclude = None
+    if exclude_buffer_pattern:
+        import re
+
+        buf_exclude = re.compile(exclude_buffer_pattern)
+
+    cast_count = 0
+    downcast_kept_fp32 = []
+    for name, param in model.named_parameters():
+        if (
+            type(param).__name__ in quantized_param_types
+            or not param.is_floating_point()
+            or param.is_meta
+            or type(param.data).__name__ == "DTensor"
+            or param.dtype == target_dtype
+        ):
+            continue
+        if (
+            keep_fp32
+            and target_dtype != torch.float32
+            and any(k in name for k in keep_fp32)
+        ):
+            downcast_kept_fp32.append(name)
+        param.data = param.data.to(target_dtype)
+        cast_count += 1
+
+    if cast_buffers:
+        for name, buf in model.named_buffers():
+            if (
+                not buf.is_floating_point()
+                or buf.is_meta
+                or buf.dtype == target_dtype
+                or (buf_exclude is not None and buf_exclude.search(name))
+            ):
+                continue
+            buf.data = buf.data.to(target_dtype)
+            cast_count += 1
+
+    if cast_count > 0 and hasattr(model, "tie_weights"):
+        model.tie_weights()
+
+    if downcast_kept_fp32:
+        logger.warning(
+            f"Downcast {len(downcast_kept_fp32)} module(s) transformers keeps in fp32 "
+            f"({', '.join(sorted(set(downcast_kept_fp32))[:5])}) to {target_dtype}; "
+            "fine for a frozen LoRA base, riskier for full fine-tuning."
+        )
+    if cast_count > 0:
+        logger.info(
+            f"Cast {cast_count} parameters/buffers from mixed dtypes to {target_dtype} for FSDP"
+        )
+    return cast_count
+
+
+def apply_lora_config(model, script_args: ScriptArguments, is_vlm: bool = False):
+    """Apply LoRA configuration to the model.
+
+    For VLMs with target_modules='all-linear', the vision encoder is excluded
+    to avoid gradient checkpointing recomputation mismatches — LoRA on vision
+    encoder layers causes shape/dtype conflicts during FSDP recomputation
+    (PyTorch issue #159359).
+    """
+    lora_kwargs = dict(
+        r=script_args.lora_r,
+        lora_alpha=script_args.lora_alpha,
+        target_modules=(
+            "all-linear"
+            if script_args.target_modules is None
+            else script_args.target_modules
+        ),
+        lora_dropout=script_args.lora_dropout,
+        bias="none",
+        task_type="CAUSAL_LM",
+    )
+
+    if is_vlm and script_args.target_modules is None:
+        vision_prefixes = [
+            "visual",
+            "vision_tower",
+            "vision_model",
+            "img_processor",
+            "vpm",
+        ]
+        lora_kwargs["exclude_modules"] = vision_prefixes
+        logger.info(
+            f"VLM detected: excluding vision encoder from LoRA targets ({vision_prefixes})"
+        )
+
+    config = LoraConfig(**lora_kwargs)
+    return get_peft_model(model, config)
+
+
+class MultiModalDataCollator:
+    """Data collator for vision-language models.
+
+    Processes raw dataset samples at collation time: applies chat template,
+    collects images, runs the processor to produce input_ids + pixel_values,
+    and builds labels with proper masking for padding and vision special tokens.
+    """
+
+    def __init__(
+        self,
+        processor,
+        script_args: ScriptArguments,
+        vision_token_ids: Optional[List[int]] = None,
+        max_length: Optional[int] = None,
+    ):
+        self.processor = processor
+        self.script_args = script_args
+        self.vision_token_ids = set(vision_token_ids or [])
+        # max_length now comes from SFTConfig.max_length (ScriptArguments.max_length
+        # was removed to avoid a TrlParser arg collision with SFTConfig).
+        self.max_length = max_length
+        self.tokenizer = (
+            processor.tokenizer if hasattr(processor, "tokenizer") else processor
+        )
+
+    def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+        texts = []
+        all_images = []
+
+        for sample in features:
+            messages = sample[self.script_args.messages_field]
+            if isinstance(messages, str):
+                messages = json.loads(messages)
+
+            text = self.processor.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=False
+            )
+            texts.append(text)
+
+            images = collect_images(sample, messages)
+            all_images.append(images)
+
+        has_images = any(imgs is not None for imgs in all_images)
+
+        if has_images:
+            flat_images = []
+            for imgs in all_images:
+                if imgs is not None:
+                    flat_images.extend(imgs)
+            batch = self.processor(
+                text=texts,
+                images=flat_images if flat_images else None,
+                return_tensors="pt",
+                padding=True,
+                truncation=self.script_args.apply_truncation,
+                max_length=self.max_length,
+            )
+        else:
+            batch = self.processor(
+                text=texts,
+                return_tensors="pt",
+                padding=True,
+                truncation=self.script_args.apply_truncation,
+                max_length=self.max_length,
+            )
+
+        labels = batch["input_ids"].clone()
+        if self.tokenizer.pad_token_id is not None:
+            labels[labels == self.tokenizer.pad_token_id] = -100
+        for tid in self.vision_token_ids:
+            labels[labels == tid] = -100
+        batch["labels"] = labels
+
+        return batch
+
+
+def setup_trainer(
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    train_ds: Dataset,
+    config_builder: ModelConfigBuilder,
+    test_ds: Optional[Dataset] = None,
+    callbacks: Optional[List] = None,
+    processor=None,
+    script_args: Optional[ScriptArguments] = None,
+):
+    """Set up the trainer.
+
+    Two engines share the same infra (LoRA / quantization / FSDP / DeepSpeed /
+    MLflow / save+merge):
+
+      - image modality  -> base ``transformers.Trainer`` + ``MultiModalDataCollator``.
+        Kept on purpose: TRL's built-in vision collator expects images as dataset
+        features and can't decode our base64 / ``file://`` inline images or mask
+        vision special tokens the way this collator does.
+      - text / messages / pretokenized -> ``trl.SFTTrainer``, which tokenizes,
+        applies the chat template (passing a ``tools`` column), appends EOS to
+        plain-text samples, supports packing, and can mask prompt tokens via
+        ``assistant_only_loss`` (set in the YAML/SFTConfig).
+    """
+    trainer_kwargs = config_builder.build_trainer_kwargs()
+
+    # Update training_args with trainer configs
+    for key, value in trainer_kwargs.items():
+        setattr(config_builder.training_args, key, value)
+
+    # Set report_to based on enabled tracking services
+    report_to = []
+    if os.environ.get("WANDB_DISABLED", "false").lower() != "true":
+        report_to.append("wandb")
+    if is_mlflow_enabled(config_builder.script_args):
+        report_to.append("mlflow")
+    config_builder.training_args.report_to = report_to
+
+    is_vlm = (
+        script_args is not None
+        and script_args.modality_type == "image"
+        and processor is not None
+    )
+
+    if is_vlm:
+        vision_token_ids = get_vision_special_token_ids(processor)
+        logger.info(
+            f"Using multi-modal data collator (vision tokens to mask: {len(vision_token_ids)})"
+        )
+        data_collator = MultiModalDataCollator(
+            processor=processor,
+            script_args=script_args,
+            vision_token_ids=vision_token_ids,
+            max_length=getattr(config_builder.training_args, "max_length", None),
+        )
+        return Trainer(
+            model=model,
+            train_dataset=train_ds,
+            eval_dataset=test_ds if test_ds is not None else None,
+            args=config_builder.training_args,
+            callbacks=callbacks,
+            data_collator=data_collator,
+        )
+
+    # SFT path (text / messages / pretokenized): SFTTrainer owns tokenization,
+    # chat-template rendering, EOS, truncation to max_length, packing and optional
+    # assistant-only loss masking. The model is already PEFT-wrapped upstream, so
+    # no peft_config is passed (SFTTrainer detects the PeftModel and uses it as-is),
+    # matching how the DPO/GRPO scripts wire up their trainers.
+    logger.info("Using SFTTrainer for text/messages/pretokenized dataset")
+    return SFTTrainer(
+        model=model,
+        args=config_builder.training_args,
+        train_dataset=train_ds,
+        eval_dataset=test_ds if test_ds is not None else None,
+        processing_class=tokenizer,
+        callbacks=callbacks,
+    )
+
+
+def _was_trained_as_vlm(adapter_dir: str) -> bool:
+    """Check if the adapter was trained on a VLM by inspecting adapter weight keys.
+
+    When a model is loaded with AutoModelForImageTextToText, the language model
+    layers are nested under 'language_model' (e.g. model.language_model.layers.X).
+    When loaded with AutoModelForCausalLM, they are directly under 'model'
+    (e.g. model.layers.X). We check the saved adapter weights for this prefix.
+    """
+    if AutoModelForImageTextToText is None:
+        return False
+    try:
+        import glob
+
+        # Check safetensors files first
+        safetensor_files = glob.glob(
+            os.path.join(adapter_dir, "adapter_model*.safetensors")
+        )
+        if safetensor_files:
+            from safetensors import safe_open
+
+            with safe_open(safetensor_files[0], framework="pt") as sf:
+                for key in sf.keys():
+                    if "language_model" in key:
+                        return True
+                return False
+
+        # Fall back to pytorch bin files
+        bin_files = glob.glob(os.path.join(adapter_dir, "adapter_model*.bin"))
+        if bin_files:
+            state_dict = torch.load(bin_files[0], map_location="cpu", weights_only=True)
+            for key in state_dict.keys():
+                if "language_model" in key:
+                    return True
+            return False
+    except Exception as e:
+        logger.warning(f"Could not inspect adapter weights: {e}")
+    return False
+
+
+def _is_vlm_from_config(model_id: Optional[str]) -> bool:
+    """Check if a model is a VLM by inspecting its config."""
+    if not model_id or AutoModelForImageTextToText is None:
+        return False
+    try:
+        from transformers import AutoConfig
+        from transformers.models.auto.modeling_auto import (
+            MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES,
+        )
+
+        config = AutoConfig.from_pretrained(
+            model_id, **trust_remote_code_kwargs(model_id)
+        )
+        return config.model_type in MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES
+    except Exception as e:
+        logger.warning(f"Could not inspect VLM config for {model_id}: {e}")
+        return False
+
+
+def _resolve_vlm_base_model_id(
+    adapter_base_model_id: Optional[str],
+    explicit_vlm_base_model_id: Optional[str],
+) -> Optional[str]:
+    """Resolve the complete VLM used to preserve vision weights during export."""
+    if explicit_vlm_base_model_id:
+        if not _is_vlm_from_config(explicit_vlm_base_model_id):
+            raise ValueError(
+                "vlm_base_model_id must reference a full supported VLM, got: "
+                f"{explicit_vlm_base_model_id}"
+            )
+        return explicit_vlm_base_model_id
+    if _is_vlm_from_config(adapter_base_model_id):
+        return adapter_base_model_id
+    return None
+
+
+def _transplant_into_vlm(
+    merged_causal_state: dict,
+    base_model_id: str,
+    torch_dtype: torch.dtype,
+):
+    """Transplant merged CausalLM weights into a full VLM to preserve vision encoder.
+
+    When an adapter is trained with AutoModelForCausalLM on a VLM base, the merged
+    language model weights use CausalLM key paths (model.layers.X...). This function
+    loads the full VLM and replaces the language model weights with the merged ones,
+    keeping the vision encoder and projector intact.
+    """
+    logger.info(
+        "Transplanting merged CausalLM weights into full VLM to preserve vision encoder"
+    )
+    vlm_model = AutoModelForImageTextToText.from_pretrained(
+        base_model_id,
+        torch_dtype=torch_dtype,
+        low_cpu_mem_usage=True,
+        **trust_remote_code_kwargs(base_model_id),
+    )
+    vlm_state = vlm_model.state_dict()
+
+    # Find the key prefix mapping between CausalLM and VLM structures.
+    # CausalLM: model.layers.0... / VLM: model.language_model.layers.0...
+    # We detect the VLM prefix by finding a known layer key.
+    causal_layer_key = next((k for k in merged_causal_state if ".layers.0." in k), None)
+    if causal_layer_key is None:
+        raise RuntimeError(
+            "Could not find layer keys in merged state dict; VLM export aborted"
+        )
+
+    causal_prefix = causal_layer_key.split("layers.0.")[0]  # e.g. "model."
+    vlm_layer_key = next(
+        (k for k in vlm_state if ".layers.0." in k and "language_model" in k), None
+    )
+    if vlm_layer_key is None:
+        raise RuntimeError(
+            "Could not find language_model layer keys in VLM; export aborted"
+        )
+
+    vlm_prefix = vlm_layer_key.split("layers.0.")[0]  # e.g. "model.language_model."
+    logger.info(f"Key mapping: CausalLM '{causal_prefix}*' -> VLM '{vlm_prefix}*'")
+
+    # Replace VLM language model weights with merged CausalLM weights
+    updated = 0
+    updated_core = 0
+    missing_core = []
+    for causal_key, value in merged_causal_state.items():
+        is_core = causal_key.startswith(causal_prefix)
+        if is_core:
+            vlm_key = vlm_prefix + causal_key[len(causal_prefix) :]
+        elif causal_key in vlm_state:
+            vlm_key = causal_key
+        else:
+            # Keys outside the main prefix (e.g. lm_head.weight)
+            # Search for matching suffix in VLM state dict
+            vlm_key = next((vk for vk in vlm_state if vk.endswith(causal_key)), None)
+        if vlm_key and vlm_key in vlm_state:
+            if tuple(vlm_state[vlm_key].shape) != tuple(value.shape):
+                raise RuntimeError(
+                    f"Shape mismatch during VLM transplant: {causal_key} -> "
+                    f"{vlm_key}: {tuple(value.shape)} != "
+                    f"{tuple(vlm_state[vlm_key].shape)}"
+                )
+            vlm_state[vlm_key] = value
+            updated += 1
+            updated_core += int(is_core)
+        elif is_core:
+            missing_core.append(causal_key)
+
+    if updated_core == 0 or missing_core:
+        raise RuntimeError(
+            "Incomplete CausalLM-to-VLM transplant: "
+            f"{updated_core} core tensors updated, {len(missing_core)} missing "
+            f"(examples: {missing_core[:3]})"
+        )
+
+    logger.info(
+        f"Transplanted {updated}/{len(merged_causal_state)} language model weights into VLM"
+    )
+    vlm_model.load_state_dict(vlm_state)
+    return vlm_model
+
+
+def _patch_peft_weight_converter_compat() -> None:
+    """Let `WeightConverter` tolerate the kwargs peft 0.19.x passes to it.
+
+    `peft.utils.transformers_weight_conversion.build_peft_weight_mapping` rebuilds a
+    model's weight converters with
+    `orig_conversion.__class__(..., distributed_operation=..., quantization_operation=...)`.
+    That matched the old dataclass `WeightConverter`, but transformers rewrote it with an
+    explicit `(source_patterns, target_patterns, operations)` signature - both fields are
+    now runtime state initialised to `None` by `WeightTransform.__init__`. Loading any
+    LoRA adapter for a model whose `model_type` has a registered conversion mapping (MoE
+    architectures that merge per-expert checkpoint weights into 3-D tensors, e.g.
+    `nemotron_h`) therefore raises `TypeError: WeightConverter.__init__() got an
+    unexpected keyword argument 'distributed_operation'`.
+
+    peft `main` fixes this by dropping both kwargs; peft 0.19.1 is the latest release and
+    still has the bug. Forwarding them after `__init__` is equivalent, since the values
+    are only populated during a tensor-parallel or quantized load. Remove this shim once
+    the requirements pin a peft release that contains the upstream fix.
+    """
+    from transformers.core_model_loading import WeightConverter
+
+    orig_init = WeightConverter.__init__
+    if getattr(orig_init, "_peft_compat", False):
+        return
+
+    def __init__(
+        self, *args, distributed_operation=None, quantization_operation=None, **kwargs
+    ):
+        orig_init(self, *args, **kwargs)
+        self.distributed_operation = distributed_operation
+        self.quantization_operation = quantization_operation
+
+    __init__._peft_compat = True
+    WeightConverter.__init__ = __init__
+
+
+def _load_and_merge_adapter(
+    adapter_dir: str,
+    torch_dtype: torch.dtype,
+    explicit_vlm_base_model_id: Optional[str] = None,
+):
+    """Load, merge, and return the final model ready for saving.
+
+    Handles three cases:
+    1. Adapter trained on VLM (modality_type=image) → merge directly on VLM
+    2. Adapter trained on CausalLM, base is VLM → merge CausalLM, transplant into VLM
+    3. Adapter trained on CausalLM, base is text-only → merge directly on CausalLM
+    """
+    from peft import PeftConfig, PeftModel
+
+    _patch_peft_weight_converter_compat()
+
+    peft_config = PeftConfig.from_pretrained(adapter_dir)
+    base_model_id = peft_config.base_model_name_or_path
+    trained_as_vlm = _was_trained_as_vlm(adapter_dir)
+    vlm_base_model_id = _resolve_vlm_base_model_id(
+        base_model_id, explicit_vlm_base_model_id
+    )
+    trc_kwargs = trust_remote_code_kwargs(base_model_id)
+
+    if trained_as_vlm:
+        if not vlm_base_model_id:
+            raise RuntimeError(
+                "Adapter keys indicate VLM training but no complete VLM base was found"
+            )
+        # Case 1: direct VLM merge
+        logger.info(
+            f"Adapter trained on VLM: loading with {AutoModelForImageTextToText.__name__}"
+        )
+        base_model = AutoModelForImageTextToText.from_pretrained(
+            vlm_base_model_id,
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+            **trust_remote_code_kwargs(vlm_base_model_id),
+        )
+        model = PeftModel.from_pretrained(base_model, adapter_dir)
+        return model.merge_and_unload()
+
+    # Merge adapter as CausalLM first
+    logger.info("Adapter trained on CausalLM: merging with AutoPeftModelForCausalLM")
+    causal_model = AutoPeftModelForCausalLM.from_pretrained(
+        adapter_dir,
+        torch_dtype=torch_dtype,
+        low_cpu_mem_usage=True,
+        **trc_kwargs,
+    )
+    merged_causal = causal_model.merge_and_unload()
+
+    if vlm_base_model_id:
+        # Case 2: transplant merged LM weights into full VLM
+        merged_state = merged_causal.state_dict()
+        del causal_model, merged_causal
+        torch.cuda.empty_cache()
+        return _transplant_into_vlm(merged_state, vlm_base_model_id, torch_dtype)
+
+    # Case 3: text-only model, return merged CausalLM directly
+    return merged_causal
+
+
+def _sanitize_sampling_params(generation_config) -> bool:
+    """Reset sampling-only parameters left set while `do_sample` is not True.
+
+    transformers >= 5 validates strictly inside ``GenerationConfig.save_pretrained``
+    (``self.validate(strict=True)``, with no kwarg to relax it) and raises when a
+    sampling-only parameter differs from its default while ``do_sample`` is not True.
+    NVIDIA Nemotron-3-Nano ships ``{"temperature": 1.0, "top_p": 0.95}`` with no
+    ``do_sample``, so saving a merged checkpoint dies with::
+
+        ValueError: GenerationConfig is invalid:
+        - `top_p`: `do_sample` is not set to `True`. However, `top_p` is set to `0.95` ...
+
+    The error names both resolutions: set ``do_sample=True``, or unset the parameter. We
+    unset, i.e. resolve toward greedy decoding, because a model fine-tuned to emit strict
+    JSON should not sample by default - an unparameterised ``generate()`` on the exported
+    checkpoint would otherwise produce temperature-1.0 top-p-0.95 output and malformed
+    JSON. Callers that do want sampling still pass it per request, which is how both the
+    endpoint and the Bedrock baseline in the evaluation notebook already work.
+
+    Defaults are transformers' own (`temperature`/`top_p`/`typical_p` 1.0, `top_k` 50,
+    `epsilon_cutoff`/`eta_cutoff` 0.0, `min_p`/`top_h` None). Returns True if anything
+    changed.
+    """
+    if getattr(generation_config, "do_sample", None) is True:
+        return False
+
+    sampling_defaults = {
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "typical_p": 1.0,
+        "top_k": 50,
+        "epsilon_cutoff": 0.0,
+        "eta_cutoff": 0.0,
+        "min_p": None,
+        "top_h": None,
+    }
+
+    changed = False
+    for attr, default in sampling_defaults.items():
+        if not hasattr(generation_config, attr):
+            continue
+        current = getattr(generation_config, attr)
+        if current is not None and current != default:
+            logger.info(
+                f"generation_config.{attr}: {current} -> {default} "
+                "(sampling parameter set without do_sample=True; transformers refuses "
+                "to save it)"
+            )
+            setattr(generation_config, attr, default)
+            changed = True
+    return changed
+
+
+def _coerce_tied_weights_keys(model):
+    """Compatibility shim for save_pretrained across transformers versions.
+
+    transformers >= 5.x expects each module's ``_tied_weights_keys`` to be a dict
+    (``_get_tied_weight_keys`` calls ``.keys()`` on it during ``save_pretrained``).
+    Some remote-code models (e.g. NVIDIA Nemotron-H, which sets
+    ``_tied_weights_keys = ["lm_head.weight"]``) still use the old list convention,
+    triggering ``AttributeError: 'list' object has no attribute 'keys'`` at save time.
+
+    Convert any list/tuple/set form to ``{key: key}`` in place. transformers only
+    consumes the keys (as regex patterns matched against pointer-shared tensors), so
+    the mapping value is irrelevant, and this is a no-op on versions/models that
+    already use a dict.
+    """
+    for module in model.modules():
+        tied = getattr(module, "_tied_weights_keys", None)
+        if isinstance(tied, (list, tuple, set)):
+            module._tied_weights_keys = {k: k for k in tied}
+    return model
+
+
+def _merge_adapter_in_process(
+    temp_dir: str,
+    final_output_dir: str,
+    torch_dtype: torch.dtype = torch.bfloat16,
+    vlm_base_model_id: Optional[str] = None,
+):
+    """Merge LoRA adapter in the current process (for FSDP/DDP)."""
+    with gpu_memory_manager():
+        model = _load_and_merge_adapter(
+            temp_dir,
+            torch_dtype,
+            explicit_vlm_base_model_id=vlm_base_model_id,
+        )
+        _coerce_tied_weights_keys(model)
+        # Must run before save_pretrained: it writes generation_config.json, and
+        # transformers validates it strictly there. The base repo's sampling params would
+        # abort the save after training has already succeeded.
+        if getattr(model, "generation_config", None) is not None:
+            _sanitize_sampling_params(model.generation_config)
+        model.save_pretrained(
+            final_output_dir, safe_serialization=True, max_shard_size="2GB"
+        )
+        return model
+
+
+def _merge_adapter_via_subprocess(
+    temp_dir: str,
+    final_output_dir: str,
+    torch_dtype_str: str = "bfloat16",
+    vlm_base_model_id: Optional[str] = None,
+    trc_kwargs: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Merge LoRA adapter in a clean subprocess to avoid DeepSpeed env conflicts.
+
+    Auto-detects whether the base model is a VLM from the adapter config and
+    loads with the correct auto class to preserve vision encoder weights.
+    `trc_kwargs` carries `trust_remote_code` only when it has to be passed; an
+    empty mapping lets Transformers resolve the implementation itself.
+    """
+    merge_script = textwrap.dedent(f"""\
+        import glob
+        import os
+        import torch
+        from peft import PeftConfig, PeftModel, AutoPeftModelForCausalLM
+        from transformers import AutoConfig
+        from transformers.core_model_loading import WeightConverter
+
+        # peft 0.19.x passes distributed_operation / quantization_operation into
+        # WeightConverter.__init__, which the current signature does not accept
+        # (fixed on peft main). Both are runtime fields defaulting to None, so
+        # forwarding them post-init matches upstream. Without this, loading a LoRA
+        # adapter for a model whose model_type has a registered conversion mapping
+        # (MoE 3-D expert weights, e.g. nemotron_h) raises TypeError.
+        _orig_wc_init = WeightConverter.__init__
+        if not getattr(_orig_wc_init, "_peft_compat", False):
+            def _wc_init(self, *a, distributed_operation=None, quantization_operation=None, **kw):
+                _orig_wc_init(self, *a, **kw)
+                self.distributed_operation = distributed_operation
+                self.quantization_operation = quantization_operation
+            _wc_init._peft_compat = True
+            WeightConverter.__init__ = _wc_init
+
+        adapter_dir = "{temp_dir}"
+        output_dir = "{final_output_dir}"
+        dtype = getattr(torch, "{torch_dtype_str}")
+        trc = {trc_kwargs or {}!r}
+        explicit_vlm_base_model_id = {vlm_base_model_id!r}
+
+        peft_config = PeftConfig.from_pretrained(adapter_dir)
+        base_model_id = peft_config.base_model_name_or_path
+
+        # Check if adapter was trained on a VLM by inspecting weight keys
+        trained_as_vlm = False
+        try:
+            sf_files = glob.glob(os.path.join(adapter_dir, "adapter_model*.safetensors"))
+            if sf_files:
+                from safetensors import safe_open
+                with safe_open(sf_files[0], framework="pt") as sf:
+                    trained_as_vlm = any("language_model" in k for k in sf.keys())
+            else:
+                bin_files = glob.glob(os.path.join(adapter_dir, "adapter_model*.bin"))
+                if bin_files:
+                    sd = torch.load(bin_files[0], map_location="cpu", weights_only=True)
+                    trained_as_vlm = any("language_model" in k for k in sd.keys())
+        except Exception as e:
+            print(f"Warning: could not inspect adapter weights: {{e}}")
+
+        # Check if base model is a VLM
+        base_is_vlm = False
+        try:
+            from transformers.models.auto.modeling_auto import MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES
+            config = AutoConfig.from_pretrained(base_model_id, **trc)
+            base_is_vlm = config.model_type in MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES
+        except Exception:
+            pass
+        if explicit_vlm_base_model_id:
+            try:
+                config = AutoConfig.from_pretrained(explicit_vlm_base_model_id, **trc)
+                if config.model_type not in MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING_NAMES:
+                    raise ValueError(
+                        f"Not an image-text model type: {{config.model_type}}"
+                    )
+            except Exception as e:
+                raise ValueError(
+                    f"Invalid vlm_base_model_id {{explicit_vlm_base_model_id}}: {{e}}"
+                ) from e
+            full_vlm_base_model_id = explicit_vlm_base_model_id
+        elif base_is_vlm:
+            full_vlm_base_model_id = base_model_id
+        else:
+            full_vlm_base_model_id = None
+
+        try:
+            from transformers import AutoModelForImageTextToText
+            vlm_auto_cls = AutoModelForImageTextToText
+        except ImportError:
+            try:
+                from transformers import AutoModelForVision2Seq as vlm_auto_cls
+            except ImportError:
+                vlm_auto_cls = None
+
+        if full_vlm_base_model_id and vlm_auto_cls is None:
+            raise RuntimeError(
+                "A VLM export was requested but this Transformers version has no "
+                "image-text auto model class"
+            )
+
+        if trained_as_vlm and vlm_auto_cls:
+            if not full_vlm_base_model_id:
+                raise RuntimeError(
+                    "Adapter was trained as a VLM but no complete VLM base was found"
+                )
+            # Case 1: adapter trained on VLM -> merge directly
+            print(f"Adapter trained on VLM: loading with {{vlm_auto_cls.__name__}}")
+            base_model = vlm_auto_cls.from_pretrained(
+                full_vlm_base_model_id, torch_dtype=dtype,
+                low_cpu_mem_usage=True, **trc,
+            )
+            model = PeftModel.from_pretrained(base_model, adapter_dir)
+            model = model.merge_and_unload()
+        else:
+            # Merge as CausalLM first
+            print("Merging adapter as CausalLM...")
+            causal_model = AutoPeftModelForCausalLM.from_pretrained(
+                adapter_dir, torch_dtype=dtype,
+                low_cpu_mem_usage=True, **trc,
+            )
+            model = causal_model.merge_and_unload()
+
+            if full_vlm_base_model_id and vlm_auto_cls:
+                # Case 2: CausalLM adapter on VLM base -> transplant into full VLM
+                print("Base is VLM: transplanting merged weights into full VLM...")
+                merged_state = model.state_dict()
+                del causal_model, model
+                torch.cuda.empty_cache()
+
+                vlm_model = vlm_auto_cls.from_pretrained(
+                    full_vlm_base_model_id, torch_dtype=dtype,
+                    low_cpu_mem_usage=True, **trc,
+                )
+                vlm_state = vlm_model.state_dict()
+
+                # Find key prefix mapping: CausalLM "model." -> VLM "model.language_model."
+                causal_lk = next((k for k in merged_state if ".layers.0." in k), None)
+                vlm_lk = next((k for k in vlm_state if ".layers.0." in k and "language_model" in k), None)
+                if not causal_lk or not vlm_lk:
+                    raise RuntimeError(
+                        "Cannot determine CausalLM-to-VLM key prefixes; export aborted"
+                    )
+                c_prefix = causal_lk.split("layers.0.")[0]
+                v_prefix = vlm_lk.split("layers.0.")[0]
+                print(f"Key mapping: '{{c_prefix}}*' -> '{{v_prefix}}*'")
+                updated = 0
+                updated_core = 0
+                missing_core = []
+                for ck, val in merged_state.items():
+                    is_core = ck.startswith(c_prefix)
+                    if is_core:
+                        vk = v_prefix + ck[len(c_prefix):]
+                    elif ck in vlm_state:
+                        vk = ck
+                    else:
+                        vk = next((x for x in vlm_state if x.endswith(ck)), None)
+                    if vk and vk in vlm_state:
+                        if tuple(vlm_state[vk].shape) != tuple(val.shape):
+                            raise RuntimeError(f"Shape mismatch: {{ck}} -> {{vk}}")
+                        vlm_state[vk] = val
+                        updated += 1
+                        updated_core += int(is_core)
+                    elif is_core:
+                        missing_core.append(ck)
+                if updated_core == 0 or missing_core:
+                    raise RuntimeError(
+                        f"Incomplete VLM transplant: {{updated_core}} core tensors "
+                        f"updated, {{len(missing_core)}} missing"
+                    )
+                print(f"Transplanted {{updated}}/{{len(merged_state)}} weights")
+                vlm_model.load_state_dict(vlm_state)
+                model = vlm_model
+
+        print("Saving merged model...")
+        # Compat: transformers >=5.x calls .keys() on each module's _tied_weights_keys;
+        # some remote-code models (e.g. Nemotron-H) declare it as a list. Coerce to a dict.
+        for _m in model.modules():
+            _tied = getattr(_m, "_tied_weights_keys", None)
+            if isinstance(_tied, (list, tuple, set)):
+                _m._tied_weights_keys = {{k: k for k in _tied}}
+
+        # transformers >=5 validates generation_config strictly inside save_pretrained and
+        # raises when a sampling-only param is set while do_sample is not True (NVIDIA
+        # Nemotron-3-Nano ships top_p=0.95 with no do_sample). Reset to the defaults, i.e.
+        # greedy - see _sanitize_sampling_params in train.py for why that direction.
+        _gc = getattr(model, "generation_config", None)
+        if _gc is not None and getattr(_gc, "do_sample", None) is not True:
+            for _attr, _default in (
+                ("temperature", 1.0), ("top_p", 1.0), ("typical_p", 1.0),
+                ("top_k", 50), ("epsilon_cutoff", 0.0), ("eta_cutoff", 0.0),
+                ("min_p", None), ("top_h", None),
+            ):
+                if hasattr(_gc, _attr):
+                    _cur = getattr(_gc, _attr)
+                    if _cur is not None and _cur != _default:
+                        print(f"generation_config.{{_attr}}: {{_cur}} -> {{_default}}")
+                        setattr(_gc, _attr, _default)
+
+        model.save_pretrained(
+            output_dir,
+            safe_serialization=True,
+            max_shard_size="2GB",
+        )
+
+        print("Merge complete!")
+    """)
+
+    clean_env = {
+        k: v
+        for k, v in os.environ.items()
+        if "DEEPSPEED" not in k and "ACCELERATE" not in k
+    }
+
+    result = subprocess.run(
+        [sys.executable, "-c", merge_script],
+        env=clean_env,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        logger.error(f"Merge subprocess failed: {result.stderr}")
+        raise RuntimeError(f"Merge failed: {result.stderr}")
+
+    logger.info(f"Merge subprocess output: {result.stdout}")
+
+
+def _detect_distributed_strategy(trainer: Trainer) -> Tuple[bool, bool]:
+    """Detect whether DeepSpeed or FSDP is active."""
+    use_deepspeed = (
+        hasattr(trainer.accelerator.state, "deepspeed_plugin")
+        and trainer.accelerator.state.deepspeed_plugin is not None
+    )
+    use_fsdp = trainer.is_fsdp_enabled
+    return use_deepspeed, use_fsdp
+
+
+def _align_generation_config(tokenizer: AutoTokenizer, final_output_dir: str) -> None:
+    """Point the exported generation_config at the tokenizer's eos/pad tokens.
+
+    Runs on the saved directory rather than on the in-memory model because both merge
+    paths reload the base model from the hub (`_merge_adapter_in_process` after the
+    trainer has been deleted, `_merge_adapter_via_subprocess` in another process), so
+    whatever `generation_config.json` they write comes from the base repo.
+
+    Some repos declare an eos_token_id their chat template never emits (NVIDIA
+    Nemotron-H declares `2` / `</s>` while its template ends turns with `<|im_end|>`).
+    Left unaligned that ships into serving and the model generates past the end of its
+    answer looking for a token it cannot produce.
+    """
+    if not os.path.exists(os.path.join(final_output_dir, "generation_config.json")):
+        # Adapter-only exports have no generation_config; the base repo's applies.
+        return
+
+    generation_config = GenerationConfig.from_pretrained(final_output_dir)
+    # The re-save below validates strictly too, so a base repo whose sampling params are
+    # set without do_sample would abort here even when the merge itself succeeded.
+    changed = _sanitize_sampling_params(generation_config)
+    for attr, token_id in (
+        ("eos_token_id", tokenizer.eos_token_id),
+        ("pad_token_id", tokenizer.pad_token_id),
+    ):
+        current = getattr(generation_config, attr, None)
+        if token_id is None:
+            continue
+        if isinstance(current, (list, tuple)):
+            # `eos_token_id` may legitimately hold several stop tokens (Nemotron-3-Nano
+            # 30B ships [2, 11] = </s> and <|im_end|>). Replacing the list with the
+            # tokenizer's single id would drop the others, so add instead - dropping the
+            # template's real turn terminator is the very failure this guards against.
+            if token_id not in current:
+                logger.info(
+                    f"generation_config.{attr}: {list(current)} + [{token_id}] "
+                    f"(tokenizer's token was missing from the list)"
+                )
+                setattr(generation_config, attr, list(current) + [token_id])
+                changed = True
+        elif current != token_id:
+            logger.info(
+                f"generation_config.{attr}: {current} -> {token_id} "
+                f"(matching the tokenizer)"
+            )
+            setattr(generation_config, attr, token_id)
+            changed = True
+
+    if changed:
+        generation_config.save_pretrained(final_output_dir)
+
+
+def _save_artifacts_on_main(
+    tokenizer: AutoTokenizer,
+    processor,
+    final_output_dir: str,
+    model_id: str = None,
+) -> None:
+    """Save tokenizer and processor to the output directory.
+
+    If processor is None but the saved model is a VLM (has a config with a
+    model_type registered for image-text-to-text), loads and saves the processor
+    from the base model so the output is complete for multi-modal inference.
+    """
+    tokenizer.save_pretrained(final_output_dir)
+    _align_generation_config(tokenizer, final_output_dir)
+    if processor is not None:
+        processor.save_pretrained(final_output_dir)
+        if (
+            hasattr(processor, "image_processor")
+            and processor.image_processor is not None
+        ):
+            processor.image_processor.save_pretrained(final_output_dir)
+        if (
+            hasattr(processor, "video_processor")
+            and processor.video_processor is not None
+        ):
+            processor.video_processor.save_pretrained(final_output_dir)
+    elif model_id and _is_vlm_from_config(model_id):
+        # No processor provided but base model is a VLM — load processor from base model
+        try:
+            logger.info(
+                f"No processor provided but base model is a VLM. "
+                f"Loading processor from: {model_id}"
+            )
+            base_processor = AutoProcessor.from_pretrained(
+                model_id, **trust_remote_code_kwargs(model_id)
+            )
+            base_processor.save_pretrained(final_output_dir)
+            # Also save sub-processors as separate files for compatibility (e.g. Ollama)
+            if (
+                hasattr(base_processor, "image_processor")
+                and base_processor.image_processor is not None
+            ):
+                base_processor.image_processor.save_pretrained(final_output_dir)
+            if (
+                hasattr(base_processor, "video_processor")
+                and base_processor.video_processor is not None
+            ):
+                base_processor.video_processor.save_pretrained(final_output_dir)
+        except Exception as e:
+            raise RuntimeError(
+                f"Could not auto-save processor for VLM {model_id}: {e}"
+            ) from e
+
+
+def _restore_base_only_shards(base_model_id: Optional[str], final_output_dir: str) -> None:
+    """Copy base-checkpoint shards whose tensors `save_pretrained` dropped entirely.
+
+    Gemma 4 (e.g. NVIDIA Nemotron-3.5-Bolt-E4B) shares K/V across its last
+    `num_kv_shared_layers` layers. Transformers never builds `k_proj`/`v_proj`/`k_norm`
+    for those layers, so a merged `save_pretrained` export omits them, while the hub
+    checkpoint ships them in a separate `model-frozen-shared-kv.safetensors`. vLLM
+    releases before 0.30 refuse a checkpoint without them ("Following weights were not
+    initialized from checkpoint"). Restoring the shard makes the export match the hub
+    layout the model was validated with.
+
+    Only shards none of whose keys exist in the export are copied, so a merged tensor
+    is never overwritten or duplicated. A no-op for models without such shards.
+    """
+    if not base_model_id:
+        return
+    out_index_path = os.path.join(final_output_dir, "model.safetensors.index.json")
+    if not os.path.isfile(out_index_path):
+        return  # single-file export: nothing indexed to extend
+    try:
+        if os.path.isdir(base_model_id):
+            base_index_path = os.path.join(base_model_id, "model.safetensors.index.json")
+            if not os.path.isfile(base_index_path):
+                return
+        else:
+            from huggingface_hub import hf_hub_download
+
+            base_index_path = hf_hub_download(
+                base_model_id, "model.safetensors.index.json"
+            )
+    except Exception as e:  # base repo has no index (single-file checkpoint)
+        logger.info(f"No base safetensors index for {base_model_id}: {e}")
+        return
+
+    with open(base_index_path, encoding="utf-8") as f:
+        base_map = json.load(f).get("weight_map", {})
+    with open(out_index_path, encoding="utf-8") as f:
+        out_index = json.load(f)
+    out_map = out_index.setdefault("weight_map", {})
+
+    keys_by_shard: Dict[str, List[str]] = {}
+    for key, shard in base_map.items():
+        keys_by_shard.setdefault(shard, []).append(key)
+
+    restored = []
+    for shard, keys in sorted(keys_by_shard.items()):
+        if any(key in out_map for key in keys) or os.path.exists(
+            os.path.join(final_output_dir, shard)
+        ):
+            continue
+        if os.path.isdir(base_model_id):
+            source = os.path.join(base_model_id, shard)
+        else:
+            from huggingface_hub import hf_hub_download
+
+            source = hf_hub_download(base_model_id, shard)
+        shutil.copyfile(source, os.path.join(final_output_dir, shard))
+        out_map.update({key: shard for key in keys})
+        restored.append(f"{shard} ({len(keys)} tensors)")
+
+    if restored:
+        with open(out_index_path, "w", encoding="utf-8") as f:
+            json.dump(out_index, f, indent=2, sort_keys=True)
+        logger.info(f"Restored base-only shards into the export: {restored}")
+
+
+def _is_visual_weight_key(key: str) -> bool:
+    return (
+        key.startswith(("visual.", "vision_model.", "vision_tower."))
+        or ".visual." in key
+        or ".vision_model." in key
+        or ".vision_tower." in key
+    )
+
+
+def _validate_vlm_export(final_output_dir: str) -> None:
+    """Fail unless an exported directory is a complete standalone VLM."""
+    config_path = os.path.join(final_output_dir, "config.json")
+    if not os.path.isfile(config_path):
+        raise RuntimeError("VLM export is missing config.json")
+    with open(config_path, encoding="utf-8") as config_file:
+        config = json.load(config_file)
+    if not isinstance(config.get("vision_config"), dict):
+        raise RuntimeError("VLM export config.json has no vision_config")
+    if str(config.get("model_type", "")).endswith("_text"):
+        raise RuntimeError("VLM export has a text-only model_type")
+
+    index_path = os.path.join(final_output_dir, "model.safetensors.index.json")
+    weight_keys = []
+    if os.path.isfile(index_path):
+        with open(index_path, encoding="utf-8") as index_file:
+            weight_map = json.load(index_file).get("weight_map", {})
+        weight_keys = list(weight_map)
+        missing_shards = sorted(
+            {
+                filename
+                for filename in weight_map.values()
+                if not os.path.isfile(os.path.join(final_output_dir, filename))
+            }
+        )
+        if missing_shards:
+            raise RuntimeError(
+                f"VLM export references missing shards: {missing_shards}"
+            )
+    else:
+        import glob
+        from safetensors import safe_open
+
+        shard_paths = glob.glob(os.path.join(final_output_dir, "*.safetensors"))
+        if not shard_paths:
+            raise RuntimeError("VLM export contains no safetensors weights")
+        for shard_path in shard_paths:
+            with safe_open(shard_path, framework="pt") as shard:
+                weight_keys.extend(shard.keys())
+
+    visual_count = sum(_is_visual_weight_key(key) for key in weight_keys)
+    if visual_count == 0:
+        raise RuntimeError("VLM export contains no visual/vision weight tensors")
+    required_processor_files = ["preprocessor_config.json"]
+    if config.get("model_type") == "qwen3_5":
+        required_processor_files.append("video_preprocessor_config.json")
+    missing_processor_files = [
+        filename
+        for filename in required_processor_files
+        if not os.path.isfile(os.path.join(final_output_dir, filename))
+    ]
+    if missing_processor_files:
+        raise RuntimeError(
+            "VLM export is missing required processor files: "
+            f"{missing_processor_files}"
+        )
+    logger.info(
+        "Validated standalone VLM export: %d tensors, %d visual tensors",
+        len(weight_keys),
+        visual_count,
+    )
+
+
+def save_model(
+    trainer: Trainer,
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    processor,
+    script_args: ScriptArguments,
+    training_args: "SFTConfig",
+    accelerator: Accelerator,
+    mlflow_enabled: bool,
+    final_output_dir: str,
+) -> None:
+    """Save the trained model with proper DeepSpeed ZeRO-3 handling and online merging."""
+    logger.info("STARTING MODEL SAVE PROCESS")
+    vlm_source_model_id = _resolve_vlm_base_model_id(
+        script_args.model_id, script_args.vlm_base_model_id
+    )
+
+    accelerator.wait_for_everyone()
+
+    use_deepspeed, use_fsdp = _detect_distributed_strategy(trainer)
+    logger.info(f"Distributed strategy - DeepSpeed: {use_deepspeed}, FSDP: {use_fsdp}")
+
+    if use_fsdp:
+        trainer.accelerator.state.fsdp_plugin.set_state_dict_type("FULL_STATE_DICT")
+
+    if script_args.use_peft and script_args.merge_weights:
+        temp_dir = "/tmp/adapter_temp"
+        os.makedirs(temp_dir, exist_ok=True)
+
+        if use_deepspeed:
+            # Trainer.save_model handles ZeRO-3 state dict gathering
+            trainer.save_model(temp_dir)
+            accelerator.wait_for_everyone()
+
+            if accelerator.is_main_process:
+                torch.cuda.empty_cache()
+                dtype_str = (
+                    script_args.torch_dtype
+                    if script_args.torch_dtype not in ["auto", None]
+                    else "bfloat16"
+                )
+                _merge_adapter_via_subprocess(
+                    temp_dir,
+                    final_output_dir,
+                    torch_dtype_str=dtype_str,
+                    vlm_base_model_id=script_args.vlm_base_model_id,
+                    trc_kwargs=trust_remote_code_for(script_args, training_args),
+                )
+                _restore_base_only_shards(
+                    vlm_source_model_id or script_args.model_id, final_output_dir
+                )
+                _save_artifacts_on_main(
+                    tokenizer, processor, final_output_dir, vlm_source_model_id
+                )
+                if vlm_source_model_id:
+                    _validate_vlm_export(final_output_dir)
+                if mlflow_enabled:
+                    logger.info(
+                        "Skipping MLflow registration (model merged in subprocess)"
+                    )
+        else:
+            # FSDP/DDP: use trainer.save_model so Accelerate honors the
+            # FULL_STATE_DICT type set above and gathers a full, unsharded adapter
+            # of plain tensors (this call must run on all ranks for the gather's
+            # collective). Calling trainer.model.save_pretrained directly bypasses
+            # that gather and pickles sharded FSDP DTensors; reloading them makes
+            # merge_and_unload()'s weight_B @ weight_A a DTensor reshard (all-to-all)
+            # on CPU, which fails with "No backend type associated with device type
+            # cpu" because the process group only has the GPU-only NCCL backend.
+            trainer.save_model(temp_dir)
+            accelerator.wait_for_everyone()
+
+            if accelerator.is_main_process:
+                del model, trainer
+                save_dtype = (
+                    getattr(torch, script_args.torch_dtype)
+                    if script_args.torch_dtype not in ["auto", None]
+                    else torch.bfloat16
+                )
+                merged_model = _merge_adapter_in_process(
+                    temp_dir,
+                    final_output_dir,
+                    torch_dtype=save_dtype,
+                    vlm_base_model_id=script_args.vlm_base_model_id,
+                )
+                _restore_base_only_shards(
+                    vlm_source_model_id or script_args.model_id, final_output_dir
+                )
+                _save_artifacts_on_main(
+                    tokenizer, processor, final_output_dir, vlm_source_model_id
+                )
+                if vlm_source_model_id:
+                    _validate_vlm_export(final_output_dir)
+                if mlflow_enabled and script_args.mlflow_log_model:
+                    register_model_in_mlflow(merged_model, tokenizer, script_args)
+
+        accelerator.wait_for_everyone()
+
+    else:
+        # Covers both PEFT without merge and non-PEFT models
+        # A full (non-adapter) save writes generation_config.json, which transformers
+        # validates strictly - so sanitize before the save, not in the
+        # _align_generation_config that only runs afterwards.
+        generation_config = getattr(trainer.model, "generation_config", None)
+        if generation_config is not None:
+            _sanitize_sampling_params(generation_config)
+        trainer.save_model(final_output_dir)
+        accelerator.wait_for_everyone()
+
+        if accelerator.is_main_process:
+            _save_artifacts_on_main(
+                tokenizer, processor, final_output_dir, vlm_source_model_id
+            )
+            if not script_args.use_peft and vlm_source_model_id:
+                _validate_vlm_export(final_output_dir)
+            if mlflow_enabled and script_args.mlflow_log_model:
+                register_model_in_mlflow(trainer.model, tokenizer, script_args)
+
+        accelerator.wait_for_everyone()
+
+    logger.info("MODEL SAVE PROCESS COMPLETED SUCCESSFULLY")
+
+
+def register_model_in_mlflow(
+    model: AutoModelForCausalLM, tokenizer: AutoTokenizer, script_args: ScriptArguments
+) -> None:
+    """Register the model in MLflow."""
+    logger.info(f"MLflow model registration under {script_args.mlflow_experiment_name}")
+
+    try:
+        params = {"top_p": 0.9, "temperature": 0.2, "max_new_tokens": 1024 * 4}
+        signature = infer_signature("inputs", "generated_text", params=params)
+
+        mlflow.transformers.log_model(
+            transformers_model={"model": model, "tokenizer": tokenizer},
+            signature=signature,
+            name="model",
+            task="text-generation",
+            registered_model_name=f"model-{os.environ.get('MLFLOW_RUN_NAME', '').split('Fine-tuning-')[-1]}",
+        )
+    except Exception as e:
+        logger.error(f"Error registering model in MLflow: {e}")
+        raise
+
+
+def detect_dataset_format(dataset: Dataset, script_args: ScriptArguments) -> str:
+    """Detect dataset format from column names.
+
+    Returns one of: 'pretokenized', 'prompt_completion', 'messages', 'text'.
+    """
+    if script_args.dataset_format != "auto":
+        fmt = script_args.dataset_format
+        known = ("pretokenized", "prompt_completion", "messages", "text")
+        if fmt not in known:
+            raise ValueError(
+                f"Unknown dataset_format {fmt!r}. Expected one of {known} or 'auto'. "
+                "An unrecognised value used to fall through every branch below and "
+                "silently train on unreshaped data, so it is rejected here instead."
+            )
+        logger.info(f"Using explicitly configured dataset format: {fmt}")
+        return fmt
+
+    columns = dataset.column_names
+
+    if "input_ids" in columns:
+        logger.info(
+            "Auto-detected dataset format: pretokenized (input_ids column found)"
+        )
+        return "pretokenized"
+
+    # Checked before `messages`: SFTTrainer supports this shape natively and, because
+    # both columns are present, turns on completion-only loss by itself
+    # (sft_trainer.py: `self.completion_only_loss = "prompt" in dataset_sample and
+    # "completion" in dataset_sample`), masking the prompt tokens. Either column may
+    # hold plain strings or lists of chat turns; TRL handles both.
+    if "prompt" in columns and "completion" in columns:
+        logger.info(
+            "Auto-detected dataset format: prompt_completion "
+            "(prompt + completion columns found; loss is masked on the prompt)"
+        )
+        return "prompt_completion"
+
+    if script_args.messages_field in columns:
+        logger.info(
+            f"Auto-detected dataset format: messages "
+            f"('{script_args.messages_field}' column found)"
+        )
+        return "messages"
+
+    if script_args.text_field in columns:
+        logger.info(
+            f"Auto-detected dataset format: text "
+            f"('{script_args.text_field}' column found)"
+        )
+        return "text"
+
+    raise ValueError(
+        f"Cannot detect dataset format. Dataset columns: {columns}. "
+        f"Expected one of: 'input_ids' (pretokenized), "
+        f"'prompt' + 'completion' (prompt-completion), "
+        f"'{script_args.messages_field}' (conversational messages), "
+        f"or '{script_args.text_field}' (pre-rendered text). "
+        f"Use --dataset_format to specify explicitly, or "
+        f"--messages_field / --text_field to match your column names."
+    )
+
+
+def _get_chat_template_callable(tokenizer, processor):
+    """Return the best available apply_chat_template callable.
+
+    Prefers the processor (handles multimodal content like images/video)
+    and falls back to the tokenizer for text-only models.
+    """
+    if processor is not None and hasattr(processor, "apply_chat_template"):
+        return processor.apply_chat_template
+    return tokenizer.apply_chat_template
+
+
+def _tokenize_sample_for_length(
+    sample: dict,
+    tokenizer: AutoTokenizer,
+    processor,
+    dataset_format: str,
+    script_args: ScriptArguments,
+) -> Optional[int]:
+    """Tokenize a single sample and return its token length, or None to skip."""
+    if dataset_format == "messages":
+        messages = sample[script_args.messages_field]
+        if isinstance(messages, str):
+            messages = json.loads(messages)
+        kwargs = {}
+        if "tools" in sample and sample["tools"]:
+            tools = sample["tools"]
+            if isinstance(tools, str):
+                tools = json.loads(tools)
+            kwargs["tools"] = tools
+        apply_chat_template = _get_chat_template_callable(tokenizer, processor)
+        tokens = apply_chat_template(messages, tokenize=True, **kwargs)
+        return len(tokens)
+    else:
+        text = sample[script_args.text_field]
+        if len(text) > 100000:
+            return None
+        tokens = tokenizer(text, add_special_tokens=True)["input_ids"]
+        return len(tokens)
+
+
+def calculate_optimal_max_length(
+    tokenizer: AutoTokenizer,
+    dataset: Dataset,
+    script_args: ScriptArguments,
+    dataset_format: str,
+    processor=None,
+    sample_size: int = 1000,
+    percentile: float = 0.95,
+    max_absolute_length: int = 32768,
+) -> int:
+    """Calculate optimal max_length by tokenizing a sample of the dataset."""
+    sample_indices = torch.randperm(len(dataset))[: min(sample_size, len(dataset))]
+    sample_data = dataset.select(sample_indices)
+
+    token_lengths = []
+    outliers_removed = 0
+
+    for sample in sample_data:
+        token_len = _tokenize_sample_for_length(
+            sample, tokenizer, processor, dataset_format, script_args
+        )
+
+        if token_len is None or token_len > max_absolute_length:
+            outliers_removed += 1
+            continue
+
+        token_lengths.append(token_len)
+
+    if not token_lengths:
+        logger.warning("No valid samples found, using default max_length=2048")
+        return 2048
+
+    avg_length = sum(token_lengths) / len(token_lengths)
+    max_length = int(sorted(token_lengths)[int(percentile * len(token_lengths))])
+
+    logger.info(
+        f"Analyzed {len(token_lengths)} samples ({outliers_removed} outliers removed)"
+    )
+    logger.info(f"Average token length: {avg_length:.1f}")
+    logger.info(f"{percentile*100}th percentile token length: {max_length}")
+
+    return max_length
+
+
+def _normalize_messages_for_sft(
+    dataset: Dataset, script_args: ScriptArguments
+) -> Dataset:
+    """Shape a conversational dataset the way SFTTrainer expects it.
+
+    SFTTrainer reads a column literally named ``messages`` holding native lists of
+    message dicts (it then applies the chat template, passing any ``tools`` column,
+    and tokenizes). We therefore:
+      1. rename a custom messages field to ``messages`` (cheap metadata rename, no
+         re-serialization -> avoids Arrow schema conflicts with varying tool_calls);
+      2. optionally parse JSON-encoded messages lazily via ``set_transform`` when
+         ``deserialize_messages=True`` (mirrors the DPO script).
+    The ``tools`` column is left untouched: SFTTrainer runs ``json.loads`` on it
+    when it's a string and passes it to apply_chat_template itself.
+    """
+    if script_args.messages_field != "messages":
+        dataset = dataset.rename_column(script_args.messages_field, "messages")
+
+    if script_args.deserialize_messages:
+
+        def _transform(batch):
+            parsed = []
+            for msgs in batch["messages"]:
+                if isinstance(msgs, str):
+                    try:
+                        msgs = json.loads(msgs)
+                    except (json.JSONDecodeError, ValueError):
+                        pass  # keep as-is (standard/plain format)
+                parsed.append(msgs)
+            batch["messages"] = parsed
+            return batch
+
+        dataset.set_transform(_transform)
+
+    return dataset
+
+
+def prepare_dataset(
+    tokenizer: AutoTokenizer,
+    script_args: ScriptArguments,
+    train_ds: Dataset,
+    test_ds: Optional[Dataset] = None,
+    processor=None,
+    dataset_format: Optional[str] = None,
+):
+    """Prepare datasets per modality (tokenization is delegated downstream).
+
+    Supported formats (auto-detected or via --dataset_format):
+      - 'pretokenized': already has 'input_ids' -> passed straight through
+        (SFTTrainer skips its own tokenization when 'input_ids' is present).
+      - 'text': pre-rendered text column (default 'text') -> SFTTrainer tokenizes
+        it and appends EOS. Optional char-level outlier filtering when apply_truncation.
+      - 'prompt_completion': 'prompt' + 'completion' columns -> passed straight
+        through; SFTTrainer masks the prompt so only the completion is supervised.
+      - 'messages': conversational lists -> normalized (field renamed to 'messages',
+        optional lazy JSON parse) so SFTTrainer can apply the chat template + tools.
+
+    Image modality leaves raw columns intact so MultiModalDataCollator can read
+    messages/images at collation time.
+    """
+    if dataset_format is None:
+        dataset_format = detect_dataset_format(train_ds, script_args)
+
+    # Character-level outlier filtering (text format only) - preserved from the
+    # original logic; applies to both the image and SFT text paths.
+    if script_args.apply_truncation and dataset_format == "text":
+        logger.info(f"Original training samples: {len(train_ds)}")
+        lengths = [len(x[script_args.text_field]) for x in train_ds]
+        threshold = sorted(lengths)[int(0.995 * len(lengths))]
+        logger.info(f"Filtering samples > {threshold} characters (99.5th percentile)")
+        train_ds = train_ds.filter(
+            lambda x: len(x[script_args.text_field]) <= threshold
+        )
+        logger.info(f"Filtered training samples: {len(train_ds)}")
+        if test_ds is not None:
+            logger.info(f"Original test samples: {len(test_ds)}")
+            test_ds = test_ds.filter(
+                lambda x: len(x[script_args.text_field]) <= threshold
+            )
+            logger.info(f"Filtered test samples: {len(test_ds)}")
+
+    # Image modality: hand raw columns to the collator, no pre-tokenization here.
+    if script_args.modality_type == "image":
+        logger.info(
+            "Image modality: skipping pre-tokenization (handled by "
+            f"MultiModalDataCollator). Truncation={script_args.apply_truncation}"
+        )
+        return train_ds, test_ds
+
+    # SFT (text / messages / prompt_completion / pretokenized): SFTTrainer tokenizes.
+    logger.info(f"Dataset format: {dataset_format} (tokenized by SFTTrainer)")
+
+    if dataset_format == "pretokenized":
+        logger.info(
+            "Dataset already contains 'input_ids' - SFTTrainer will use it as-is "
+            f"(columns: {train_ds.column_names})"
+        )
+        return train_ds, test_ds
+
+    if dataset_format == "prompt_completion":
+        # Handed straight to SFTTrainer: it applies the chat template to `prompt` (with
+        # add_generation_prompt=True) and to `prompt + completion`, forwarding any
+        # per-example `chat_template_kwargs` column, then derives the completion mask
+        # from the token-length difference. Nothing to reshape here, and no
+        # `{% generation %}` marker is needed in the template.
+        logger.info(
+            "prompt/completion columns passed through to SFTTrainer; loss is computed "
+            f"on the completion only (columns: {train_ds.column_names})"
+        )
+        return train_ds, test_ds
+
+    if dataset_format == "messages":
+        train_ds = _normalize_messages_for_sft(train_ds, script_args)
+        if test_ds is not None:
+            test_ds = _normalize_messages_for_sft(test_ds, script_args)
+
+    # 'text' format: no reshaping needed; SFTTrainer reads dataset_text_field.
+    return train_ds, test_ds
+
+
+def train(script_args, training_args, train_ds, test_ds):
+    """Train the model using centralized configuration."""
+    set_seed(training_args.seed)
+
+    # Create centralized config builder
+    config_builder = ModelConfigBuilder(script_args, training_args)
+    mlflow_enabled = is_mlflow_enabled(script_args)
+
+    if script_args.token is not None:
+        os.environ.update({"HF_TOKEN": script_args.token})
+        if dist.is_initialized():
+            logger.info("Waiting for all processes after setting HF token")
+            dist.barrier()
+
+    if script_args.use_snapshot_download:
+        download_model(script_args.model_id)
+        if dist.is_initialized():
+            logger.info("Waiting for all processes after model download")
+            dist.barrier()
+        script_args.model_id = "/tmp/tmp_folder"
+
+    if script_args.vlm_base_model_id:
+        _resolve_vlm_base_model_id(script_args.model_id, script_args.vlm_base_model_id)
+        logger.info(
+            "Validated explicit VLM export base: %s",
+            script_args.vlm_base_model_id,
+        )
+
+    # Load model, tokenizer, and processor using centralized config
+    model = load_model(config_builder, script_args)
+    tokenizer = load_tokenizer(script_args, training_args)
+    processor = load_processor(script_args, training_args)
+    is_vlm = script_args.modality_type == "image"
+    if not is_vlm:
+        # Text path on a multimodal checkpoint (Gemma 4): see the helper's docstring.
+        _expose_text_config_loss_attrs(model)
+
+    # Detect the format up front (on ORIGINAL column names) so we can auto-calc the
+    # length and set dataset_text_field before the messages column gets renamed.
+    dataset_format = detect_dataset_format(train_ds, script_args)
+
+    if is_vlm:
+        # Image modality skips pre-tokenization (prepare_dataset leaves raw columns
+        # like `messages_field` / images intact; MultiModalDataCollator reads them at
+        # collation time). Trainer's default remove_unused_columns=True strips any
+        # dataset column not in the model's forward() signature (e.g. "messages"),
+        # which would starve the collator before it ever runs. Force it off here so
+        # this can't be forgotten in args.yaml.
+        training_args.remove_unused_columns = False
+    else:
+        # SFT (text/messages) path. Preserve the original percentile-based length
+        # logic, but feed the result into SFTConfig.max_length (SFTTrainer truncates
+        # to it) instead of tokenizing ourselves. Trigger it when explicitly requested
+        # OR (legacy behavior) when apply_truncation is on and max_length was left at
+        # the SFTConfig default. Skipped for pretokenized data.
+        default_max_length = 1024  # SFTConfig.max_length default
+        max_length_is_default = getattr(training_args, "max_length", None) in (
+            None,
+            default_max_length,
+        )
+        want_autocalc = script_args.auto_calculate_lengths or (
+            script_args.apply_truncation and max_length_is_default
+        )
+        # `calculate_optimal_max_length` only knows how to tokenize the 'messages' and
+        # 'text' shapes - for anything else `_tokenize_sample_for_length` reads
+        # `sample[text_field]` and would raise KeyError - so prompt_completion is
+        # excluded alongside pretokenized. Set `max_length` explicitly in args.yaml for
+        # that format.
+        if (
+            dataset_format not in ("pretokenized", "prompt_completion")
+            and want_autocalc
+        ):
+            computed = calculate_optimal_max_length(
+                tokenizer, train_ds, script_args, dataset_format, processor=None
+            )
+            training_args.max_length = computed
+            logger.info(f"Set SFTConfig.max_length={computed} (auto-calculated)")
+        elif (
+            want_autocalc
+            and dataset_format == "prompt_completion"
+            and max_length_is_default
+        ):
+            logger.warning(
+                f"Length auto-calculation was requested but is not supported for "
+                f"prompt_completion, so max_length stays at the default "
+                f"{default_max_length} and SFTTrainer will truncate anything longer. "
+                f"Set max_length explicitly in args.yaml."
+            )
+
+        # Point SFTTrainer at the configured text column for the 'text' format.
+        if dataset_format == "text":
+            training_args.dataset_text_field = script_args.text_field
+
+    train_ds, test_ds = prepare_dataset(
+        tokenizer, script_args, train_ds, test_ds, processor, dataset_format
+    )
+
+    # Cast the frozen base model's params/buffers to a uniform dtype BEFORE LoRA is
+    # applied, so PEFT's fp32 upcast of the adapter weights (see apply_lora_config /
+    # get_peft_model) is preserved instead of being immediately overwritten.
+    if script_args.cast_parameters_to_uniform_dtype:
+        cast_parameters_to_uniform_dtype(model, config_builder.torch_dtype)
+
+    if script_args.use_peft:
+        model = apply_lora_config(model, script_args, is_vlm=is_vlm)
+
+    if (
+        script_args.patch_peft_fsdp_auto_wrap_policy
+        and script_args.use_peft
+        and training_args.fsdp
+        and training_args.fsdp != ""
+    ):
+        patch_peft_fsdp_auto_wrap_policy()
+
+    callbacks = setup_wandb(script_args)
+    if script_args.early_stopping:
+        if callbacks is None:
+            callbacks = []
+        callbacks.append(
+            EarlyStoppingCallback(
+                early_stopping_patience=3, early_stopping_threshold=0.01
+            )
+        )
+
+        training_args.load_best_model_at_end = True
+        training_args.metric_for_best_model = "eval_loss"
+        training_args.greater_is_better = False
+    trainer = setup_trainer(
+        model,
+        tokenizer,
+        train_ds,
+        config_builder,
+        test_ds,
+        callbacks,
+        processor=processor,
+        script_args=script_args,
+    )
+
+    if trainer.accelerator.is_main_process:
+        trainer.model.print_trainable_parameters()
+
+    if script_args.checkpoint_dir is not None:
+        os.makedirs(script_args.checkpoint_dir, exist_ok=True)
+
+        original_output_dir = training_args.output_dir
+        training_args.output_dir = script_args.checkpoint_dir
+    else:
+        original_output_dir = training_args.output_dir
+
+    # Start training
+    if mlflow_enabled:
+        logger.info(f"MLflow tracking under {script_args.mlflow_experiment_name}")
+        mlflow.set_system_metrics_node_id(
+            f"node_{trainer.accelerator.process_index // torch.cuda.device_count()}"
+        )
+        if trainer.accelerator.is_main_process:
+            mlflow.start_run(run_name=os.environ.get("MLFLOW_RUN_NAME", None))
+            mlflow.log_params(
+                {
+                    "total_gpus": trainer.accelerator.num_processes,
+                    "nodes": trainer.accelerator.num_processes
+                    // torch.cuda.device_count(),
+                    "gpus_per_node": torch.cuda.device_count(),
+                }
+            )
+            try:
+                train_dataset_mlflow = mlflow.data.from_pandas(
+                    train_ds.to_pandas(), name="train_dataset"
+                )
+                mlflow.log_input(train_dataset_mlflow, context="train")
+            except Exception as e:
+                logger.warning(f"Failed to log dataset to MLflow: {e}")
+
+    if (
+        script_args.checkpoint_dir
+        and get_last_checkpoint(script_args.checkpoint_dir) is not None
+        and script_args.use_checkpoints
+    ):
+        train_result = trainer.train(resume_from_checkpoint=True)
+    else:
+        train_result = trainer.train()
+
+    metrics = train_result.metrics
+    metrics["train_samples"] = len(train_ds)
+    trainer.log_metrics("train", metrics)
+    trainer.save_metrics("train", metrics)
+    trainer.save_state()
+
+    save_model(
+        trainer,
+        model,
+        tokenizer,
+        processor,
+        script_args,
+        training_args,
+        trainer.accelerator,
+        mlflow_enabled,
+        original_output_dir,
+    )
+    trainer.accelerator.wait_for_everyone()
+
+
+def _is_hf_dataset_dir(path: str) -> bool:
+    """Check if path is a HuggingFace dataset directory (Arrow format)."""
+    return os.path.isdir(path) and os.path.exists(
+        os.path.join(path, "dataset_info.json")
+    )
+
+
+def _load_dataset_auto(path: str) -> Dataset:
+    """Load a dataset from path, automatically detecting format (JSON, JSONL, or Arrow)."""
+    if path.endswith(".jsonl") or path.endswith(".json"):
+        return load_dataset("json", data_files=path, split="train")
+    if path.endswith(".arrow"):
+        logger.info(f"Loading Arrow file from {path}")
+        return load_dataset("arrow", data_files=path, split="train")
+    if _is_hf_dataset_dir(path):
+        logger.info(f"Detected HuggingFace Arrow dataset format at {path}")
+        ds = load_from_disk(path)
+        if isinstance(ds, DatasetDict):
+            split = "train" if "train" in ds else list(ds.keys())[0]
+            logger.info(f"DatasetDict detected, using split '{split}'")
+            ds = ds[split]
+        return ds
+    # Fallback: look for JSON/JSONL files in directory
+    import glob as _glob
+
+    json_files = sorted(
+        _glob.glob(os.path.join(path, "*.json"))
+        + _glob.glob(os.path.join(path, "*.jsonl"))
+    )
+    if json_files:
+        logger.info(f"Found JSON file(s) in directory: {json_files}")
+        return load_dataset("json", data_files=json_files, split="train")
+    raise FileNotFoundError(
+        f"No supported dataset files found in '{path}'. "
+        "Expected .json, .jsonl, .arrow files or a HuggingFace dataset directory."
+    )
+
+
+def load_datasets(script_args: ScriptArguments) -> Tuple[Dataset, Optional[Dataset]]:
+    """Load training and test datasets."""
+    try:
+        logger.info(f"Loading training dataset from {script_args.train_dataset_path}")
+        train_ds = _load_dataset_auto(script_args.train_dataset_path)
+        logger.info(
+            f"Training dataset loaded: {len(train_ds)} samples, "
+            f"columns: {train_ds.column_names}"
+        )
+
+        test_ds = None
+        if script_args.val_dataset_path:
+            logger.info(f"Loading test dataset from {script_args.val_dataset_path}")
+            test_ds = _load_dataset_auto(script_args.val_dataset_path)
+            logger.info(
+                f"Test dataset loaded: {len(test_ds)} samples, "
+                f"columns: {test_ds.column_names}"
+            )
+
+        return train_ds, test_ds
+    except Exception as e:
+        logger.error(f"Error loading datasets: {e}")
+        raise
+
+
+def main() -> None:
+    """Main function to parse arguments and start training."""
+    parser = TrlParser((ScriptArguments, SFTConfig))
+    script_args, training_args = parser.parse_args_and_config()
+
+    # Pick the recipe for whatever instance SageMaker launched: QLoRA on 24 GB cards,
+    # bf16 LoRA on 48 GB cards. Logged so the run records which path it took.
+    if script_args.auto_4bit_below_gpu_gib and torch.cuda.is_available():
+        gpu_gib = torch.cuda.get_device_properties(0).total_memory / 2**30
+        if gpu_gib < script_args.auto_4bit_below_gpu_gib:
+            script_args.load_in_4bit = True
+        logger.info(
+            f"GPU {torch.cuda.get_device_name(0)} {gpu_gib:.1f} GiB "
+            f"(threshold {script_args.auto_4bit_below_gpu_gib} GiB) "
+            f"-> load_in_4bit={script_args.load_in_4bit}"
+        )
+
+    set_custom_env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    setup_mlflow(script_args)
+
+    train_ds, test_ds = load_datasets(script_args)
+    train(script_args, training_args, train_ds, test_ds)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Training failed: {e}", exc_info=True)
+        raise

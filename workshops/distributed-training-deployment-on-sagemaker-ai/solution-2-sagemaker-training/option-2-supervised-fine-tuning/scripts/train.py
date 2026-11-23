@@ -1471,6 +1471,25 @@ def _detect_distributed_strategy(trainer: Trainer) -> Tuple[bool, bool]:
     return use_deepspeed, use_fsdp
 
 
+def _make_tokenizer_config_vllm_compatible(output_dir: str) -> None:
+    """transformers 5 writes extra_special_tokens as a list, but the vLLM serving container's transformers 4.x
+    expects a dict and fails to load the tokenizer ("'list' object has no attribute 'keys'"). Move the list to
+    additional_special_tokens, the 4.x key, so the tokens stay special (as option 4's deployment notebook does)."""
+    path = os.path.join(output_dir, "tokenizer_config.json")
+    if not os.path.exists(path):
+        return
+    with open(path) as f:
+        cfg = json.load(f)
+    extra = cfg.get("extra_special_tokens")
+    if not isinstance(extra, list):
+        return
+    existing = cfg.get("additional_special_tokens") or []
+    cfg["additional_special_tokens"] = existing + [t for t in extra if t not in existing]
+    del cfg["extra_special_tokens"]
+    with open(path, "w") as f:
+        json.dump(cfg, f, indent=2, ensure_ascii=False)
+
+
 def _save_artifacts_on_main(
     tokenizer: AutoTokenizer,
     processor,
@@ -1520,6 +1539,8 @@ def _save_artifacts_on_main(
                 base_processor.video_processor.save_pretrained(final_output_dir)
         except Exception as e:
             logger.warning(f"Could not auto-save processor for VLM: {e}")
+    # Last, so a processor's save_pretrained cannot write the list back
+    _make_tokenizer_config_vllm_compatible(final_output_dir)
 
 
 def save_model(

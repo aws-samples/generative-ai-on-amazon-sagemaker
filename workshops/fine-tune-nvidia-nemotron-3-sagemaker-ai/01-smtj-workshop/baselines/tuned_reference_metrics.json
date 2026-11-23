@@ -1,0 +1,12 @@
+{
+ "label_correct": 87.57,
+ "evidence_f1": 80.23,
+ "contradiction_correct": 65.79,
+ "json_valid": 100.0,
+ "records": 123,
+ "model": "fine-tuned NVIDIA-Nemotron-3.5-Bolt-E4B-BF16",
+ "prompt": "chat template, enable_thinking=False",
+ "reached_json": "123/123",
+ "note": "Reference results read when RUN_ENDPOINT_EVAL is False, computed from tuned_reference_rows.json in this directory. Trained one epoch with the recipe in notebook 2 on ml.g6e.16xlarge (job train-NVIDIA-Nemotron-3-5-Bolt-E4B-BF16-sft-20261028204004), served with vLLM 0.31.0 on ml.g5.xlarge. judge_reference_metrics.json judges these same generations.",
+ "epochs": 1
+}

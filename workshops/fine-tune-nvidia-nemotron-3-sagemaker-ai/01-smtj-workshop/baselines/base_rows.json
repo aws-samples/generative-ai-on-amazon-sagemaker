@@ -1,0 +1,1109 @@
+[
+ {
+  "index": 0,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-11\": {\"label\": \"Contradiction\", \"evidence\": [53]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [84]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [45]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [76]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [60]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [59]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [71]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [66]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [44]}}",
+  "label_correct": 0.8824,
+  "evidence_f1": 0.6486,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 1,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-11\": {\"label\": \"Contradiction\", \"evidence\": [24]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [57]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [27, 86]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [36, 37]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [45, 46]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [44]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}\n}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.6842,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 2,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-5\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [5]}}",
+  "label_correct": 0.4706,
+  "evidence_f1": 0.9091,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 3,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [2]}}",
+  "label_correct": 0.4118,
+  "evidence_f1": 0.5,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 4,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.5217,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 5,
+  "generated": "{\"nda-1\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [3]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-17\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-8\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [10]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.8889,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 6,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [65]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.6667,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 7,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [25]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.8333,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 8,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [19]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [21, 22]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [19]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [62]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [16, 38]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [16, 38]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [33]}\n}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.5957,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 9,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [64]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [8, 9]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [18]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.6061,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 10,
+  "generated": "{\"nda-11\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [81, 82]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [63]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [91]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [35]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [35]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [77]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [52, 51]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [85]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [53]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [51, 52]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [45]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.3721,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 11,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [56, 57, 58]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [39, 40, 41]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [52]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [58]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [56]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [23]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.45,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 12,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [42, 43]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [35]}\n}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.6,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 13,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [52, 53]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [45, 46]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [24]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [55]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [30, 45]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.7143,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 14,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [62]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [131, 133]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [121]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [62]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [62]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [90, 165]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [140]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [62]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [170, 171, 172]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [111, 114, 112]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [62]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [141]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [143, 144, 146]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [112]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [115, 123, 124, 125]}\n}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.5854,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 15,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [16c]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": []}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16c]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [8]}\n}",
+  "label_correct": 0.0,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 0.0,
+  "reached_json": true
+ },
+ {
+  "index": 16,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [58]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [16, 17]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [19, 20]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [64]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [53, 54, 55, 56]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [26, 38]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [35]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.7556,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 17,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [29]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [66]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [29]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [81]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [66]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [100]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [62]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [27]}\n}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.4848,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 18,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-11\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.7692,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 19,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [18]}\n}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.6087,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 20,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [21]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [91]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [21]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [21]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [61]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [74]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [53]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [36]}}",
+  "label_correct": 0.9412,
+  "evidence_f1": 0.5946,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 21,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [42, 45]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.6364,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 22,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [43]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [44]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [21, 22]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [60]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [69]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [60]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [37]}\n}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.7273,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 23,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [20]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-12\": {\"label\": \"Contradiction\", \"evidence\": [20]}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [21]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [10]}}",
+  "label_correct": 0.4118,
+  "evidence_f1": 0.4615,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 24,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-16\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [17]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.7826,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 25,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [53]}, \"nda-10\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [14, 42]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [14, 42]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [28]}\n}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.4667,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 26,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [11]}}",
+  "label_correct": 0.4706,
+  "evidence_f1": 0.6087,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 27,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [21]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.7619,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 28,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [28, 31]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-17\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [23]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.8571,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 29,
+  "generated": "{\"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [15, 60]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [61]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [14, 43, 45, 46, 67]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [37, 38, 39, 40]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [14, 43, 43]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [29]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.6364,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 30,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [35]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [59]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [55]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [37]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [58]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [60]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [56]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [43]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [45]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.7647,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 31,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [25, 27]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [14]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.8,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 32,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [64]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [118]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [37, 38, 89]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [80]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [68, 70]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [58, 242]}}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.5116,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 33,
+  "generated": "{\"nda-1\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-1\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [64]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [27]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.5,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 34,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [27, 28]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [19, 20]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [23, 24, 25, 26]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [17, 18, 21]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [11, 13]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.6061,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 35,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [72]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [91]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [75]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [73]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [52]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [68]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [34]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.4545,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 36,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [69]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [91]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [16, 19]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [72]}, \"nda-3\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [39]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.8148,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 37,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [44]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [31, 32, 35]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [33]}\n}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.6875,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 38,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [25, 26]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [26]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [19]}}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.5926,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 39,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [16]}, \"nda-16\": {\"label\": \"Contradiction\", \"evidence\": [62]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [39]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [16]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [16]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [90]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [65]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [34]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.5,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 40,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [10]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.8333,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 41,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [43]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [15c]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [15c]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16d]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [48]}\n}",
+  "label_correct": 0.0,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 0.0,
+  "reached_json": true
+ },
+ {
+  "index": 42,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [19]}}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.7619,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 43,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-11\": {\"label\": \"Contradiction\", \"evidence\": [19]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [4]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [4]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [4]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.7586,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 44,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [4]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [31]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [34]}}",
+  "label_correct": 0.4706,
+  "evidence_f1": 0.3077,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 45,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-10\": {\"label\": \"Contradiction\", \"evidence\": [29]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"Contradiction\", \"evidence\": [29]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [12]}\n}",
+  "label_correct": 0.4706,
+  "evidence_f1": 0.8,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 46,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-16\": {\"label\": \"Contradiction\", \"evidence\": [39]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [58]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [39]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [36]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.6667,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 47,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [20]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [8]}}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.8333,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 48,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [7]}\n}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.6154,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 49,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [28, 31]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-17\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [23]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.8571,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 50,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-10\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [21]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.619,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 51,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [10]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.7619,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 52,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [46]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [27]}}",
+  "label_correct": 0.8824,
+  "evidence_f1": 0.3492,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 53,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8, 12]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [24, 25]}, \"nda-17\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [15]}}",
+  "label_correct": 0.8824,
+  "evidence_f1": 0.4865,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 54,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-11\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [19]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [17, 18]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [21, 22]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [14]}\"}",
+  "label_correct": 0.0,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 0.0,
+  "reached_json": true
+ },
+ {
+  "index": 55,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [13]}\n}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.5116,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 56,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [9, 10]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-10\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-11\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [11, 16]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [38]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [9, 10]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [11, 16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.8235,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 57,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [27, 28]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.5517,
+  "contradiction_correct": 0.25,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 58,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [70]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [2]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.4878,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 59,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [14]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.449,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 60,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [52]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [32, 33, 34, 35]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [52]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [29]}\"}",
+  "label_correct": 0.0,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 0.0,
+  "reached_json": true
+ },
+ {
+  "index": 61,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [12, 13]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [36, 37]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [18, 33]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [22]}}",
+  "label_correct": 0.9412,
+  "evidence_f1": 0.5532,
+  "contradiction_correct": 0.6667,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 62,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [11, 12, 13]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [24]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.5714,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 63,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [76]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [20]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [78]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [76]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [76]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [81]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [90]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [66]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [92]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [20]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.5333,
+  "contradiction_correct": 0.6667,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 64,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [36]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [36]}, \"nda-1\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [66]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [51]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [75]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [46]}\n}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.7273,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 65,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [25]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [23]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.8571,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 66,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [13, 14, 16]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [10]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.4444,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 67,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-11\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [17]},}",
+  "label_correct": 0.0,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 0.0,
+  "reached_json": true
+ },
+ {
+  "index": 68,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [16]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [19]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [19]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [39]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [24]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Contradiction\", \"evidence\": [24]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [26]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.4516,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 69,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [20, 50]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [57]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [31, 33, 39]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [36, 37]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [31, 33, 39]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [16, 22]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.52,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 70,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8, 9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7, 8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [23]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.6897,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 71,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [12]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.6207,
+  "contradiction_correct": 0.6667,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 72,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [29]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [79]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [29]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [29]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [95]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [43]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [79]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [43]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [11]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.5,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 73,
+  "generated": "{\"nda-1\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [43]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [23]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.8462,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 74,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-17\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [14]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.5806,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 75,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [36]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [38]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [27]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [70]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [48]}\n}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.5217,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 76,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-10\": {\"label\": \"Contradiction\", \"evidence\": [37]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [15]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.5333,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 77,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-19\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-17\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-5\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [5]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.8,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 78,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [23, 24]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [8, 12]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [11]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.6842,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 79,
+  "generated": "{\"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [76]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [77]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [77]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [74]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [79]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [76]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [74]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [79]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [76]}\n}",
+  "label_correct": 0.3529,
+  "evidence_f1": 0.375,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 80,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-16\": {\"label\": \"Contradiction\", \"evidence\": [37]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [60]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [19]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.5455,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 81,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [3]}, \"nda-11\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [1]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [1]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [11]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.4286,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 82,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [16]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.5714,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 83,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [22]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [25, 26, 27, 28]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [44, 45, 48]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [54]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [25, 26, 27, 28]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [44]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [51]}\n}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.625,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 84,
+  "generated": "{\"nda-1\": {\"label\": \"Entailment\", \"evidence\": [5, 7]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [5, 7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13, 14]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [11]}\n}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.7143,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 85,
+  "generated": "{\"nda-1\": {\"label\": \"Entailment\", \"evidence\": [8, 9]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [8, 9]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [41, 42]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [18, 19]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [17]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.7143,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 86,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [5]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [15]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [59]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [59]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [18]}\n}",
+  "label_correct": 0.4118,
+  "evidence_f1": 0.4444,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 87,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [2]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [2]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [2]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [2]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [6]}\n}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.6207,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 88,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [77, 88]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [76, 86]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [77, 88]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [77, 88]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [74, 83]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [79]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [75]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [74, 83]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [79]}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [76, 86]}\n}",
+  "label_correct": 0.4706,
+  "evidence_f1": 0.5882,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 89,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [3]}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [3]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [3]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [3]}, \"nda-19\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [3]}, \"nda-17\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [4]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.75,
+  "contradiction_correct": 0.6667,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 90,
+  "generated": "{\"nda-11\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [22]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [20, 21]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [43, 48]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [32, 33, 42]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [31, 32]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [35, 62]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.5581,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 91,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [1]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [1]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [1]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [3]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [3]}}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.5833,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 92,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-2\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-19\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [1]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [1]}, \"nda-17\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [1]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [1]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 93,
+  "generated": "{\"nda-1\": {\"label\": \"Entailment\", \"evidence\": [53]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [101]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [53]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [62]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [58]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [59]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [58]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [65]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [63]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [46]}\n}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.5294,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 94,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [22]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [44]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [22]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [22]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [40]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [32]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.4848,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 95,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [14]}}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.6087,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 96,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-17\": {\"label\": \"Contradiction\", \"evidence\": [16]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [14]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.7,
+  "contradiction_correct": 0.6667,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 97,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-11\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [62]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [29, 30]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [24, 25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [22, 39]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.5854,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 98,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.5128,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 99,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [18], [25]}}",
+  "label_correct": 0.0,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 0.0,
+  "reached_json": true
+ },
+ {
+  "index": 100,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [33]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [52]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [73]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [47]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [91]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [61]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [39]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.4,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 101,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [18]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [16, 18]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [16, 18]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [52, 54]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [23, 38, 44]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [16, 18]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [16, 18]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.6364,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 102,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [11, 12]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [65]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [34, 36, 37, 38, 39, 40]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [58]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [27]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.75,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 103,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [69]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [11, 13]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [70]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [72, 73]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [30, 31]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [12, 25]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [12, 25]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [21]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.6531,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 104,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [72]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [36]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [73]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [75]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [31, 32]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [22]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.449,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 105,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [34]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [4]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [15]}}",
+  "label_correct": 0.5882,
+  "evidence_f1": 0.72,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 106,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Contradiction\", \"evidence\": [32]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [32]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [56, 57, 58]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [22, 23]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [16]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.7273,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 107,
+  "generated": "{\"nda-1\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [35, 36]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-1\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [14, 16]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [28, 29]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [11]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [15, 41]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [22]}\n}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.6,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 108,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [10]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-11\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [42, 43]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [19]},}",
+  "label_correct": 0.0,
+  "evidence_f1": 0.0,
+  "contradiction_correct": 0.0,
+  "json_valid": 0.0,
+  "reached_json": true
+ },
+ {
+  "index": 109,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [69]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [71]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [74]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [45]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [18]}}",
+  "label_correct": 0.8824,
+  "evidence_f1": 0.549,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 110,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [123]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [23]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [126]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-20\": {\"label\": \"Contradiction\", \"evidence\": [123]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [64]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [42]}\n}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.5455,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 111,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-15\": {\"label\": \"Contradiction\", \"evidence\": [31]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [30, 12]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [61]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [12, 13]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [26]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [12, 13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [8]}\n}",
+  "label_correct": 0.9412,
+  "evidence_f1": 0.6531,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 112,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [13]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [4]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [21]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [4]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.3824,
+  "contradiction_correct": 0.3333,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 113,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [4]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [35]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [5]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [15]}}",
+  "label_correct": 0.7059,
+  "evidence_f1": 0.6452,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 114,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [16]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [29]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [65]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [67]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [42]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [46]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.6087,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 115,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [98]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [112]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [49, 50]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [17]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [101]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [113, 115]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [70]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [80]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [16, 31]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [17]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [114]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [16, 31]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [29]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.5,
+  "contradiction_correct": 0.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 116,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [20]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [8]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [27]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [8]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [49]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [10]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [19]}}",
+  "label_correct": 0.7647,
+  "evidence_f1": 0.75,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 117,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [24]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [7]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [23]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [17, 18]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.7097,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 118,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [23, 24]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [27, 28]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [9]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [39]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [9]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [41]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [37]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [31]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [15]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [20]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.7692,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 119,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [14]}\n}",
+  "label_correct": 0.5294,
+  "evidence_f1": 0.6667,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 120,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [1]}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [16, 18]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [22]}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [12]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [1]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [32, 34]}, \"nda-12\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-20\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-3\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Contradiction\", \"evidence\": [7]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-8\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-13\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [12]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [3]}}",
+  "label_correct": 0.6471,
+  "evidence_f1": 0.5,
+  "contradiction_correct": 0.5,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 121,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [56]}, \"nda-15\": {\"label\": \"Entailment\", \"evidence\": [38]}, \"nda-10\": {\"label\": \"Entailment\", \"evidence\": [25]}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [6]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [99]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [59]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [6]}, \"nda-18\": {\"label\": \"Entailment\", \"evidence\": [13]}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [30]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [48]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [33]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [28]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [23]}\n}",
+  "label_correct": 0.8824,
+  "evidence_f1": 0.4062,
+  "contradiction_correct": 0.6667,
+  "json_valid": 1.0,
+  "reached_json": true
+ },
+ {
+  "index": 122,
+  "generated": "{\"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-11\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-16\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-15\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-10\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-2\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-1\": {\"label\": \"Contradiction\", \"evidence\": [14]}, \"nda-19\": {\"label\": \"Entailment\", \"evidence\": [51]}, \"nda-12\": {\"label\": \"Entailment\", \"evidence\": [18]}, \"nda-20\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-3\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-18\": {\"label\": \"NotMentioned\", \"evidence\": []}, \"nda-7\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-17\": {\"label\": \"Entailment\", \"evidence\": [50]}, \"nda-8\": {\"label\": \"Entailment\", \"evidence\": [32]}, \"nda-13\": {\"label\": \"Entailment\", \"evidence\": [19]}, \"nda-5\": {\"label\": \"Entailment\", \"evidence\": [14]}, \"nda-4\": {\"label\": \"Entailment\", \"evidence\": [26]}}",
+  "label_correct": 0.8235,
+  "evidence_f1": 0.8,
+  "contradiction_correct": 1.0,
+  "json_valid": 1.0,
+  "reached_json": true
+ }
+]
