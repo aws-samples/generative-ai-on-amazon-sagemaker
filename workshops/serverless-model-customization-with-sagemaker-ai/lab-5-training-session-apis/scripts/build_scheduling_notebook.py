@@ -368,15 +368,14 @@ def show(messages, width=300):
                 print(f"  {m['role']}: {b['text'][:width]}")
 
 
-# Run the agent with a model on Amazon Bedrock instead of the rollout gateway. Training does not use Bedrock, so
-# the rest of the notebook runs even if this demo fails, for example without access to gpt-oss-120b.
-try:
-    out = run_agent(task, {"bedrock_model_id": "openai.gpt-oss-120b-1:0"})
-    show(out["messages"])
-    print("reward:", out["reward"], "| earliest slot:",
-          _fmt(task["expected"]) if task["expected"] is not None else "none")
-except Exception as exc:  # noqa: BLE001
-    print(f"Bedrock demo skipped ({type(exc).__name__}: {str(exc)[:200]})")
+# Run the agent with a model on Amazon Bedrock instead of the rollout gateway.
+out = run_agent(task, {"bedrock_model_id": "openai.gpt-oss-120b-1:0"})
+show(out["messages"])
+if out["error"]:
+    # run_agent returns the error instead of raising. Training does not use Bedrock, so the notebook continues.
+    print(f"The Bedrock call failed: {out['error']}")
+    print("This demo needs Amazon Bedrock access to openai.gpt-oss-120b-1:0; the rest of the notebook does not.")
+print("reward:", out["reward"], "| earliest slot:", _fmt(task["expected"]) if task["expected"] is not None else "none")
 """)
 
 md("""
