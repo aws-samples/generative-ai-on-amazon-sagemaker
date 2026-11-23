@@ -459,10 +459,10 @@ print("adapter:", weights.model_package_arn)
 """)
 md("Stop the session. It counts against your concurrent-session quota until it is stopped.")
 code("""
-# Stop the session and release its resources. The saved model package is kept.
-training_client.stop()
 # End the MLflow run.
 tracking.end()
+# Stop the session and release its resources. The saved model package is kept.
+training_client.stop()
 """)
 md("""
 ## Try your own reward or algorithm

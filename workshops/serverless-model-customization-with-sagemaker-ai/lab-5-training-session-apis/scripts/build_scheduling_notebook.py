@@ -368,10 +368,15 @@ def show(messages, width=300):
                 print(f"  {m['role']}: {b['text'][:width]}")
 
 
-# Run the agent with a model on Amazon Bedrock instead of the rollout gateway.
-out = run_agent(task, {"bedrock_model_id": "openai.gpt-oss-120b-1:0"})
-show(out["messages"])
-print("reward:", out["reward"], "| earliest slot:", _fmt(task["expected"]) if task["expected"] is not None else "none")
+# Run the agent with a model on Amazon Bedrock instead of the rollout gateway. Training does not use Bedrock, so
+# the rest of the notebook runs even if this demo fails, for example without access to gpt-oss-120b.
+try:
+    out = run_agent(task, {"bedrock_model_id": "openai.gpt-oss-120b-1:0"})
+    show(out["messages"])
+    print("reward:", out["reward"], "| earliest slot:",
+          _fmt(task["expected"]) if task["expected"] is not None else "none")
+except Exception as exc:  # noqa: BLE001
+    print(f"Bedrock demo skipped ({type(exc).__name__}: {str(exc)[:200]})")
 """)
 
 md("""
@@ -565,10 +570,10 @@ print(model_package_arn)
 """)
 md("## Clean up\n\nStop the training session. It counts against your concurrent-session quota until it is stopped.")
 code("""
-# Stop the training session and the rollout gateway. The saved model package is kept.
-run.close()
 # End the MLflow run.
 tracking.end()
+# Stop the training session and the rollout gateway. The saved model package is kept.
+run.close()
 """)
 md("""
 ## Use this for your own agent

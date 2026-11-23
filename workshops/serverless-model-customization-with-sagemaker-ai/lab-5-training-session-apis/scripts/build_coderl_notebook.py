@@ -114,8 +114,8 @@ The next cell connects to your AWS account:
   `code-rl`. Every adapter you save is registered there in
   [Model Registry](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry.html) as a
   [model package version](https://docs.aws.amazon.com/sagemaker/latest/dg/model-registry-version.html). The cell creates the group, or reuses it if it already exists.
-- **`PRETRAINED_ADAPTER`** is the S3 prefix of the adapter trained beforehand, used in section 5. It comes from the
-  environment variable `PRETRAINED_ADAPTER_S3`; the workshop environment sets it for you.
+- **`PRETRAINED_ADAPTER`** is the S3 prefix of the adapter trained beforehand, used in section 5. It defaults to a
+  public copy in the workshop's assets bucket. Set the environment variable `PRETRAINED_ADAPTER_S3` to use another copy.
 """)
 code("""
 import asyncio, json, os, random, time
@@ -127,8 +127,10 @@ REGION = session.region_name
 ACCOUNT = session.client("sts").get_caller_identity()["Account"]
 ROLE_ARN = session.client("iam").get_role(RoleName="SageMakerTrainingSessionRole")["Role"]["Arn"]
 S3_OUTPUT = f"s3://sagemaker-{REGION}-{ACCOUNT}/training-sessions/code-rl/"
-# The placeholder default is used only when the environment variable is not set; section 5 needs the real prefix.
-PRETRAINED_ADAPTER = os.environ.get("PRETRAINED_ADAPTER_S3", "s3://<bucket>/code-rl/adapter/model/")
+# Public copy of the pre-trained adapter. Set PRETRAINED_ADAPTER_S3 to read it from another prefix.
+PRETRAINED_ADAPTER = os.environ.get(
+    "PRETRAINED_ADAPTER_S3",
+    "s3://ws-assets-prod-iad-r-pdx-f3b3f9f1a7d6a3d0/548b5be9-2da8-4c93-82f7-b0b474108ab3/lab5/code-rl-adapter-qwen/model/")
 
 sm = session.client("sagemaker")
 # Create the model package group. If it already exists, the call raises a ClientError and the existing group is used.
@@ -467,12 +469,13 @@ from urllib.parse import urlparse
 s3 = session.client("s3")
 src = urlparse(PRETRAINED_ADAPTER)  # src.netloc is the bucket, src.path the key prefix
 dest_prefix = "training-sessions/code-rl/pretrained/model/"
-# Copy every object under the source prefix to the same relative key under dest_prefix in your bucket.
-for page in s3.get_paginator("list_objects_v2").paginate(Bucket=src.netloc, Prefix=src.path.lstrip("/")):
-    for obj in page.get("Contents", []):
-        rel = obj["Key"][len(src.path.lstrip("/")):]
-        # s3.copy is a managed copy within S3; the object data does not pass through the notebook.
-        s3.copy({"Bucket": src.netloc, "Key": obj["Key"]}, f"sagemaker-{REGION}-{ACCOUNT}", dest_prefix + rel)
+# The two files of the adapter. The public assets bucket allows reading them but not listing the prefix.
+ADAPTER_FILES = ["checkpoints/hf/adapter_config.json", "checkpoints/hf/adapter_model.safetensors"]
+for rel in ADAPTER_FILES:
+    # s3.copy is a managed copy within S3; the object data does not pass through the notebook.
+    s3.copy({"Bucket": src.netloc, "Key": src.path.lstrip("/") + rel}, f"sagemaker-{REGION}-{ACCOUNT}",
+            dest_prefix + rel)
+    print("copied", rel)
 
 # Register the copied files as a model package version in the code-rl group. BaseModel identifies the base model
 # the adapter was trained on, by hub content name and version.
@@ -509,11 +512,11 @@ print(f"pass rate: base {base_pass:.1%} -> pre-trained adapter {pretrained_pass:
       f"({len(test_tasks)} held-out problems, 2 attempts each, {time.time() - t0:.0f}s)")
 """)
 code("""
+# End the MLflow run.
+tracking.end()
 # Stop the session and close the Code Interpreter sessions. The code interpreter and the model package are kept.
 pretrained_client.stop()
 sandbox.close()
-# End the MLflow run.
-tracking.end()
 """)
 
 md("""
