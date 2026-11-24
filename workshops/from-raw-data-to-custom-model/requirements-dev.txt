@@ -1,0 +1,6 @@
+# Development / maintenance tooling (not needed by the attendee notebooks):
+# scripts/build_notebooks.py and scripts/run_attendee_test.py (nbformat, nbclient), tests (pytest).
+-r requirements.txt
+nbformat==5.11.1
+nbclient==0.11.0
+pytest==9.1.1
