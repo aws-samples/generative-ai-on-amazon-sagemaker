@@ -1,0 +1,63 @@
+{
+  "image_processor": {
+    "data_format": "channels_first",
+    "do_convert_rgb": true,
+    "do_normalize": true,
+    "do_rescale": true,
+    "do_resize": true,
+    "image_mean": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "image_processor_type": "Qwen2VLImageProcessorFast",
+    "image_std": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "merge_size": 2,
+    "patch_size": 16,
+    "resample": 3,
+    "rescale_factor": 0.00392156862745098,
+    "size": {
+      "longest_edge": 16777216,
+      "shortest_edge": 65536
+    },
+    "temporal_patch_size": 2
+  },
+  "processor_class": "Qwen3VLProcessor",
+  "video_processor": {
+    "data_format": "channels_first",
+    "default_to_square": true,
+    "do_convert_rgb": true,
+    "do_normalize": true,
+    "do_rescale": true,
+    "do_resize": true,
+    "do_sample_frames": true,
+    "fps": 2,
+    "image_mean": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "image_std": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "max_frames": 768,
+    "merge_size": 2,
+    "min_frames": 4,
+    "patch_size": 16,
+    "resample": 3,
+    "rescale_factor": 0.00392156862745098,
+    "return_metadata": false,
+    "size": {
+      "longest_edge": 25165824,
+      "shortest_edge": 4096
+    },
+    "temporal_patch_size": 2,
+    "video_processor_type": "Qwen3VLVideoProcessor"
+  }
+}

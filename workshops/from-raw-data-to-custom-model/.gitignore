@@ -1,0 +1,14 @@
+# Local scratch: caches, intermediate parquet, logs, notebook state
+work/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Instructor run state: account-specific S3/ARN references (kept locally, not published)
+instructor/state.json
+instructor/state.json.lock
+
+# data/ is committed seed data (catalog, benchmarks, reference results). The parent repo's
+# .gitignore ignores */**/data, so re-include it here.
+!data/
+!data/**

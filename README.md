@@ -62,6 +62,14 @@ This repository provides comprehensive resources for working with generative AI 
 - Evaluate models using LLM-as-a-Judge with custom metrics and benchmark evaluations
 - Deploy fine-tuned models with DJL LMI and vLLM on SageMaker Real-time Endpoints
 
+#### [From Raw Data to Custom Model](./workshops/from-raw-data-to-custom-model/)
+
+- Generate and profile raw synthetic data, and find its quality problems before training
+- Curate it with exact and MinHash/LSH deduplication, toxicity filtering, calibrated auto-labeling, human review, and synthetic gap-fill
+- Build SFT and RLVR datasets with teacher traces and rejection sampling, and review a hybrid rule-plus-LLM reward function
+- Fine-tune Qwen3.5-4B with serverless SFT, then SFT followed by RLVR
+- Deploy LoRA adapters on inference components next to the base model, try them in a Streamlit demo, and compare models by problem type
+
 ## Getting Started
 
 1. Clone this repository
