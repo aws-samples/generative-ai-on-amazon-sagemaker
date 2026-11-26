@@ -12,7 +12,7 @@ import os
 
 import boto3
 
-LMI_IMAGE = "763104351884.dkr.ecr.{region}.amazonaws.com/djl-inference:0.33.0-lmi15.0.0-cu128"
+LMI_IMAGE = "763104351884.dkr.ecr.{region}.amazonaws.com/djl-inference:0.36.0-lmi18.0.0-cu128"
 LMI_ENV = {
     "HF_MODEL_ID": "/opt/ml/model",
     "OPTION_TRUST_REMOTE_CODE": "true",
@@ -77,7 +77,7 @@ def main():
             }],
             "SupportedContentTypes": ["application/json"],
             "SupportedResponseMIMETypes": ["application/json"],
-            "SupportedRealtimeInferenceInstanceTypes": ["ml.g5.2xlarge", "ml.g5.4xlarge", "ml.g6.2xlarge"],
+            "SupportedRealtimeInferenceInstanceTypes": ["ml.g7.2xlarge", "ml.g7.4xlarge", "ml.g6.2xlarge"],
         },
         ModelMetrics={"ModelQuality": {"Statistics": {"ContentType": "application/json", "S3Uri": args.evaluation_s3_uri}}},
         CustomerMetadataProperties=metadata,

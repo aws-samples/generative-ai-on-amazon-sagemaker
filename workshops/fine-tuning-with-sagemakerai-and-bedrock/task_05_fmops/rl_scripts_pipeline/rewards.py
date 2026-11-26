@@ -37,8 +37,9 @@ def default_judge_model_ids(region: str) -> Dict[str, str]:
     """Return default Bedrock model ids for the training judge and the independent eval judge.
 
     The training judge (Amazon Nova Pro) produces the reward the policy optimizes.
-    The eval judge comes from a different model family (Anthropic Claude) so that
-    an RL model that learned to please the training judge cannot also grade itself.
+    The eval judge is a different model (Amazon Nova 2 Lite), so an RL model that learned the quirks of
+    the training judge is not graded by that same model. Both come from the Amazon Nova family, so their
+    judgments are less independent than those of judges from two different model families.
     """
     geo = "us"
     if region.startswith("eu-"):
@@ -47,8 +48,7 @@ def default_judge_model_ids(region: str) -> Dict[str, str]:
         geo = "apac"
     return {
         "train_judge": f"{geo}.amazon.nova-pro-v1:0",
-        # Claude Sonnet 4 (20250514) is marked Legacy and is blocked for accounts that have not used it recently.
-        "eval_judge": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "eval_judge": "global.amazon.nova-2-lite-v1:0",
     }
 
 

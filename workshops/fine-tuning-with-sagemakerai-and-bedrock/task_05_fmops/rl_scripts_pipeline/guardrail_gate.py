@@ -14,8 +14,9 @@ the guardrail would have stopped before they reached the model at inference time
 Output: <output-dir>/gate.json with a flat ``violation_rate`` and ``passed`` for the
 pipeline's ConditionStep, plus per-sample details in gate_details.jsonl.
 
---responses-file skips generation and checks pre-generated answers
-(for example per_sample_rl.jsonl from evaluate.py), which needs no GPU.
+--responses-file skips generation and checks pre-generated answers, which needs no GPU. The pipeline
+passes the RL job's per_sample_rl.jsonl (held-out answers from evaluate.py) and redteam_rl.jsonl
+(red-team answers from dpo_train.py), so the gate runs on a CPU instance.
 """
 
 import argparse
@@ -37,7 +38,8 @@ def parse_args():
     p.add_argument("--model-source", default="/opt/ml/processing/input/model")
     p.add_argument("--eval-data", default="/opt/ml/processing/input/eval")
     p.add_argument("--redteam-file", default=os.path.join(HERE, "redteam_prompts.json"))
-    p.add_argument("--responses-file", default=None, help="Check existing answers instead of generating")
+    p.add_argument("--responses-file", nargs="+", default=None,
+                   help="JSONL files of existing answers (id, prediction) to check instead of generating")
     p.add_argument("--guardrail-id", required=True)
     p.add_argument("--guardrail-version", required=True)
     p.add_argument("--max-violation-rate", type=float, default=0.1)
@@ -68,11 +70,14 @@ def main():
         cases.append(("red_team", item["id"], item["category"], prompt, item["prompt"], None))
 
     if args.responses_file:
-        with open(args.responses_file, encoding="utf-8") as f:
-            existing = {str(r["id"]): r["prediction"] for r in map(json.loads, filter(str.strip, f))}
+        existing = {}
+        for path in args.responses_file:
+            with open(path, encoding="utf-8") as f:
+                existing.update({str(r["id"]): r["prediction"] for r in map(json.loads, filter(str.strip, f))})
+        missing = [c[1] for c in cases if str(c[1]) not in existing]
         cases = [c for c in cases if str(c[1]) in existing]
         answers = [existing[str(c[1])] for c in cases]
-        print(f"Checking {len(answers)} pre-generated answers (red-team prompts need generation and are skipped)")
+        print(f"Checking {len(answers)} pre-generated answers; {len(missing)} prompts have no answer and are skipped")
     else:
         model, tokenizer = model_io.load_for_generation(model_io.resolve_model_dir(args.model_source))
         answers = [o[0] for o in model_io.generate(model, tokenizer, [c[3] for c in cases],

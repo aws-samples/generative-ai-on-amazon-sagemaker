@@ -6,8 +6,8 @@ each answer with:
 
 * the Lab 1 benchmark: ROUGE-1, ROUGE-2 and ROUGE-L F1 against the reference
 * the RLVR verifier score (``rlvr``) and answer length (``words``)
-* an independent Bedrock judge (``judge``) from a different model family than the
-  judge used during RL, so the RL model is not graded by the model it optimized for
+* a separate Bedrock eval judge (``judge``), a different model than the judge used
+  during RL, so the RL model is not graded by the model it optimized for
 * ``reward``: the same composite as training, recomputed with the independent judge
 
 Outputs in --output-dir:
