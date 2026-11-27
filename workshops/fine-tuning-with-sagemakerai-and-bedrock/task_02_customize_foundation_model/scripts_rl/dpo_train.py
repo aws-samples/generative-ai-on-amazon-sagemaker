@@ -45,7 +45,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
-# This script runs as one process on one GPU. On a multi-GPU instance such as ml.g5.12xlarge the Hugging Face
+# This script runs as one process on one GPU. On a multi-GPU instance such as ml.g7.12xlarge the Hugging Face
 # Trainer would otherwise wrap the model in DataParallel, which bitsandbytes 4-bit layers do not support.
 # It must be set before torch initializes CUDA. The evaluation subprocess inherits it.
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
@@ -88,6 +88,9 @@ class ScriptArguments:
     final_eval_bedrock_region: str = field(default="")
     final_eval_max_samples: int = field(default=60)
     final_eval_batch_size: int = field(default=16)
+    final_eval_redteam_file: str = field(default="", metadata={
+        "help": "JSON list of red-team prompts the RL model also answers (eval/redteam_rl.jsonl), for the "
+                "pipeline's guardrail gate; a relative path is resolved next to this script; empty skips it"})
 
 
 def instance_gpu_count() -> int:
@@ -329,6 +332,32 @@ def run_final_eval(args: ScriptArguments, sft_dir: str, rl_dir: str, out_dir: st
     subprocess.run(cmd, check=True, env=env)
 
 
+def generate_redteam_answers(args: ScriptArguments, rl_dir: str, out_dir: str):
+    """Answer the red-team prompts with the RL model, so the guardrail gate can check them on a CPU instance.
+
+    Uses the same system prompt and decoding settings as the evaluation. Writes eval/redteam_rl.jsonl with one
+    row per prompt: id, category, prompt and the model's prediction.
+    """
+    path = args.final_eval_redteam_file
+    if not os.path.isabs(path):
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
+    with open(path, encoding="utf-8") as f:
+        items = json.load(f)
+    prompts = [[{"role": "system", "content": model_io.SYSTEM_PROMPT}, {"role": "user", "content": it["prompt"]}]
+               for it in items]
+    model, tokenizer = model_io.load_for_generation(rl_dir)
+    outputs = model_io.generate(model, tokenizer, prompts, max_new_tokens=512, batch_size=args.final_eval_batch_size)
+    del model
+    model_io.release_cuda()
+    eval_dir = os.path.join(out_dir, "eval")
+    os.makedirs(eval_dir, exist_ok=True)
+    with open(os.path.join(eval_dir, "redteam_rl.jsonl"), "w", encoding="utf-8") as f:
+        for it, out in zip(items, outputs):
+            f.write(json.dumps({"id": it["id"], "category": it["category"], "prompt": it["prompt"],
+                                "prediction": out[0]}) + "\n")
+    print(f"Wrote {len(items)} red-team answers to {eval_dir}/redteam_rl.jsonl")
+
+
 def main():
     parser = TrlParser((ScriptArguments, DPOConfig))
     args, training_args = parser.parse_args_and_config()
@@ -362,6 +391,8 @@ def main():
 
         if args.run_final_eval:
             run_final_eval(args, sft_dir, rl_dir, out_dir, mlflow_run_id=tracking.active_run_id(mlf))
+            if args.final_eval_redteam_file and args.merge_weights:
+                generate_redteam_answers(args, rl_dir, out_dir)
 
 
 if __name__ == "__main__":

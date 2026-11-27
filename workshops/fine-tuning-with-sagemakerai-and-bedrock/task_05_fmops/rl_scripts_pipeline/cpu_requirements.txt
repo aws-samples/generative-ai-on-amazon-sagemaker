@@ -1,0 +1,2 @@
+mlflow==3.9.0
+sagemaker-mlflow==0.2.0

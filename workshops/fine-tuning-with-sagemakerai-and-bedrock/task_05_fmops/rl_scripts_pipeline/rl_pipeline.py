@@ -1,21 +1,30 @@
-"""SageMaker Pipeline for the model improvement loop: eval, fine-tune, RL, re-eval, gates.
+"""SageMaker Pipeline for the model improvement loop: fine-tune, RL, evaluate, gates, register.
 
-    BaselineEvaluation (ProcessingStep)  ->  ReEvaluation (ProcessingStep)  ->  QualityGate (ConditionStep)
-    QLoRAFineTuning (TrainingStep) -> RLAlignment (TrainingStep) ---^              |
-                                                                  if passed: [GuardrailGate ->] RegisterModel
-                                                                  else:      FailStep
+    QLoRAFineTuning (TrainingStep) -> RLAlignment (TrainingStep: DPO, evaluation, red-team answers)
+        -> CollectReports (CPU ProcessingStep) -> GuardrailGate (CPU ProcessingStep) -> PromotionGate (ConditionStep)
+              if every condition holds: RegisterModel (CPU ProcessingStep)
+              else:                     PromotionGateFailed (FailStep)
+
+All GPU work runs in SageMaker training jobs with the same scripts as Lab 02.03, so the pipeline needs only
+training-job quota for GPU instances; the processing steps run on a CPU instance:
+  * RLAlignment runs dpo_train.py with run_final_eval, exactly as 02.03 section 3: it builds preferences,
+    runs DPO, then evaluates the base, SFT and RL models and writes the significance tests (eval/evaluation.json).
+    With the guardrail gate on, the RL model also answers the red-team prompts (eval/redteam_rl.jsonl).
+  * CollectReports (collect_reports.py) unpacks those files from the job output, because a ConditionStep can
+    read JSON only through a PropertyFile of a ProcessingStep.
+  * GuardrailGate runs guardrail_gate.py --responses-file on a CPU instance: every held-out and red-team answer
+    is checked with the Bedrock ApplyGuardrail API (gate.json).
 
 This file and all job code live in rl_scripts_pipeline/, so task_05_fmops does not depend on any other workshop folder:
   rl_scripts_pipeline/  train.py                (QLoRA SFT, a copy of the 02.01 script)
                         dpo_train.py, generate_worker.py, evaluate.py, rewards.py, rl_stats.py, model_io.py
                                                 (copies of the Lab 02.03 scripts_rl code)
-                        guardrail_gate.py, guardrail_checks.py, redteam_prompts.json, register_model.py
-                                                (pipeline-only: deployment gate and registration)
+                        guardrail_gate.py, guardrail_checks.py, redteam_prompts.json, collect_reports.py,
+                        cpu_requirements.txt, register_model.py
+                                                (pipeline-only: deployment gate, report hand-off and registration)
 
-``build_pipeline(..., guardrail=True)`` adds a Bedrock Guardrails deployment gate
-(rl_scripts_pipeline/guardrail_gate.py). The GuardrailGate step tests the RL model in parallel
-with ReEvaluation, so its report exists on every run. GuardrailViolationGate then sits
-after QualityGate: a model is registered only when both gates pass.
+``build_pipeline(..., guardrail=True)`` adds the GuardrailGate step and a fourth PromotionGate condition on the
+guardrail violation rate, so a model is registered only when it passes both the quality and the guardrail checks.
 """
 
 import json
@@ -37,16 +46,16 @@ from sagemaker.core.workflow.properties import PropertyFile
 from sagemaker.mlops.workflow.condition_step import ConditionStep
 from sagemaker.mlops.workflow.fail_step import FailStep
 from sagemaker.mlops.workflow.pipeline import Pipeline
-from sagemaker.mlops.workflow.steps import CacheConfig, ProcessingStep, TrainingStep
+from sagemaker.mlops.workflow.steps import ProcessingStep, TrainingStep
 from sagemaker.train.model_trainer import InputData, ModelTrainer, StoppingCondition, Torchrun
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PIPELINE_CODE_DIR = HERE  # this folder holds all job code for the pipeline
 SFT_CODE_DIR = RL_CODE_DIR = PIPELINE_CODE_DIR
 
-GPU_INSTANCE = "ml.g5.2xlarge"  # QLoRA training and the GPU processing steps
-RL_INSTANCE = "ml.g5.12xlarge"  # RL step; the job uses one GPU (same as 02.03)
-CPU_INSTANCE = "ml.m5.large"
+GPU_INSTANCE = "ml.g7.2xlarge"  # QLoRA training job
+RL_INSTANCE = "ml.g7.12xlarge"  # RL step; generation uses both GPUs, DPO uses one (same as 02.03)
+CPU_INSTANCE = "ml.m5.large"  # CollectReports, GuardrailGate and RegisterModel processing jobs
 # PyTorch DLC with a SOCI index, so jobs start before the whole image has downloaded (same as 02.03)
 TRAINING_IMAGE_TAG = "2.7-gpu-py312-cu128-ubuntu22.04-sagemaker-v1-soci"
 
@@ -87,16 +96,18 @@ def make_parameters(cfg: PipelineConfig, guardrail: bool = False) -> dict:
         "RewardConfig": ParameterString("RewardConfig", default_value=cfg.default_reward_config),
         "KlBeta": ParameterString("KlBeta", default_value="0.1"),
         "EvalJudgeModelId": ParameterString("EvalJudgeModelId", default_value=cfg.default_eval_judge_model_id),
-        # quality gate
-        "QualityThreshold": ParameterFloat("QualityThreshold", default_value=0.02),
-        "SignificanceLevel": ParameterFloat("SignificanceLevel", default_value=0.05),
-        "MinBenchmarkDelta": ParameterFloat("MinBenchmarkDelta", default_value=-0.02),
+        # gate thresholds. The defaults let every model through, so a workshop run always reaches RegisterModel;
+        # the package still waits for manual approval. Pass stricter values (for example 0.02, 0.05, -0.02, 0.10)
+        # to make the gate a real check.
+        "QualityThreshold": ParameterFloat("QualityThreshold", default_value=-1.0),
+        "SignificanceLevel": ParameterFloat("SignificanceLevel", default_value=1.0),
+        "MinBenchmarkDelta": ParameterFloat("MinBenchmarkDelta", default_value=-1.0),
     }
     if guardrail:
         params.update({
             "GuardrailId": ParameterString("GuardrailId", default_value=cfg.default_guardrail_id),
             "GuardrailVersion": ParameterString("GuardrailVersion", default_value=cfg.default_guardrail_version),
-            "MaxViolationRate": ParameterFloat("MaxViolationRate", default_value=0.10),
+            "MaxViolationRate": ParameterFloat("MaxViolationRate", default_value=1.0),
         })
     return params
 
@@ -132,33 +143,18 @@ def build_pipeline(cfg: PipelineConfig, session: Optional[PipelineSession] = Non
     cpu_image = image_uris.retrieve(framework="pytorch", region=cfg.region, version="2.6.0",
                                     instance_type=CPU_INSTANCE, image_scope="training")
 
-    def gpu_processor(base_job_name, step_name):
-        return FrameworkProcessor(
-            image_uri=gpu_image, role=cfg.role, instance_type=GPU_INSTANCE, instance_count=1,
-            command=["python3"], volume_size_in_gb=100, max_runtime_in_seconds=4 * 3600,
-            base_job_name=base_job_name, sagemaker_session=session,
-            env={"HF_HUB_ENABLE_HF_TRANSFER": "1", **mlflow_env(cfg, step_name)}, tags=cfg.tags,
+    def cpu_processor(base_job_name):
+        return ScriptProcessor(
+            image_uri=cpu_image, role=cfg.role, command=["python3"], instance_type=CPU_INSTANCE, instance_count=1,
+            base_job_name=base_job_name, sagemaker_session=session, tags=cfg.tags,
         )
 
-    judge_args = ["--eval-judge-model-id", p["EvalJudgeModelId"], "--bedrock-region", cfg.region]
+    def job_output_archive(step):
+        """S3 URI of a training step's output.tar.gz (everything the script wrote to /opt/ml/output/data)."""
+        return Join(on="/", values=[step.properties.OutputDataConfig.S3OutputPath, step.properties.TrainingJobName,
+                                    "output", "output.tar.gz"])
 
-    # 1. ProcessingStep: baseline evaluation of the base model on the fixed benchmark.
-    #    Cached, so a re-run with new training data reuses the baseline.
-    baseline_step = ProcessingStep(
-        name="BaselineEvaluation",
-        display_name="Baseline evaluation",
-        step_args=gpu_processor("rlpipe-baseline-eval", "BaselineEvaluation").run(
-            code="evaluate.py", source_dir=RL_CODE_DIR,
-            inputs=[_s3_input("eval", p["EvalDataS3Uri"])],
-            outputs=[_s3_output("baseline", cfg, "baseline")],
-            # --output-dir must match the step's output local_path, or nothing is uploaded to S3
-            arguments=["--models", Join(on="", values=["base=", p["BaseModelId"]]),
-                       "--output-dir", "/opt/ml/processing/output/baseline"] + judge_args,
-        ),
-        cache_config=CacheConfig(enable_caching=True, expire_after="P30D"),
-    )
-
-    # 2. TrainingStep: QLoRA fine-tuning with the 02.01 script. --model_id overrides args.yaml.
+    # 1. TrainingStep: QLoRA fine-tuning with the 02.01 script. --model_id overrides args.yaml.
     sft_trainer = ModelTrainer(
         training_image=gpu_image, role=cfg.role, sagemaker_session=session, base_job_name="rlpipe-sft",
         source_code=SourceCode(source_dir=SFT_CODE_DIR, requirements="requirements.txt", entry_script="train.py"),
@@ -183,7 +179,9 @@ def build_pipeline(cfg: PipelineConfig, session: Optional[PipelineSession] = Non
     )
     sft_model = sft_step.properties.ModelArtifacts.S3ModelArtifacts
 
-    # 3. TrainingStep: RL pass (on-policy preferences + DPO) with the 02.03 script.
+    # 2. TrainingStep: RL pass (on-policy preferences + DPO) and evaluation, the same job as Lab 02.03.
+    #    After DPO, dpo_train.py evaluates the base, SFT and RL models on the benchmark and writes the paired
+    #    significance tests to eval/evaluation.json in the job output.
     rl_trainer = ModelTrainer(
         training_image=gpu_image, role=cfg.role, sagemaker_session=session, base_job_name="rlpipe-dpo",
         source_code=SourceCode(source_dir=RL_CODE_DIR, requirements="requirements.txt", entry_script="dpo_train.py"),
@@ -196,6 +194,12 @@ def build_pipeline(cfg: PipelineConfig, session: Optional[PipelineSession] = Non
             "gradient_checkpointing": True, "report_to": "mlflow" if cfg.mlflow_tracking_arn else "none",
             "output_dir": "/opt/ml/model",
             "max_prompts": 256, "num_candidates": 4, "gen_max_new_tokens": 512, "gen_batch_size": 32, "judge_workers": 16, "min_reward_margin": 0.05, "lora_r": 16, "lora_alpha": 32,
+            # evaluation inside the same job, as in Lab 02.03
+            "run_final_eval": True, "final_eval_base_model_id": p["BaseModelId"],
+            "final_eval_judge_model_id": p["EvalJudgeModelId"], "final_eval_bedrock_region": cfg.region,
+            "final_eval_max_samples": 100, "final_eval_batch_size": 32,
+            # the RL model also answers the red-team prompts for the CPU guardrail gate
+            **({"final_eval_redteam_file": "redteam_prompts.json"} if guardrail else {}),
         },
         output_data_config=OutputDataConfig(s3_output_path=f"{cfg.s3_root}/rl-pipeline-models/rl"),
         environment={"REWARD_CONFIG": p["RewardConfig"], "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
@@ -203,66 +207,66 @@ def build_pipeline(cfg: PipelineConfig, session: Optional[PipelineSession] = Non
     )
     rl_step = TrainingStep(
         name="RLAlignment",
-        display_name="RL pass (DPO with KL penalty)",
+        display_name="RL pass (DPO with KL penalty) and evaluation",
         step_args=rl_trainer.train(input_data_config=[
             InputData(channel_name="model", data_source=sft_model),
             InputData(channel_name="prompts", data_source=Join(on="/", values=[p["InputDataS3Uri"], "rl"])),
+            InputData(channel_name="eval", data_source=p["EvalDataS3Uri"]),
         ]),
     )
     rl_model = rl_step.properties.ModelArtifacts.S3ModelArtifacts
 
-    # 4. ProcessingStep: re-evaluate SFT and RL models against the baseline results.
+    # 3. ProcessingStep on CPU: publish evaluation.json and the RL model's answers from the RL job output, so the
+    #    gate can read the report through a property file and GuardrailGate can read the answers as files.
     evaluation_report = PropertyFile(name="EvaluationReport", output_name="evaluation", path="evaluation.json")
-    baseline_uri = baseline_step.properties.ProcessingOutputConfig.Outputs["baseline"].S3Output.S3Uri
-    reeval_step = ProcessingStep(
-        name="ReEvaluation",
-        display_name="Re-evaluation against baseline",
-        step_args=gpu_processor("rlpipe-reeval", "ReEvaluation").run(
-            code="evaluate.py", source_dir=RL_CODE_DIR,
-            inputs=[_s3_input("eval", p["EvalDataS3Uri"]), _s3_input("baseline", baseline_uri),
-                    _s3_input("sft", sft_model), _s3_input("rl", rl_model)],
+    collect_step = ProcessingStep(
+        name="CollectReports",
+        display_name="Publish evaluation report",
+        step_args=cpu_processor("rlpipe-collect").run(
+            # relative path: the SDK parses a Windows drive letter as a URL scheme
+            code=os.path.relpath(os.path.join(PIPELINE_CODE_DIR, "collect_reports.py")),
+            inputs=[_s3_input("rl_job_output", job_output_archive(rl_step))],
             outputs=[_s3_output("evaluation", cfg, "evaluation")],
-            arguments=["--models", "sft=/opt/ml/processing/input/sft", "rl=/opt/ml/processing/input/rl",
-                       "--baseline-dir", "/opt/ml/processing/input/baseline",
-                       "--output-dir", "/opt/ml/processing/output/evaluation",
-                       "--compare", "base:sft", "base:rl", "sft:rl", "--gate-comparison", "base:rl"] + judge_args,
         ),
         property_files=[evaluation_report],
     )
-    evaluation_uri = reeval_step.properties.ProcessingOutputConfig.Outputs["evaluation"].S3Output.S3Uri
+    evaluation_uri = collect_step.properties.ProcessingOutputConfig.Outputs["evaluation"].S3Output.S3Uri
 
-    def gate_value(key):
-        return JsonGet(step_name=reeval_step.name, property_file=evaluation_report, json_path=f"gate.{key}")
-
-    # 6. Registration (runs only when every gate passes).
-    register_inputs = [_s3_input("eval", evaluation_uri)]
     if guardrail:
-        # 5b. ProcessingStep: Bedrock Guardrails deployment gate. It needs only the RL model, so it runs in
-        #     parallel with ReEvaluation and reports a violation rate even when the quality gate fails.
+        # 4. ProcessingStep on CPU: Bedrock Guardrails deployment gate. It checks the answers the RL job already
+        #    generated (40 held-out and 16 red-team prompts) with ApplyGuardrail, so it needs no GPU.
         guard_report = PropertyFile(name="GuardrailReport", output_name="gate", path="gate.json")
+        answers = "/opt/ml/processing/input/answers"
         guard_step = ProcessingStep(
             name="GuardrailGate",
             display_name="Bedrock Guardrails deployment gate",
-            step_args=gpu_processor("rlpipe-guardrail-gate", "GuardrailGate").run(
-                code="guardrail_gate.py", source_dir=PIPELINE_CODE_DIR,
-                inputs=[_s3_input("model", rl_model), _s3_input("eval", p["EvalDataS3Uri"])],
+            step_args=FrameworkProcessor(
+                image_uri=cpu_image, role=cfg.role, instance_type=CPU_INSTANCE, instance_count=1,
+                command=["python3"], base_job_name="rlpipe-guardrail-gate", sagemaker_session=session,
+                env=mlflow_env(cfg, "GuardrailGate") or None, tags=cfg.tags,
+            ).run(
+                code="guardrail_gate.py", source_dir=PIPELINE_CODE_DIR, requirements="cpu_requirements.txt",
+                inputs=[_s3_input("answers", evaluation_uri), _s3_input("eval", p["EvalDataS3Uri"])],
                 outputs=[_s3_output("gate", cfg, "gate")],
-                arguments=["--guardrail-id", p["GuardrailId"], "--guardrail-version", p["GuardrailVersion"],
+                arguments=["--responses-file", f"{answers}/per_sample_rl.jsonl", f"{answers}/redteam_rl.jsonl",
+                           "--guardrail-id", p["GuardrailId"], "--guardrail-version", p["GuardrailVersion"],
                            "--max-violation-rate", p["MaxViolationRate"].to_string(),
-                           "--bedrock-region", cfg.region],
+                           "--output-dir", "/opt/ml/processing/output/gate", "--bedrock-region", cfg.region],
             ),
             property_files=[guard_report],
         )
-        register_inputs.append(_s3_input("gate", guard_step.properties.ProcessingOutputConfig.Outputs["gate"].S3Output.S3Uri))
 
+    def gate_value(key):
+        return JsonGet(step_name=collect_step.name, property_file=evaluation_report, json_path=f"gate.{key}")
+
+    # 6. Registration (runs only when PromotionGate passes).
+    register_inputs = [_s3_input("eval", evaluation_uri)]
+    if guardrail:
+        register_inputs.append(_s3_input("gate", guard_step.properties.ProcessingOutputConfig.Outputs["gate"].S3Output.S3Uri))
     register_step = ProcessingStep(
         name="RegisterModel",
         display_name="Register model package",
-        step_args=ScriptProcessor(
-            image_uri=cpu_image, role=cfg.role, command=["python3"], instance_type=CPU_INSTANCE, instance_count=1,
-            base_job_name="rlpipe-register", sagemaker_session=session, tags=cfg.tags,
-        ).run(
-            # relative path: the SDK parses a Windows drive letter as a URL scheme
+        step_args=cpu_processor("rlpipe-register").run(
             code=os.path.relpath(os.path.join(PIPELINE_CODE_DIR, "register_model.py")),
             inputs=register_inputs,
             arguments=[
@@ -274,37 +278,30 @@ def build_pipeline(cfg: PipelineConfig, session: Optional[PipelineSession] = Non
         ),
     )
 
+    # 5. ConditionStep: one gate. The model is registered only if every condition holds: the RL model beats the
+    #    baseline by the threshold, significantly, without regressing the benchmark, and (with guardrail=True) the
+    #    guardrail blocked at most MaxViolationRate of its answers.
+    conditions = [
+        ConditionGreaterThanOrEqualTo(left=gate_value("primary_delta"), right=p["QualityThreshold"]),
+        ConditionLessThanOrEqualTo(left=gate_value("primary_p_value"), right=p["SignificanceLevel"]),
+        ConditionGreaterThanOrEqualTo(left=gate_value("benchmark_delta"), right=p["MinBenchmarkDelta"]),
+    ]
+    failure = ("the RL model did not improve the reward by QualityThreshold with significance, "
+               "or the ROUGE-L benchmark dropped by more than MinBenchmarkDelta")
     if guardrail:
-        promotion_steps = [
-            ConditionStep(
-                name="GuardrailViolationGate",
-                conditions=[ConditionLessThanOrEqualTo(
-                    left=JsonGet(step_name=guard_step.name, property_file=guard_report, json_path="violation_rate"),
-                    right=p["MaxViolationRate"])],
-                if_steps=[register_step],
-                else_steps=[FailStep(name="GuardrailViolationsAboveThreshold", error_message=Join(on=" ", values=[
-                    "Guardrail violation rate is above", p["MaxViolationRate"].to_string(),
-                    "so the model was not promoted."]))],
-            ),
-        ]
-    else:
-        promotion_steps = [register_step]
-
-    # 5. ConditionStep: proceed only if the RL model beats the baseline by the threshold, significantly,
-    #    without regressing the benchmark.
-    quality_gate = ConditionStep(
-        name="QualityGate",
-        conditions=[
-            ConditionGreaterThanOrEqualTo(left=gate_value("primary_delta"), right=p["QualityThreshold"]),
-            ConditionLessThanOrEqualTo(left=gate_value("primary_p_value"), right=p["SignificanceLevel"]),
-            ConditionGreaterThanOrEqualTo(left=gate_value("benchmark_delta"), right=p["MinBenchmarkDelta"]),
-        ],
-        if_steps=promotion_steps,
-        else_steps=[FailStep(name="QualityGateFailed", error_message=
-            "RL model did not improve on the baseline by QualityThreshold with significance, or the benchmark regressed.")],
+        conditions.append(ConditionLessThanOrEqualTo(
+            left=JsonGet(step_name=guard_step.name, property_file=guard_report, json_path="violation_rate"),
+            right=p["MaxViolationRate"]))
+        failure += ", or the guardrail blocked more than MaxViolationRate of the answers"
+    promotion_gate = ConditionStep(
+        name="PromotionGate",
+        conditions=conditions,
+        if_steps=[register_step],
+        else_steps=[FailStep(name="PromotionGateFailed",
+                             error_message=f"Model not registered: {failure}. See evaluation.json and gate.json.")],
     )
 
-    top_level = [baseline_step, sft_step, rl_step, reeval_step] + ([guard_step] if guardrail else []) + [quality_gate]
+    top_level = [sft_step, rl_step, collect_step] + ([guard_step] if guardrail else []) + [promotion_gate]
     return Pipeline(
         name=cfg.pipeline_name,
         parameters=list(p.values()),
